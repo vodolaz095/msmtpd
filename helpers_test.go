@@ -21,63 +21,63 @@ func TestWrap(t *testing.T) {
 }
 
 func TestParseLine(t *testing.T) {
-	cmd := parseLine("HELO hostname")
-	if cmd.action != "HELO" {
-		t.Fatalf("unexpected action: %s", cmd.action)
+	commandForParseLine := parseLine("HELO hostname")
+	if commandForParseLine.action != "HELO" {
+		t.Fatalf("unexpected action: %s", commandForParseLine.action)
 	}
-	if len(cmd.fields) != 2 {
-		t.Fatalf("unexpected fields length: %d", len(cmd.fields))
+	if len(commandForParseLine.fields) != 2 {
+		t.Fatalf("unexpected fields length: %d", len(commandForParseLine.fields))
 	}
-	if len(cmd.params) != 1 {
-		t.Fatalf("unexpected params length: %d", len(cmd.params))
+	if len(commandForParseLine.params) != 1 {
+		t.Fatalf("unexpected params length: %d", len(commandForParseLine.params))
 	}
-	if cmd.params[0] != "hostname" {
-		t.Fatalf("unexpected value for param 0: %v", cmd.params[0])
+	if commandForParseLine.params[0] != "hostname" {
+		t.Fatalf("unexpected value for param 0: %v", commandForParseLine.params[0])
 	}
-	cmd = parseLine("DATA")
-	if cmd.action != "DATA" {
-		t.Fatalf("unexpected action: %s", cmd.action)
+	commandForParseLine = parseLine("DATA")
+	if commandForParseLine.action != "DATA" {
+		t.Fatalf("unexpected action: %s", commandForParseLine.action)
 	}
-	if len(cmd.fields) != 1 {
-		t.Fatalf("unexpected fields length: %d", len(cmd.fields))
+	if len(commandForParseLine.fields) != 1 {
+		t.Fatalf("unexpected fields length: %d", len(commandForParseLine.fields))
 	}
-	if cmd.params != nil {
-		t.Fatalf("unexpected params: %v", cmd.params)
+	if commandForParseLine.params != nil {
+		t.Fatalf("unexpected params: %v", commandForParseLine.params)
 	}
-	cmd = parseLine("MAIL FROM:<test@example.org>")
-	if cmd.action != "MAIL" {
-		t.Fatalf("unexpected action: %s", cmd.action)
+	commandForParseLine = parseLine("MAIL FROM:<test@example.org>")
+	if commandForParseLine.action != "MAIL" {
+		t.Fatalf("unexpected action: %s", commandForParseLine.action)
 	}
-	if len(cmd.fields) != 2 {
-		t.Fatalf("unexpected fields length: %d", len(cmd.fields))
+	if len(commandForParseLine.fields) != 2 {
+		t.Fatalf("unexpected fields length: %d", len(commandForParseLine.fields))
 	}
-	if len(cmd.params) != 2 {
-		t.Fatalf("unexpected params length: %d", len(cmd.params))
+	if len(commandForParseLine.params) != 2 {
+		t.Fatalf("unexpected params length: %d", len(commandForParseLine.params))
 	}
-	if cmd.params[0] != "FROM" {
-		t.Fatalf("unexpected value for param 0: %v", cmd.params[0])
+	if commandForParseLine.params[0] != "FROM" {
+		t.Fatalf("unexpected value for param 0: %v", commandForParseLine.params[0])
 	}
-	if cmd.params[1] != "<test@example.org>" {
-		t.Fatalf("unexpected value for param 1: %v", cmd.params[1])
+	if commandForParseLine.params[1] != "<test@example.org>" {
+		t.Fatalf("unexpected value for param 1: %v", commandForParseLine.params[1])
 	}
 }
 
-func TestParseLineMailformedMAILFROM(t *testing.T) {
-	cmd := parseLine("MAIL FROM: <test@example.org>")
-	if cmd.action != "MAIL" {
-		t.Fatalf("unexpected action: %s", cmd.action)
+func TestParseLineMalformedMAILFROM(t *testing.T) {
+	commandForParseMalformedMailFrom := parseLine("MAIL FROM: <test@example.org>")
+	if commandForParseMalformedMailFrom.action != "MAIL" {
+		t.Fatalf("unexpected action: %s", commandForParseMalformedMailFrom.action)
 	}
-	if len(cmd.fields) != 2 {
-		t.Fatalf("unexpected fields length: %d", len(cmd.fields))
+	if len(commandForParseMalformedMailFrom.fields) != 2 {
+		t.Fatalf("unexpected fields length: %d", len(commandForParseMalformedMailFrom.fields))
 	}
-	if len(cmd.params) != 2 {
-		t.Fatalf("unexpected params length: %d", len(cmd.params))
+	if len(commandForParseMalformedMailFrom.params) != 2 {
+		t.Fatalf("unexpected params length: %d", len(commandForParseMalformedMailFrom.params))
 	}
-	if cmd.params[0] != "FROM" {
-		t.Fatalf("unexpected value for param 0: %v", cmd.params[0])
+	if commandForParseMalformedMailFrom.params[0] != "FROM" {
+		t.Fatalf("unexpected value for param 0: %v", commandForParseMalformedMailFrom.params[0])
 	}
-	if cmd.params[1] != "<test@example.org>" {
-		t.Fatalf("unexpected value for param 1: %v", cmd.params[1])
+	if commandForParseMalformedMailFrom.params[1] != "<test@example.org>" {
+		t.Fatalf("unexpected value for param 1: %v", commandForParseMalformedMailFrom.params[1])
 	}
 }
 
