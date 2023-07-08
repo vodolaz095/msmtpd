@@ -1,6 +1,10 @@
 package msmptd
 
-import "strings"
+import (
+	"crypto/rand"
+	"encoding/hex"
+	"strings"
+)
 
 // wrap a byte slice paragraph for use in SMTP header
 func wrap(sl []byte) []byte {
@@ -53,4 +57,15 @@ func parseLine(line string) (cmd command) {
 
 func mask(input string) string {
 	return string(input[0]) + "****"
+}
+
+// getRandomID gets random hex encoded id
+func getRandomID() (id string, err error) {
+	b := make([]byte, 10)
+	_, err = rand.Read(b)
+	if err != nil {
+		return
+	}
+	id = hex.EncodeToString(b)
+	return
 }

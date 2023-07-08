@@ -62,15 +62,26 @@ type Server struct {
 
 func (srv *Server) newSession(c net.Conn) (t *Transaction) {
 	var err error
+	id, err := getRandomID()
+	if err != nil {
+		panic(err) // its extremely unlikely
+	}
+	mu := sync.Mutex{}
 	t = &Transaction{
+		ID:        id,
+		StartedAt: time.Now(),
+
 		server:     srv,
-		conn:       c,
-		reader:     bufio.NewReader(c),
-		writer:     bufio.NewWriter(c),
-		Addr:       c.RemoteAddr(),
 		ServerName: srv.Hostname,
-		facts:      make(map[string]string, 0),
-		counters:   make(map[string]float64, 0),
+
+		conn:   c,
+		reader: bufio.NewReader(c),
+		writer: bufio.NewWriter(c),
+		Addr:   c.RemoteAddr(),
+
+		facts:    make(map[string]string, 0),
+		counters: make(map[string]float64, 0),
+		mu:       &mu,
 	}
 
 	// Check if the underlying connection is already TLS.
@@ -100,14 +111,11 @@ func (srv *Server) ListenAndServe(addr string) error {
 	if srv.inShutdown.Load() {
 		return ErrServerClosed
 	}
-
 	srv.configureDefaults()
-
 	l, err := net.Listen("tcp", addr)
 	if err != nil {
 		return err
 	}
-
 	return srv.Serve(l)
 }
 
@@ -116,19 +124,14 @@ func (srv *Server) Serve(l net.Listener) error {
 	if srv.inShutdown.Load() {
 		return ErrServerClosed
 	}
-
 	srv.configureDefaults()
-
 	l = &onceCloseListener{Listener: l}
 	defer l.Close()
 	srv.listener = &l
-
 	var limiter chan struct{}
-
 	if srv.MaxConnections > 0 {
 		limiter = make(chan struct{}, srv.MaxConnections)
 	}
-
 	for {
 		conn, e := l.Accept()
 		if e != nil {
@@ -144,9 +147,7 @@ func (srv *Server) Serve(l net.Listener) error {
 			}
 			return e
 		}
-
 		session := srv.newSession(conn)
-
 		srv.waitgrp.Add(1)
 		go func() {
 			defer srv.waitgrp.Done()
@@ -163,7 +164,6 @@ func (srv *Server) Serve(l net.Listener) error {
 			}
 		}()
 	}
-
 }
 
 // Shutdown instructs the server to shut down, starting by closing the
