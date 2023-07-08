@@ -109,37 +109,29 @@ func cmd(c *textproto.Conn, expectedCode int, format string, args ...interface{}
 	return err
 }
 
-type testLogger struct {
-	testSuite *testing.T
+type testLogger struct{}
+
+func (tl *testLogger) Tracef(transaction *Transaction, format string, args ...any) {
+	fmt.Printf("TRACE: %s %s\n", transaction.ID, fmt.Sprintf(format, args...))
 }
 
-func (t *testLogger) Tracef(transaction *Transaction, format string, args ...any) {
-	t.testSuite.Logf("TRACE: %s %s %s",
-		t.testSuite.Name(),
-		transaction.ID, fmt.Sprintf(format, args...))
+func (tl *testLogger) Debugf(transaction *Transaction, format string, args ...any) {
+	fmt.Printf("DEBUG: %s %s\n", transaction.ID, fmt.Sprintf(format, args...))
 }
 
-func (t *testLogger) Debugf(transaction *Transaction, format string, args ...any) {
-	t.testSuite.Logf("DEBUG: %s %s %s",
-		t.testSuite.Name(), transaction.ID, fmt.Sprintf(format, args...))
+func (tl *testLogger) Infof(transaction *Transaction, format string, args ...any) {
+	fmt.Printf("INFO: %s %s\n", transaction.ID, fmt.Sprintf(format, args...))
 }
 
-func (t *testLogger) Infof(transaction *Transaction, format string, args ...any) {
-	t.testSuite.Logf("INFO: %s %s %s",
-		t.testSuite.Name(), transaction.ID, fmt.Sprintf(format, args...))
+func (tl *testLogger) Warnf(transaction *Transaction, format string, args ...any) {
+	fmt.Printf("WARN: %s %s\n", transaction.ID, fmt.Sprintf(format, args...))
 }
 
-func (t *testLogger) Warnf(transaction *Transaction, format string, args ...any) {
-	t.testSuite.Logf("WARN: %s %s %s",
-		t.testSuite.Name(), transaction.ID, fmt.Sprintf(format, args...))
+func (tl *testLogger) Errorf(transaction *Transaction, format string, args ...any) {
+	fmt.Printf("ERROR: %s %s\n", transaction.ID, fmt.Sprintf(format, args...))
 }
 
-func (t *testLogger) Errorf(transaction *Transaction, format string, args ...any) {
-	t.testSuite.Logf("ERROR: %s %s %s",
-		t.testSuite.Name(), transaction.ID, fmt.Sprintf(format, args...))
-}
-
-func (t *testLogger) Fatalf(transaction *Transaction, format string, args ...any) {
+func (tl *testLogger) Fatalf(transaction *Transaction, format string, args ...any) {
 	panic("it is bad")
 }
 
@@ -158,7 +150,7 @@ func runserver(t *testing.T, server *Server) (addr string, closer func()) {
 	if err != nil {
 		t.Fatalf("Listen failed: %v", err)
 	}
-	logger := testLogger{testSuite: t}
+	logger := testLogger{}
 	server.Logger = &logger
 	go func() {
 		serveErr := server.Serve(ln)
