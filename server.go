@@ -12,6 +12,8 @@ import (
 	"time"
 )
 
+type CheckerFunc func(transaction *Transaction, name string) error
+
 // Server defines the parameters for running the SMTP server
 type Server struct {
 	Hostname       string // Server hostname. (default: "localhost.localdomain")
@@ -34,10 +36,10 @@ type Server struct {
 	// Can be left empty for no restrictions.
 	// If an error is returned, it will be reported in the SMTP session.
 	// Use the ErrorSMTP struct for access to error codes.
-	ConnectionCheckers []func(transaction *Transaction) error              // Called upon new connection.
-	HeloCheckers       []func(transaction *Transaction, name string) error // Called after HELO/EHLO.
-	SenderCheckers     []func(transaction *Transaction, addr string) error // Called after MAIL FROM.
-	RecipientCheckers  []func(transaction *Transaction, addr string) error // Called after each RCPT TO.
+	ConnectionCheckers []func(transaction *Transaction) error // Called upon new connection.
+	HeloCheckers       []CheckerFunc                          // Called after HELO/EHLO.
+	SenderCheckers     []CheckerFunc                          // Called after MAIL FROM.
+	RecipientCheckers  []CheckerFunc                          // Called after each RCPT TO.
 
 	// Enable PLAIN/LOGIN authentication, only available after STARTTLS.
 	// Can be left empty for no authentication support.
@@ -94,13 +96,14 @@ func (srv *Server) newSession(c net.Conn) (t *Transaction) {
 		// read/write and connection state will be invalid
 		err = tlsConn.Handshake()
 		if err != nil {
+			t.LogDebug("%s : while performing handshake", err)
 			t.Secured = false
+			t.Hate(tlsHandshakeFailedHate)
 		} else {
 			t.Secured = true
 		}
 		state := tlsConn.ConnectionState()
 		t.TLS = &state
-		t.Hate(tlsHandshakeFailedHate)
 	}
 	t.scanner = bufio.NewScanner(t.reader)
 	return
@@ -231,6 +234,14 @@ func (srv *Server) configureDefaults() {
 	}
 	if srv.WelcomeMessage == "" {
 		srv.WelcomeMessage = fmt.Sprintf("%s ESMTP ready.", srv.Hostname)
+	}
+	if srv.Logger != nil {
+		// it is ok
+	} else {
+		srv.Logger = &DefaultLogger{
+			Logger: log.Default(),
+			Level:  InfoLevel,
+		}
 	}
 }
 

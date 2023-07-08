@@ -1,8 +1,6 @@
 package msmptd
 
 func (t *Transaction) handle(line string) {
-	t.mu.Lock()
-	defer t.mu.Unlock()
 	t.LogTrace("Command received: %s", line)
 	cmd := parseLine(line)
 
@@ -13,44 +11,45 @@ func (t *Transaction) handle(line string) {
 	switch cmd.action {
 	case "PROXY":
 		t.handlePROXY(cmd)
-		return
+		break
 	case "HELO":
 		t.handleHELO(cmd)
-		return
+		break
 	case "EHLO":
 		t.handleEHLO(cmd)
-		return
+		break
 	case "MAIL":
 		t.handleMAIL(cmd)
-		return
+		break
 	case "RCPT":
 		t.handleRCPT(cmd)
-		return
+		break
 	case "STARTTLS":
 		t.handleSTARTTLS(cmd)
-		return
+		break
 	case "DATA":
 		t.handleDATA(cmd)
-		return
+		break
 	case "RSET":
 		t.handleRSET(cmd)
-		return
+		break
 	case "NOOP":
 		t.handleNOOP(cmd)
-		return
+		break
 	case "QUIT":
 		t.handleQUIT(cmd)
-		return
+		break
 	case "AUTH":
 		t.handleAUTH(cmd)
-		return
+		break
 	case "XCLIENT":
 		t.handleXCLIENT(cmd)
-		return
+		break
+	default:
+		t.Hate(unknownCommandPenalty)
+		t.LogDebug("Unsupported command received: %s", line)
+		t.reply(502, "Unsupported command.")
 	}
-	t.Hate(unknownCommandPenalty)
-	t.LogDebug("Unsupported command received: %s", line)
-	t.reply(502, "Unsupported command.")
 }
 
 func (t *Transaction) handleRSET(cmd command) {

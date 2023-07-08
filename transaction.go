@@ -92,28 +92,27 @@ func (t *Transaction) GetFact(name string) (value string, found bool) {
 	return
 }
 
-// Incr increments transaction
-func (t *Transaction) Incr(key string, delta any) (newVal float64) {
+// Incr increments transaction counter
+func (t *Transaction) Incr(key string, delta float64) (newVal float64) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	if len(t.facts) == 0 {
 		t.counters = make(map[string]float64, 0)
 	}
-
 	old, found := t.counters[key]
-	if !found {
-		t.counters[key] = delta.(float64)
-		return t.counters[key]
-	}
-	switch delta.(type) {
-	case int, int8, int16, int32, int64, float32, float64:
-		newVal = old + delta.(float64)
+	if found {
+		newVal = old + delta
 		t.counters[key] = newVal
-		break
-	default:
-		return 0
+		return newVal
 	}
-	return newVal
+	t.counters[key] = delta
+	return t.counters[key]
+}
+
+// GetCounter returns counter value
+func (t *Transaction) GetCounter(key string) (val float64, found bool) {
+	val, found = t.counters[key]
+	return
 }
 
 /*
@@ -133,12 +132,12 @@ func (t *Transaction) Karma() int {
 
 // Love grants good points to karma, promising message to enter Paradise for SMTP transactions, aka dovecot server socket for accepting messages via SMTP
 func (t *Transaction) Love(delta int) (newVal int) {
-	return int(t.Incr(karmaCounterName, delta))
+	return int(t.Incr(karmaCounterName, float64(delta)))
 }
 
 // Hate grants bad points to karma, restricting message to enter Paradise for SMTP transactions, aka dovecot server socket for accepting messages via SMTP
 func (t *Transaction) Hate(delta int) (newVal int) {
-	return int(t.Incr(karmaCounterName, -delta))
+	return int(t.Incr(karmaCounterName, -float64(delta)))
 }
 
 /*

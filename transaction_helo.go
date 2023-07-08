@@ -22,10 +22,10 @@ func (t *Transaction) handleHELO(cmd command) {
 		}
 	}
 	t.LogDebug("HELO <%s> is checked!", cmd.fields[1])
-	t.mu.Lock()
+	//t.mu.Lock()
 	t.HeloName = cmd.fields[1]
 	t.Protocol = SMTP
-	t.mu.Unlock()
+	//t.mu.Unlock()
 	t.reply(250, "Go on, i'm listening...")
 	return
 }
@@ -68,10 +68,10 @@ func (t *Transaction) handleEHLO(cmd command) {
 		}
 	}
 	t.LogDebug("EHLO <%s> is checked!", cmd.fields[1])
-	t.mu.Lock()
+	//t.mu.Lock() //TODO - debug
 	t.HeloName = cmd.fields[1]
 	t.Protocol = ESMTP
-	t.mu.Unlock()
+	//t.mu.Unlock() // TODO - debug
 	fmt.Fprintf(t.writer, "250-%s\r\n", t.server.Hostname)
 	extensions := t.extensions()
 	if len(extensions) > 1 {

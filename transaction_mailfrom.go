@@ -40,6 +40,9 @@ func (t *Transaction) handleMAIL(cmd command) {
 			t.reply(502, "Malformed e-mail address")
 			return
 		}
+		t.MailFrom = *addr
+	} else {
+		t.MailFrom = mail.Address{}
 	}
 	t.LogDebug("MAIL FROM [%s] is received...", cmd.fields[1])
 	for k := range t.server.SenderCheckers {
@@ -50,7 +53,6 @@ func (t *Transaction) handleMAIL(cmd command) {
 		}
 	}
 	t.LogDebug("MAIL FROM [%s] is checked...", cmd.fields[1])
-	t.MailFrom = *addr
 	t.reply(250, "Ok, it makes sense, go ahead please!")
 	return
 }
