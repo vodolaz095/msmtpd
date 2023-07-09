@@ -748,6 +748,7 @@ func TestMeta(t *testing.T) {
 				transaction.SetFact("something", name)
 				transaction.Incr("int64", 1)
 				transaction.Incr("float64", 1.1)
+				transaction.LogWarn("something")
 				return nil
 			},
 		},
