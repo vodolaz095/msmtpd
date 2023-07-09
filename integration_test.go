@@ -1323,6 +1323,9 @@ func TestKarma(t *testing.T) {
 	addr, closer := runserver(t, &Server{
 		SenderCheckers: []CheckerFunc{
 			func(transaction *Transaction, name string) error {
+				if transaction.Karma() != 0 {
+					t.Errorf("wrong initial karma")
+				}
 				if name == "scuba@vodolaz095.ru" {
 					transaction.Love(1000)
 				}
