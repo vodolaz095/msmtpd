@@ -12,45 +12,70 @@ import (
 	"time"
 )
 
+// CheckerFunc are signature of functions used in checks for client issuing HELO/EHLO, MAIL FROM, RCPT TO commands
+// First argument is current Transaction, 2nd one - is argument of clients commands.
+// Note that we can store counters and Facts in Transaction, in order to extract and reuse it in future.
 type CheckerFunc func(transaction *Transaction, name string) error
 
 // Server defines the parameters for running the SMTP server
 type Server struct {
-	Hostname       string // Server hostname. (default: "localhost.localdomain")
-	WelcomeMessage string // Initial server banner. (default: "<hostname> ESMTP ready.")
+	// Hostname is how we name ourselves, default is "localhost.localdomain"
+	Hostname string
+	// WelcomeMessage sets initial server banner. (default: "<hostname> ESMTP ready.")
+	WelcomeMessage string
+	// ReadTimeout is socket timeout for read operations. (default: 60s)
+	ReadTimeout time.Duration
+	// WriteTimeout is socket timeout for write operations. (default: 60s)
+	WriteTimeout time.Duration
+	// DataTimeout Socket timeout for DATA command (default: 5m)
+	DataTimeout time.Duration
 
-	ReadTimeout  time.Duration // Socket timeout for read operations. (default: 60s)
-	WriteTimeout time.Duration // Socket timeout for write operations. (default: 60s)
-	DataTimeout  time.Duration // Socket timeout for DATA command (default: 5m)
-
-	MaxConnections int // Max concurrent connections, use -1 to disable. (default: 100)
+	// MaxConnections sets maximum number of concurrent connections, use -1 to disable. (default: 100)
+	MaxConnections int
+	// MaxMessageSize, default is
 	MaxMessageSize int // Max message size in bytes. (default: 10240000)
 	MaxRecipients  int // Max RCPT TO calls for each envelope. (default: 100)
 
-	// New e-mails are handed off to this functions.
-	// Can be left empty for a NOOP server.
-	// If an error is returned, it will be reported in the SMTP session.
-	Handlers []func(transaction *Transaction) error
+	// Resolver is net.Resolver used by server and plugins to resolve remote resources against DNS servers
+	Resolver *net.Resolver
 
 	// Enable various checks during the SMTP session.
 	// Can be left empty for no restrictions.
 	// If an error is returned, it will be reported in the SMTP session.
 	// Use the ErrorSMTP struct for access to error codes.
-	ConnectionCheckers []func(transaction *Transaction) error // Called upon new connection.
-	HeloCheckers       []CheckerFunc                          // Called after HELO/EHLO.
-	SenderCheckers     []CheckerFunc                          // Called after MAIL FROM.
-	RecipientCheckers  []CheckerFunc                          // Called after each RCPT TO.
+	// Checks are called synchronously, in usual order
 
-	// Enable PLAIN/LOGIN authentication, only available after STARTTLS.
-	// Can be left empty for no authentication support.
+	// ConnectionCheckers are called when TCP connection is started
+	ConnectionCheckers []func(transaction *Transaction) error
+	// HeloCheckers are called after client send HELO/EHLO commands,
+	// 1st argument is Transaction, 2nd one - HELO/EHLO payload
+	HeloCheckers []CheckerFunc
+	// SenderCheckers are called when client issues MAIL FROM command,
+	// 1st argument is Transaction, 2nd one - MAIL FROM payload
+	SenderCheckers []CheckerFunc
+	// RecipientCheckers are called when client issues RCPT TO command,
+	// 1st argument is Transaction, 2nd one - RCPT TO payload
+	RecipientCheckers []CheckerFunc
+
+	// Authenticator, while beign not nill, enables PLAIN/LOGIN authentication,
+	// only available after STARTTLS. Variable can be left empty for no authentication support.
 	Authenticator func(transaction *Transaction, username, password string) error
 
-	EnableXCLIENT       bool // Enable XCLIENT support (default: false)
-	EnableProxyProtocol bool // Enable proxy protocol support (default: false)
+	// Handlers are functions to process message body after DATA command.
+	// Can be left empty for a NOOP server.
+	// If an error is returned, it will be reported in the SMTP session.
+	Handlers []func(transaction *Transaction) error
 
-	TLSConfig *tls.Config // Enable STARTTLS support.
-	ForceTLS  bool        // Force STARTTLS usage.
+	// EnableXCLIENT enables XClient command support (disabled by default, since it is security risk)
+	EnableXCLIENT bool
+	// EnableProxyProtocol enables Proxy command support (disabled by default, since it is security risk)
+	EnableProxyProtocol bool
 
+	// TLSConfig is used both for STARTTLS and operation over TLS channel
+	TLSConfig *tls.Config
+	// ForceTLS requires connections to be encrypted
+	ForceTLS bool
+	// Logger is interface being used as protocol/plugin/errors logger
 	Logger Logger
 
 	// mu guards doneChan and makes closing it and listener atomic from
@@ -62,7 +87,9 @@ type Server struct {
 	inShutdown atomic.Bool
 }
 
-func (srv *Server) newSession(c net.Conn) (t *Transaction) {
+// startTransaction takes network connection and wraps it into Transaction object to handle all remote
+// client interactions via (E)SMTP protocol.
+func (srv *Server) startTransaction(c net.Conn) (t *Transaction) {
 	var err error
 	id, err := getRandomID()
 	if err != nil {
@@ -150,7 +177,7 @@ func (srv *Server) Serve(l net.Listener) error {
 			}
 			return e
 		}
-		session := srv.newSession(conn)
+		session := srv.startTransaction(conn)
 		srv.waitgrp.Add(1)
 		go func() {
 			defer srv.waitgrp.Done()
@@ -235,9 +262,10 @@ func (srv *Server) configureDefaults() {
 	if srv.WelcomeMessage == "" {
 		srv.WelcomeMessage = fmt.Sprintf("%s ESMTP ready.", srv.Hostname)
 	}
-	if srv.Logger != nil {
-		// it is ok
-	} else {
+	if srv.Logger == nil {
+		srv.Resolver = net.DefaultResolver
+	}
+	if srv.Logger == nil {
 		srv.Logger = &DefaultLogger{
 			Logger: log.Default(),
 			Level:  InfoLevel,
