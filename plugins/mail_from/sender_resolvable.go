@@ -11,6 +11,7 @@ import (
 
 // Good read - https://en.wikipedia.org/wiki/MX_record
 
+// SenderIsResolvableOptions are options for SenderIsResolvable plugin, default values are recommended
 type SenderIsResolvableOptions struct {
 	// FallbackToAddressRecord allows to delivery to 25th port of address resolved by A or AAAA
 	// queries if MX records are not present
@@ -27,6 +28,8 @@ const SenderIsNotResolvableComplain = "Seems like i cannot find your sender addr
 
 func SenderIsResolvable(opts SenderIsResolvableOptions) msmptd.CheckerFunc {
 	return func(transaction *msmptd.Transaction, name string) error {
+		possibleMxServers := make([]string, 0)
+		usableMxServers := make([]net.IP, 0)
 		resolver := transaction.Resolver()
 		ctx := context.Background() // TODO
 		address, err := mail.ParseAddress(name)
@@ -38,13 +41,7 @@ func SenderIsResolvable(opts SenderIsResolvableOptions) msmptd.CheckerFunc {
 		mxRecords, err := resolver.LookupMX(ctx, domain)
 		if err != nil {
 			transaction.LogWarn("%s : while resolving MX records for domain %s of %s", err, domain, name)
-			return msmptd.ErrorSMTP{
-				Code:    421,
-				Message: SenderIsNotResolvableComplain,
-			}
 		}
-		possibleMxServers := make([]string, 0)
-		usableMxServers := make([]net.IP, 0)
 		if len(mxRecords) > 0 {
 			for _, record := range mxRecords {
 				transaction.LogDebug("For domain %s MX record %s %v is found",
