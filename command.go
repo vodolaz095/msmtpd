@@ -1,4 +1,4 @@
-package msmptd
+package msmtpd
 
 type command struct {
 	line   string

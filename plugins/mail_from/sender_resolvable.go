@@ -26,8 +26,8 @@ type SenderIsResolvableOptions struct {
 
 const SenderIsNotResolvableComplain = "Seems like i cannot find your sender address mail servers using DNS, please, try again later"
 
-func SenderIsResolvable(opts SenderIsResolvableOptions) msmptd.CheckerFunc {
-	return func(transaction *msmptd.Transaction, name string) error {
+func SenderIsResolvable(opts SenderIsResolvableOptions) msmtpd.CheckerFunc {
+	return func(transaction *msmtpd.Transaction, name string) error {
 		possibleMxServers := make([]string, 0)
 		usableMxServers := make([]net.IP, 0)
 		resolver := transaction.Resolver()
@@ -35,7 +35,7 @@ func SenderIsResolvable(opts SenderIsResolvableOptions) msmptd.CheckerFunc {
 		address, err := mail.ParseAddress(name)
 		if err != nil {
 			transaction.LogWarn("%s : while parsing %s as MAIL FROM address", err, name)
-			return msmptd.ErrorSMTP{Code: 521, Message: "I cannot parse your address, it seems malformed. i'm sorry."}
+			return msmtpd.ErrorSMTP{Code: 521, Message: "I cannot parse your address, it seems malformed. i'm sorry."}
 		}
 		domain := strings.Split(address.Address, "@")[1]
 		mxRecords, err := resolver.LookupMX(ctx, domain)
@@ -55,7 +55,7 @@ func SenderIsResolvable(opts SenderIsResolvableOptions) msmptd.CheckerFunc {
 					domain)
 				possibleMxServers = append(possibleMxServers, domain)
 			} else {
-				return msmptd.ErrorSMTP{
+				return msmtpd.ErrorSMTP{
 					Code:    421,
 					Message: SenderIsNotResolvableComplain,
 				}
@@ -63,7 +63,7 @@ func SenderIsResolvable(opts SenderIsResolvableOptions) msmptd.CheckerFunc {
 		}
 		if len(possibleMxServers) == 0 {
 			transaction.LogDebug("For domain %s there are no possible email exchanges", domain)
-			return msmptd.ErrorSMTP{
+			return msmtpd.ErrorSMTP{
 				Code:    421,
 				Message: SenderIsNotResolvableComplain,
 			}
@@ -133,7 +133,7 @@ func SenderIsResolvable(opts SenderIsResolvableOptions) msmptd.CheckerFunc {
 				len(usableMxServers), domain)
 			return nil
 		}
-		return msmptd.ErrorSMTP{
+		return msmtpd.ErrorSMTP{
 			Code:    421,
 			Message: SenderIsNotResolvableComplain,
 		}

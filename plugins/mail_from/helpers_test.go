@@ -10,31 +10,31 @@ import (
 
 type testLogger struct{}
 
-func (tl *testLogger) Tracef(transaction *msmptd.Transaction, format string, args ...any) {
+func (tl *testLogger) Tracef(transaction *msmtpd.Transaction, format string, args ...any) {
 	fmt.Printf("TRACE: %s %s\n", transaction.ID, fmt.Sprintf(format, args...))
 }
 
-func (tl *testLogger) Debugf(transaction *msmptd.Transaction, format string, args ...any) {
+func (tl *testLogger) Debugf(transaction *msmtpd.Transaction, format string, args ...any) {
 	fmt.Printf("DEBUG: %s %s\n", transaction.ID, fmt.Sprintf(format, args...))
 }
 
-func (tl *testLogger) Infof(transaction *msmptd.Transaction, format string, args ...any) {
+func (tl *testLogger) Infof(transaction *msmtpd.Transaction, format string, args ...any) {
 	fmt.Printf("INFO: %s %s\n", transaction.ID, fmt.Sprintf(format, args...))
 }
 
-func (tl *testLogger) Warnf(transaction *msmptd.Transaction, format string, args ...any) {
+func (tl *testLogger) Warnf(transaction *msmtpd.Transaction, format string, args ...any) {
 	fmt.Printf("WARN: %s %s\n", transaction.ID, fmt.Sprintf(format, args...))
 }
 
-func (tl *testLogger) Errorf(transaction *msmptd.Transaction, format string, args ...any) {
+func (tl *testLogger) Errorf(transaction *msmtpd.Transaction, format string, args ...any) {
 	fmt.Printf("ERROR: %s %s\n", transaction.ID, fmt.Sprintf(format, args...))
 }
 
-func (tl *testLogger) Fatalf(transaction *msmptd.Transaction, format string, args ...any) {
+func (tl *testLogger) Fatalf(transaction *msmtpd.Transaction, format string, args ...any) {
 	panic("it is bad")
 }
 
-func runserver(t *testing.T, server *msmptd.Server) (addr string, closer func()) {
+func runserver(t *testing.T, server *msmtpd.Server) (addr string, closer func()) {
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		t.Errorf("Listen failed: %v", err)

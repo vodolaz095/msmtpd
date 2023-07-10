@@ -1,4 +1,4 @@
-package msmptd
+package msmtpd
 
 func (t *Transaction) handle(line string) {
 	t.LogTrace("Command received: %s", line)

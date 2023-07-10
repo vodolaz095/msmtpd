@@ -9,7 +9,7 @@ import (
 
 // AcceptMailFromAddresses is filter to accept emails only from predefined whilelist of addresses,
 // it is more strict version of AcceptMailFromDomains which can accept email from every mailbox of domain
-func AcceptMailFromAddresses(whitelist []string) msmptd.CheckerFunc {
+func AcceptMailFromAddresses(whitelist []string) msmtpd.CheckerFunc {
 	var err error
 	var parsed *mail.Address
 	goodMailFroms := make(map[mail.Address]bool, 0)
@@ -23,13 +23,13 @@ func AcceptMailFromAddresses(whitelist []string) msmptd.CheckerFunc {
 		}
 		goodMailFroms[*parsed] = true
 	}
-	return func(transaction *msmptd.Transaction, name string) error {
+	return func(transaction *msmtpd.Transaction, name string) error {
 		_, found := goodMailFroms[transaction.MailFrom]
 		if found {
 			transaction.LogDebug("Sender %s is whitelisted", transaction.MailFrom.String())
 			return nil
 		}
-		return msmptd.ErrorSMTP{
+		return msmtpd.ErrorSMTP{
 			Code:    521,
 			Message: "I'm sorry, but your email address is not in whitelist",
 		}

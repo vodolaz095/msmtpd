@@ -18,7 +18,7 @@ X-Mailer: swaks v20190914.0 jetmore.org/john/code/swaks/
 This is a test mailing
 `
 
-	transaction := msmptd.Transaction{
+	transaction := msmtpd.Transaction{
 		ID:         "TestBodyParseAndCheckHeadersOK",
 		StartedAt:  time.Now(),
 		ServerName: "",
@@ -35,7 +35,7 @@ This is a test mailing
 func TestBodyParseAndCheckHeadersMalformed(t *testing.T) {
 	malformedMessage := `This is a test mailing`
 
-	transaction := msmptd.Transaction{
+	transaction := msmtpd.Transaction{
 		ID:         "TestBodyParseAndCheckHeadersOK",
 		StartedAt:  time.Now(),
 		ServerName: "",
@@ -45,9 +45,9 @@ func TestBodyParseAndCheckHeadersMalformed(t *testing.T) {
 
 	err := handler(&transaction)
 	if err != nil {
-		typecasted, ok := err.(msmptd.ErrorSMTP)
+		typecasted, ok := err.(msmtpd.ErrorSMTP)
 		if !ok {
-			t.Errorf("error is not of kind msmptd.ErrorSMTP")
+			t.Errorf("error is not of kind msmtpd.ErrorSMTP")
 		}
 		if typecasted.Code != 521 {
 			t.Errorf("wrong status code %v", typecasted.Code)
@@ -73,7 +73,7 @@ X-Mailer: swaks v20190914.0 jetmore.org/john/code/swaks/
 This is a test mailing
 `
 
-	transaction := msmptd.Transaction{
+	transaction := msmtpd.Transaction{
 		ID:         "TestBodyParseAndCheckHeadersOK",
 		StartedAt:  time.Now(),
 		ServerName: "",
@@ -83,9 +83,9 @@ This is a test mailing
 
 	err := handler(&transaction)
 	if err != nil {
-		typecasted, ok := err.(msmptd.ErrorSMTP)
+		typecasted, ok := err.(msmtpd.ErrorSMTP)
 		if !ok {
-			t.Errorf("error is not of kind msmptd.ErrorSMTP")
+			t.Errorf("error is not of kind msmtpd.ErrorSMTP")
 		}
 		if typecasted.Code != 521 {
 			t.Errorf("wrong status code %v", typecasted.Code)

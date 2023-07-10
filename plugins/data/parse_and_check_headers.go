@@ -23,13 +23,13 @@ var DefaultHeadersToRequire = []string{
 // ParseBodyAndCheckHeaders is Handler for processing message body to ensure is
 // 1. parsable as email message
 // 2. contains minimal headers required
-func ParseBodyAndCheckHeaders(headersRequired []string) func(transaction *msmptd.Transaction) error {
-	return func(transaction *msmptd.Transaction) error {
+func ParseBodyAndCheckHeaders(headersRequired []string) func(transaction *msmtpd.Transaction) error {
+	return func(transaction *msmtpd.Transaction) error {
 		var val string
 		message, err := mail.ReadMessage(bytes.NewReader(transaction.Body))
 		if err != nil {
 			transaction.LogWarn("%s : while parsing message body", err)
-			return msmptd.ErrorSMTP{
+			return msmtpd.ErrorSMTP{
 				Code:    521,
 				Message: complain,
 			}
@@ -38,7 +38,7 @@ func ParseBodyAndCheckHeaders(headersRequired []string) func(transaction *msmptd
 			val = message.Header.Get(header)
 			if val == "" {
 				transaction.LogWarn("header %s is missing", header)
-				return msmptd.ErrorSMTP{
+				return msmtpd.ErrorSMTP{
 					Code:    521,
 					Message: complain,
 				}

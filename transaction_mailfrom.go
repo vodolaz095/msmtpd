@@ -1,4 +1,4 @@
-package msmptd
+package msmtpd
 
 import (
 	"net/mail"

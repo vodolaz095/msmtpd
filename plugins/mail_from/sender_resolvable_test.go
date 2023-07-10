@@ -32,7 +32,7 @@ func TestSenderIsResolvableDefault(t *testing.T) {
 	var err error
 	for k, v := range testCases {
 		t.Logf("Checking %s...", k)
-		tr := msmptd.Transaction{
+		tr := msmtpd.Transaction{
 			ID: fmt.Sprintf("TestSenderIsResolvableDefault - %s", k),
 		}
 		err = handler(&tr, k)
@@ -77,7 +77,7 @@ func TestSenderIsResolvableFallback(t *testing.T) {
 	var err error
 	for k, v := range testCases {
 		t.Logf("Checking %s...", k)
-		tr := msmptd.Transaction{
+		tr := msmtpd.Transaction{
 			ID: fmt.Sprintf("TestSenderIsResolvableFallback - %s", k),
 		}
 		err = handler(&tr, k)
@@ -122,7 +122,7 @@ func TestSenderIsResolvableLocal(t *testing.T) {
 	var err error
 	for k, v := range testCases {
 		t.Logf("Checking %s...", k)
-		tr := msmptd.Transaction{
+		tr := msmtpd.Transaction{
 			ID: fmt.Sprintf("TestSenderIsResolvableFallback - %s", k),
 		}
 		err = handler(&tr, k)
@@ -162,7 +162,7 @@ func TestSenderIsResolvableFallbackAndLocal(t *testing.T) {
 	var err error
 	for k, v := range testCases {
 		t.Logf("Checking %s...", k)
-		tr := msmptd.Transaction{
+		tr := msmtpd.Transaction{
 			ID: fmt.Sprintf("TestSenderIsResolvableFallback - FROM: `%s`", k),
 		}
 		err = handler(&tr, k)
