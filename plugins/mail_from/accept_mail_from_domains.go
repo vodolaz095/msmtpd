@@ -1,7 +1,6 @@
 package mail_from
 
 import (
-	"net/mail"
 	"strings"
 
 	"msmtpd"
@@ -13,16 +12,11 @@ func AcceptMailFromDomains(whitelist []string) msmtpd.CheckerFunc {
 	for _, raw := range whitelist {
 		goodDomains[strings.ToLower(raw)] = true
 	}
-	return func(transaction *msmtpd.Transaction, name string) error {
-		addr, err := mail.ParseAddress(name)
-		if err != nil {
-			transaction.LogWarn("%s : while parsing %s as email address", err, name)
-			return msmtpd.ErrorSMTP{Code: 502, Message: "Malformed e-mail address"}
-		}
-		domain := strings.Split(addr.Address, "@")[1]
+	return func(transaction *msmtpd.Transaction) error {
+		domain := strings.Split(transaction.MailFrom.Address, "@")[1]
 		_, found := goodDomains[domain]
 		if found {
-			transaction.LogDebug("Sender's %s domain is whitelisted", addr.String())
+			transaction.LogDebug("Sender's %s domain is whitelisted", transaction.MailFrom.String())
 			return nil
 		}
 		return msmtpd.ErrorSMTP{

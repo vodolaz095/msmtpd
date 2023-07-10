@@ -14,18 +14,16 @@ func (t *Transaction) handleHELO(cmd command) {
 		t.reset()
 	}
 	t.LogDebug("HELO <%s> is received...", cmd.fields[1])
+	t.HeloName = cmd.fields[1]
+	t.Protocol = SMTP
 	for k := range t.server.HeloCheckers {
-		err = t.server.HeloCheckers[k](t, cmd.fields[1])
+		err = t.server.HeloCheckers[k](t)
 		if err != nil {
 			t.error(err)
 			return
 		}
 	}
-	t.LogDebug("HELO <%s> is checked!", cmd.fields[1])
-	//t.mu.Lock()
-	t.HeloName = cmd.fields[1]
-	t.Protocol = SMTP
-	//t.mu.Unlock()
+	t.LogInfo("HELO <%s> is checked!", cmd.fields[1])
 	t.reply(250, "Go on, i'm listening...")
 	return
 }
@@ -60,18 +58,16 @@ func (t *Transaction) handleEHLO(cmd command) {
 		t.reset()
 	}
 	t.LogDebug("EHLO <%s> is received...", cmd.fields[1])
+	t.HeloName = cmd.fields[1]
+	t.Protocol = ESMTP
 	for k := range t.server.HeloCheckers {
-		err = t.server.HeloCheckers[k](t, cmd.fields[1])
+		err = t.server.HeloCheckers[k](t)
 		if err != nil {
 			t.error(err)
 			return
 		}
 	}
-	t.LogDebug("EHLO <%s> is checked!", cmd.fields[1])
-	//t.mu.Lock() //TODO - debug
-	t.HeloName = cmd.fields[1]
-	t.Protocol = ESMTP
-	//t.mu.Unlock() // TODO - debug
+	t.LogInfo("EHLO <%s> is checked!", cmd.fields[1])
 	fmt.Fprintf(t.writer, "250-%s\r\n", t.server.Hostname)
 	extensions := t.extensions()
 	if len(extensions) > 1 {

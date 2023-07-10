@@ -1,9 +1,7 @@
 package mail_from
 
 import (
-	"context"
 	"net"
-	"net/mail"
 	"strings"
 
 	"msmtpd"
@@ -27,20 +25,16 @@ type SenderIsResolvableOptions struct {
 const SenderIsNotResolvableComplain = "Seems like i cannot find your sender address mail servers using DNS, please, try again later"
 
 func SenderIsResolvable(opts SenderIsResolvableOptions) msmtpd.CheckerFunc {
-	return func(transaction *msmtpd.Transaction, name string) error {
+	return func(transaction *msmtpd.Transaction) error {
 		possibleMxServers := make([]string, 0)
 		usableMxServers := make([]net.IP, 0)
 		resolver := transaction.Resolver()
-		ctx := context.Background() // TODO
-		address, err := mail.ParseAddress(name)
-		if err != nil {
-			transaction.LogWarn("%s : while parsing %s as MAIL FROM address", err, name)
-			return msmtpd.ErrorSMTP{Code: 521, Message: "I cannot parse your address, it seems malformed. i'm sorry."}
-		}
-		domain := strings.Split(address.Address, "@")[1]
+		ctx := transaction.Context()
+		domain := strings.Split(transaction.MailFrom.Address, "@")[1]
 		mxRecords, err := resolver.LookupMX(ctx, domain)
 		if err != nil {
-			transaction.LogWarn("%s : while resolving MX records for domain %s of %s", err, domain, name)
+			transaction.LogWarn("%s : while resolving MX records for domain %s of %s",
+				err, domain, transaction.MailFrom.String())
 			mxRecords = nil
 		}
 		if len(mxRecords) > 0 {
@@ -76,7 +70,7 @@ func SenderIsResolvable(opts SenderIsResolvableOptions) msmtpd.CheckerFunc {
 			ips, errLookUp := resolver.LookupIP(ctx, "ip", record)
 			if errLookUp != nil {
 				transaction.LogWarn("%s : while resolving IP address for mailserver %s of domain of %s for %s",
-					errLookUp, record, domain, name)
+					errLookUp, record, domain, transaction.MailFrom.String())
 				continue
 			}
 			for _, ip := range ips {

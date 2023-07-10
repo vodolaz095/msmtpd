@@ -44,15 +44,15 @@ func (t *Transaction) handleMAIL(cmd command) {
 	} else {
 		t.MailFrom = mail.Address{}
 	}
-	t.LogDebug("MAIL FROM [%s] is received...", cmd.fields[1])
+	t.LogDebug("MAIL FROM [%s] is received...", t.MailFrom.String())
 	for k := range t.server.SenderCheckers {
-		err = t.server.SenderCheckers[k](t, addr.Address)
+		err = t.server.SenderCheckers[k](t)
 		if err != nil {
 			t.error(err)
 			return
 		}
 	}
-	t.LogDebug("MAIL FROM [%s] is checked...", cmd.fields[1])
+	t.LogInfo("MAIL FROM [%s] is checked!", t.MailFrom.String())
 	t.reply(250, "Ok, it makes sense, go ahead please!")
 	return
 }

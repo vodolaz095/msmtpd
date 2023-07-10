@@ -33,8 +33,8 @@ func (t *Transaction) handleDATA(cmd command) {
 		// Accept and deliver message
 		t.Body = data.Bytes()
 		t.LogDebug("Processing clients message having %v bytes in it", data.Len())
-		for k := range t.server.Handlers {
-			deliverErr = t.server.Handlers[k](t)
+		for k := range t.server.DataHandlers {
+			deliverErr = t.server.DataHandlers[k](t)
 			if deliverErr != nil {
 				t.error(deliverErr)
 				return

@@ -25,7 +25,8 @@ func TestTransaction_Resolver(t *testing.T) {
 func TestTransaction_Resolver_In_Server(t *testing.T) {
 	addr, closer := runserver(t, &Server{
 		HeloCheckers: []CheckerFunc{
-			func(tr *Transaction, name string) error {
+			func(tr *Transaction) error {
+				name := tr.HeloName
 				addrs, err := tr.Resolver().LookupMX(context.Background(), name)
 				if err != nil {
 					return err
@@ -75,7 +76,8 @@ func TestTransaction_Resolver_In_Server_Custom(t *testing.T) {
 			},
 		},
 		HeloCheckers: []CheckerFunc{
-			func(tr *Transaction, name string) error {
+			func(tr *Transaction) error {
+				name := tr.HeloName
 				addrs, err := tr.Resolver().LookupMX(context.Background(), name)
 				if err != nil {
 					return err

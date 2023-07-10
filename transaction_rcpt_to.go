@@ -20,14 +20,16 @@ func (t *Transaction) handleRCPT(cmd command) {
 		t.reply(502, "Malformed e-mail address")
 		return
 	}
+	t.LogDebug("Checking recipient %s...", addr)
 	for k := range t.server.RecipientCheckers {
-		err = t.server.RecipientCheckers[k](t, addr.Address)
+		err = t.server.RecipientCheckers[k](t, addr)
 		if err != nil {
 			t.error(err)
 			return
 		}
 	}
 	t.RcptTo = append(t.RcptTo, *addr)
+	t.LogInfo("Recipient %s will be %v one in transaction", addr, len(t.RcptTo))
 	t.reply(250, "It seems i can handle delivery for this recipient, i'll do my best!")
 	return
 }

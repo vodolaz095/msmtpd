@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"net/mail"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -16,7 +17,8 @@ import (
 // CheckerFunc are signature of functions used in checks for client issuing HELO/EHLO, MAIL FROM, RCPT TO commands
 // First argument is current Transaction, 2nd one - is argument of clients commands.
 // Note that we can store counters and Facts in Transaction, in order to extract and reuse it in future.
-type CheckerFunc func(transaction *Transaction, name string) error
+type CheckerFunc func(transaction *Transaction) error
+type CheckerFuncRecipient func(transaction *Transaction, recipient *mail.Address) error
 
 // Server defines the parameters for running the SMTP server
 type Server struct {
@@ -47,7 +49,7 @@ type Server struct {
 	// Checks are called synchronously, in usual order
 
 	// ConnectionCheckers are called when TCP connection is started
-	ConnectionCheckers []func(transaction *Transaction) error
+	ConnectionCheckers []CheckerFunc
 	// HeloCheckers are called after client send HELO/EHLO commands,
 	// 1st argument is Transaction, 2nd one - HELO/EHLO payload
 	HeloCheckers []CheckerFunc
@@ -56,16 +58,16 @@ type Server struct {
 	SenderCheckers []CheckerFunc
 	// RecipientCheckers are called when client issues RCPT TO command,
 	// 1st argument is Transaction, 2nd one - RCPT TO payload
-	RecipientCheckers []CheckerFunc
+	RecipientCheckers []CheckerFuncRecipient
 
 	// Authenticator, while beign not nill, enables PLAIN/LOGIN authentication,
 	// only available after STARTTLS. Variable can be left empty for no authentication support.
 	Authenticator func(transaction *Transaction, username, password string) error
 
-	// Handlers are functions to process message body after DATA command.
+	// DataHandlers are functions to process message body after DATA command.
 	// Can be left empty for a NOOP server.
 	// If an error is returned, it will be reported in the SMTP session.
-	Handlers []func(transaction *Transaction) error
+	DataHandlers []CheckerFunc
 
 	// EnableXCLIENT enables XClient command support (disabled by default, since it is security risk)
 	EnableXCLIENT bool

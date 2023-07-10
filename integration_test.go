@@ -387,7 +387,7 @@ func TestAuthBypass(t *testing.T) {
 }
 
 func TestConnectionCheck(t *testing.T) {
-	cc := make([]func(tr *Transaction) error, 0)
+	cc := make([]CheckerFunc, 0)
 	cc = append(cc, func(tr *Transaction) error {
 		return ErrorSMTP{Code: 552, Message: "Denied"}
 	})
@@ -401,7 +401,7 @@ func TestConnectionCheck(t *testing.T) {
 }
 
 func TestConnectionCheckSimpleError(t *testing.T) {
-	cc := make([]func(tr *Transaction) error, 0)
+	cc := make([]CheckerFunc, 0)
 	cc = append(cc, func(tr *Transaction) error {
 		return errors.New("Denied")
 	})
@@ -417,7 +417,8 @@ func TestConnectionCheckSimpleError(t *testing.T) {
 func TestHELOCheck(t *testing.T) {
 	addr, closer := runserver(t, &Server{
 		HeloCheckers: []CheckerFunc{
-			func(transaction *Transaction, name string) error {
+			func(transaction *Transaction) error {
+				name := transaction.HeloName
 				if name != "foobar.local" {
 					t.Error("Wrong HELO name")
 				}
@@ -437,7 +438,7 @@ func TestHELOCheck(t *testing.T) {
 
 func TestSenderCheck(t *testing.T) {
 	sc := make([]CheckerFunc, 0)
-	sc = append(sc, func(tr *Transaction, name string) error {
+	sc = append(sc, func(tr *Transaction) error {
 		return ErrorSMTP{Code: 552, Message: "Denied"}
 	})
 	addr, closer := runserver(t, &Server{
@@ -454,8 +455,8 @@ func TestSenderCheck(t *testing.T) {
 }
 
 func TestRecipientCheck(t *testing.T) {
-	rc := make([]CheckerFunc, 0)
-	rc = append(rc, func(tr *Transaction, name string) error {
+	rc := make([]CheckerFuncRecipient, 0)
+	rc = append(rc, func(tr *Transaction, name *mail.Address) error {
 		return ErrorSMTP{Code: 552, Message: "Denied"}
 	})
 	addr, closer := runserver(t, &Server{
@@ -507,7 +508,7 @@ func TestMaxMessageSize(t *testing.T) {
 }
 
 func TestHandler(t *testing.T) {
-	handlers := make([]func(tr *Transaction) error, 0)
+	handlers := make([]CheckerFunc, 0)
 	handlers = append(handlers, func(tr *Transaction) error {
 		if tr.MailFrom.Address != "sender@example.org" {
 			t.Errorf("Unknown sender: %v", tr.MailFrom)
@@ -524,7 +525,7 @@ func TestHandler(t *testing.T) {
 		return nil
 	})
 	addr, closer := runserver(t, &Server{
-		Handlers: handlers,
+		DataHandlers: handlers,
 	})
 	defer closer()
 	c, err := smtp.Dial(addr)
@@ -555,12 +556,12 @@ func TestHandler(t *testing.T) {
 }
 
 func TestRejectHandler(t *testing.T) {
-	handlers := make([]func(tr *Transaction) error, 0)
+	handlers := make([]CheckerFunc, 0)
 	handlers = append(handlers, func(tr *Transaction) error {
 		return ErrorSMTP{Code: 550, Message: "Rejected"}
 	})
 	addr, closer := runserver(t, &Server{
-		Handlers: handlers,
+		DataHandlers: handlers,
 	})
 	defer closer()
 	c, err := smtp.Dial(addr)
@@ -692,6 +693,21 @@ func TestRCPTbeforeMAIL(t *testing.T) {
 	}
 }
 
+func TestDATAbeforeMailFrom(t *testing.T) {
+	addr, closer := runserver(t, &Server{})
+	defer closer()
+	c, err := smtp.Dial(addr)
+	if err != nil {
+		t.Errorf("Dial failed: %v", err)
+	}
+	if _, err = c.Data(); err == nil {
+		t.Error("Data accepted despite no sender")
+	}
+	if err = c.Quit(); err != nil {
+		t.Errorf("QUIT failed: %v", err)
+	}
+}
+
 func TestDATAbeforeRCPT(t *testing.T) {
 	addr, closer := runserver(t, &Server{})
 	defer closer()
@@ -711,13 +727,13 @@ func TestDATAbeforeRCPT(t *testing.T) {
 }
 
 func TestInterruptedDATA(t *testing.T) {
-	handlers := make([]func(tr *Transaction) error, 0)
+	handlers := make([]CheckerFunc, 0)
 	handlers = append(handlers, func(tr *Transaction) error {
 		t.Error("Accepted DATA despite disconnection")
 		return nil
 	})
 	addr, closer := runserver(t, &Server{
-		Handlers: handlers,
+		DataHandlers: handlers,
 	})
 	defer closer()
 	c, err := smtp.Dial(addr)
@@ -745,7 +761,7 @@ func TestContext(t *testing.T) {
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 	addr, closer := runserver(t, &Server{
-		ConnectionCheckers: []func(transaction *Transaction) error{
+		ConnectionCheckers: []CheckerFunc{
 			func(transaction *Transaction) error {
 				ctx := transaction.Context()
 				t.Logf("context is extracted!")
@@ -779,7 +795,8 @@ func TestMeta(t *testing.T) {
 	addr, closer := runserver(t, &Server{
 		MaxConnections: 1,
 		HeloCheckers: []CheckerFunc{
-			func(transaction *Transaction, name string) error {
+			func(transaction *Transaction) error {
+				name := transaction.HeloName
 				transaction.SetFact("something", name)
 				transaction.Incr("int64", 1)
 				transaction.Incr("float64", 1.1)
@@ -789,7 +806,7 @@ func TestMeta(t *testing.T) {
 			},
 		},
 		SenderCheckers: []CheckerFunc{
-			func(transaction *Transaction, name string) error {
+			func(transaction *Transaction) error {
 				var found bool
 				_, found = transaction.GetFact("nothing")
 				if found {
@@ -829,8 +846,8 @@ func TestMeta(t *testing.T) {
 				return nil
 			},
 		},
-		RecipientCheckers: []CheckerFunc{
-			func(transaction *Transaction, name string) error {
+		RecipientCheckers: []CheckerFuncRecipient{
+			func(transaction *Transaction, _ *mail.Address) error {
 				var found bool
 				a, found := transaction.GetCounter("int64")
 				if !found {
@@ -956,7 +973,7 @@ func TestLongLine(t *testing.T) {
 
 func TestXCLIENT(t *testing.T) {
 	sc := make([]CheckerFunc, 0)
-	sc = append(sc, func(tr *Transaction, name string) error {
+	sc = append(sc, func(tr *Transaction) error {
 		if tr.HeloName != "new.example.net" {
 			t.Errorf("Didn't override HELO name: %v", tr.HeloName)
 		}
@@ -1016,7 +1033,7 @@ func TestXCLIENT(t *testing.T) {
 func TestEnvelopeReceived(t *testing.T) {
 	addr, closer := runsslserver(t, &Server{
 		Hostname: "foobar.example.net",
-		Handlers: []func(tr *Transaction) error{
+		DataHandlers: []CheckerFunc{
 			func(tr *Transaction) error {
 				tr.AddReceivedLine()
 				if !bytes.HasPrefix(tr.Body, []byte("Received: from localhost ([127.0.0.1]) by foobar.example.net with ESMTP;")) {
@@ -1061,7 +1078,7 @@ func TestEnvelopeReceived(t *testing.T) {
 func TestExtraHeader(t *testing.T) {
 	addr, closer := runsslserver(t, &Server{
 		Hostname: "foobar.example.net",
-		Handlers: []func(tr *Transaction) error{
+		DataHandlers: []CheckerFunc{
 			func(tr *Transaction) error {
 				tr.AddHeader("Something", "interesting")
 				if !bytes.HasPrefix(tr.Body, []byte("Something: interesting")) {
@@ -1106,7 +1123,7 @@ func TestExtraHeader(t *testing.T) {
 func TestTwoExtraHeadersMakeMessageParsable(t *testing.T) {
 	addr, closer := runsslserver(t, &Server{
 		Hostname: "foobar.example.net",
-		Handlers: []func(tr *Transaction) error{
+		DataHandlers: []CheckerFunc{
 			func(tr *Transaction) error {
 				tr.AddHeader("Something1", "interesting 1")
 				tr.AddHeader("Something2", "interesting 2")
@@ -1338,8 +1355,8 @@ func TestErrors(t *testing.T) {
 
 func TestMalformedMAILFROM(t *testing.T) {
 	sc := make([]CheckerFunc, 0)
-	sc = append(sc, func(tr *Transaction, name string) error {
-		if name != "test@example.org" {
+	sc = append(sc, func(tr *Transaction) error {
+		if tr.MailFrom.Address != "test@example.org" {
 			return ErrorSMTP{Code: 502, Message: "Denied"}
 		}
 		return nil
@@ -1366,17 +1383,17 @@ func TestMalformedMAILFROM(t *testing.T) {
 func TestKarma(t *testing.T) {
 	addr, closer := runserver(t, &Server{
 		SenderCheckers: []CheckerFunc{
-			func(transaction *Transaction, name string) error {
+			func(transaction *Transaction) error {
 				if transaction.Karma() != 0 {
 					t.Errorf("wrong initial karma")
 				}
-				if name == "scuba@vodolaz095.ru" {
+				if transaction.MailFrom.Address == "scuba@vodolaz095.ru" {
 					transaction.Love(1000)
 				}
 				return nil
 			},
 		},
-		Handlers: []func(tr *Transaction) error{
+		DataHandlers: []CheckerFunc{
 			func(tr *Transaction) error {
 				if tr.Karma() != 1000 {
 					t.Errorf("not enough karma")

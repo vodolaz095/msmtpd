@@ -23,7 +23,7 @@ func AcceptMailFromAddresses(whitelist []string) msmtpd.CheckerFunc {
 		}
 		goodMailFroms[*parsed] = true
 	}
-	return func(transaction *msmtpd.Transaction, name string) error {
+	return func(transaction *msmtpd.Transaction) error {
 		_, found := goodMailFroms[transaction.MailFrom]
 		if found {
 			transaction.LogDebug("Sender %s is whitelisted", transaction.MailFrom.String())
