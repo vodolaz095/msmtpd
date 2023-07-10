@@ -9,17 +9,17 @@ import (
 func TestLogger(t *testing.T) {
 	buffer := bytes.NewBufferString("")
 	backend := log.New(buffer, "", log.Lshortfile)
-	testLogger := DefaultLogger{
+	testLoggerForThisTest := DefaultLogger{
 		Logger: backend,
-		Level:  DebugLevel,
+		Level:  TraceLevel,
 	}
 	tr := &Transaction{
 		ID: "testTransaction1",
 	}
-	testLogger.Tracef(tr, "Tracef %s", "trace")
-	testLogger.Debugf(tr, "Debugf %s", "debug")
-	testLogger.Infof(tr, "Infof %s", "info")
-	testLogger.Warnf(tr, "Warnf %s", "warn")
-	testLogger.Errorf(tr, "Errorf %s", "error")
+	testLoggerForThisTest.Tracef(tr, "Tracef %s", "trace")
+	testLoggerForThisTest.Debugf(tr, "Debugf %s", "debug")
+	testLoggerForThisTest.Infof(tr, "Infof %s", "info")
+	testLoggerForThisTest.Warnf(tr, "Warnf %s", "warn")
+	testLoggerForThisTest.Errorf(tr, "Errorf %s", "error")
 	t.Logf("Logged: %s", buffer.String())
 }

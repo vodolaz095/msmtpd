@@ -75,14 +75,14 @@ func (d *DefaultLogger) Infof(transaction *Transaction, format string, args ...a
 // Warnf sends WarnLevel message
 func (d *DefaultLogger) Warnf(transaction *Transaction, format string, args ...any) {
 	if d.Level >= WarnLevel {
-		d.Printf("INFO [%s]: %s", transaction.ID, fmt.Sprintf(format, args...))
+		d.Printf("WARN [%s]: %s", transaction.ID, fmt.Sprintf(format, args...))
 	}
 }
 
 // Errorf sends ErrorLevel message
 func (d *DefaultLogger) Errorf(transaction *Transaction, format string, args ...any) {
 	if d.Level >= ErrorLevel {
-		d.Printf("INFO [%s]: %s", transaction.ID, fmt.Sprintf(format, args...))
+		d.Printf("ERROR [%s]: %s", transaction.ID, fmt.Sprintf(format, args...))
 	}
 }
 
