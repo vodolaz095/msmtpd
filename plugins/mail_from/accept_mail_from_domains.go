@@ -1,31 +1,28 @@
 package mail_from
 
 import (
+	"net/mail"
 	"strings"
 
 	"msmtpd"
 )
 
+// AcceptMailFromDomains allows all senders from domain list provided
 func AcceptMailFromDomains(whitelist []string) msmptd.CheckerFunc {
 	goodDomains := make(map[string]bool, 0)
 	for _, raw := range whitelist {
-		goodDomains[raw] = true
+		goodDomains[strings.ToLower(raw)] = true
 	}
-
 	return func(transaction *msmptd.Transaction, name string) error {
-		// check if we already whitelisted this address
-		status, found := transaction.GetFact(MailFromWhileListed)
-		if found {
-			if status == "true" {
-				return nil
-			}
+		addr, err := mail.ParseAddress(name)
+		if err != nil {
+			transaction.LogWarn("%s : while parsing %s as email address", err, name)
+			return msmptd.ErrorSMTP{Code: 502, Message: "Malformed e-mail address"}
 		}
-
-		domain := strings.Split(transaction.MailFrom.Address, "@")[1]
-		_, found = goodDomains[domain]
+		domain := strings.Split(addr.Address, "@")[1]
+		_, found := goodDomains[domain]
 		if found {
-			transaction.LogDebug("Sender's %s domain is whitelisted", transaction.MailFrom.String())
-			transaction.SetFact(MailFromWhileListed, "true")
+			transaction.LogDebug("Sender's %s domain is whitelisted", addr.String())
 			return nil
 		}
 		return msmptd.ErrorSMTP{

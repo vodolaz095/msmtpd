@@ -131,6 +131,9 @@ func (t *Transaction) GetCounter(key string) (val float64, found bool) {
 func (t *Transaction) SetFlag(name string) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
+	if len(t.flags) == 0 {
+		t.flags = make(map[string]bool, 0)
+	}
 	t.flags[name] = true
 }
 
