@@ -3,6 +3,7 @@ package helo
 import (
 	"fmt"
 	"net"
+	"net/netip"
 	"strings"
 
 	"msmtpd"
@@ -17,6 +18,8 @@ type Options struct {
 	TolerateDynamic bool
 	// TolerateRDNSMismatch reverseDNS server name of connecting IP to be different, than HELO provided
 	TolerateRDNSMismatch bool
+	// IgnoreHostnameForLocalAddresses allows to provide wierd hostnames in HELO/EHLO from local ip ranges
+	IgnoreHostnameForLocalAddresses bool
 }
 
 const complain = "I don't like the way you introduce yourself. Goodbye!"
@@ -25,6 +28,22 @@ func CheckHELO(opts Options) msmtpd.CheckerFunc {
 	tlds := strings.Split(topListDomains, "\n")
 	return func(transaction *msmtpd.Transaction) error {
 		var pass bool
+		if opts.IgnoreHostnameForLocalAddresses {
+			addrPort, err := netip.ParseAddrPort(transaction.Addr.String())
+			if err != nil {
+				transaction.LogError(err, "while parsing remote address "+transaction.Addr.String())
+				return msmtpd.ErrorSMTP{
+					Code:    521,
+					Message: complain,
+				}
+			}
+			if addrPort.Addr().IsPrivate() {
+				transaction.LogDebug("Since clients address %s is local, HELO/EHLO %s will work",
+					transaction.Addr.String(), transaction.HeloName,
+				)
+				return nil
+			}
+		}
 		if !opts.TolerateInvalidHostname {
 			fixed := strings.ToUpper(transaction.HeloName)
 			for i := range tlds {
