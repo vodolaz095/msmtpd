@@ -78,4 +78,5 @@ func (t *Transaction) close() {
 	t.writer.Flush()
 	time.Sleep(200 * time.Millisecond)
 	t.conn.Close()
+	t.cancel()
 }

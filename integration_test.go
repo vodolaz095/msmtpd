@@ -10,6 +10,7 @@ import (
 	"net/smtp"
 	"net/textproto"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 )
@@ -740,6 +741,40 @@ func TestInterruptedDATA(t *testing.T) {
 	c.Close()
 }
 
+func TestContext(t *testing.T) {
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	addr, closer := runserver(t, &Server{
+		ConnectionCheckers: []func(transaction *Transaction) error{
+			func(transaction *Transaction) error {
+				ctx := transaction.Context()
+				t.Logf("context is extracted!")
+				go func() {
+					t.Logf("starting background goroutine being terminated with context")
+					<-ctx.Done()
+					wg.Done()
+					t.Logf("context is terminated")
+				}()
+				return nil
+			},
+		},
+	})
+
+	defer closer()
+	cm, err := smtp.Dial(addr)
+	if err != nil {
+		t.Errorf("Dial failed: %v", err)
+	}
+	t.Logf("closing connection, so context should be closed too...")
+	err = cm.Close()
+	if err != nil {
+		t.Error(err)
+	}
+	t.Logf("waiting for context to be closed...")
+	wg.Wait()
+	t.Logf("context is closed")
+}
+
 func TestMeta(t *testing.T) {
 	addr, closer := runserver(t, &Server{
 		MaxConnections: 1,
@@ -749,6 +784,7 @@ func TestMeta(t *testing.T) {
 				transaction.Incr("int64", 1)
 				transaction.Incr("float64", 1.1)
 				transaction.LogWarn("something")
+				transaction.SetFlag("heloCheckerFired")
 				return nil
 			},
 		},
@@ -786,6 +822,10 @@ func TestMeta(t *testing.T) {
 				}
 				transaction.Incr("int64", 1)
 				transaction.Incr("float64", 1.1)
+				if !transaction.IsFlagSet("heloCheckerFired") {
+					t.Errorf("flag heloCheckerFired is not set")
+				}
+				transaction.UnsetFlag("heloCheckerFired")
 				return nil
 			},
 		},
@@ -803,6 +843,9 @@ func TestMeta(t *testing.T) {
 				c, found := transaction.GetFact("something")
 				if !found {
 					t.Errorf("fact `something` is not set!")
+				}
+				if transaction.IsFlagSet("heloCheckerFired") {
+					t.Errorf("flag heloCheckerFired is set")
 				}
 				return ErrorSMTP{
 					Code:    451,

@@ -2,6 +2,7 @@ package msmptd
 
 import (
 	"bufio"
+	"context"
 	"crypto/tls"
 	"fmt"
 	"net"
@@ -57,11 +58,17 @@ type Transaction struct {
 
 	// Parsed stores parsed message body
 	Parsed *mail.Message
-
+	// Logger is logging system inherited from server
+	Logger Logger
 	// facts are map of string data related to transaction
 	facts map[string]string
 	// counters are map of float data related to transaction
 	counters map[string]float64
+	// flags are map of bool data related to transaction
+	flags map[string]bool
+
+	ctx    context.Context
+	cancel context.CancelFunc
 
 	server  *Server
 	conn    net.Conn
@@ -70,6 +77,11 @@ type Transaction struct {
 	scanner *bufio.Scanner
 
 	mu *sync.Mutex
+}
+
+// Context returns transaction context, which is canceled when transaction is closed
+func (t *Transaction) Context() context.Context {
+	return t.ctx
 }
 
 /*
@@ -113,6 +125,32 @@ func (t *Transaction) Incr(key string, delta float64) (newVal float64) {
 func (t *Transaction) GetCounter(key string) (val float64, found bool) {
 	val, found = t.counters[key]
 	return
+}
+
+// SetFlag set flag enabled for transaction
+func (t *Transaction) SetFlag(name string) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	t.flags[name] = true
+}
+
+// UnsetFlag unsets boolean flag from transaction
+func (t *Transaction) UnsetFlag(name string) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	_, found := t.flags[name]
+	if found {
+		delete(t.flags, name)
+	}
+}
+
+// IsFlagSet returns true, if flag is set
+func (t *Transaction) IsFlagSet(name string) bool {
+	val, found := t.flags[name]
+	if found {
+		return val
+	}
+	return false
 }
 
 /*

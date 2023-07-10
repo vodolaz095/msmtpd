@@ -2,6 +2,7 @@ package msmptd
 
 import (
 	"bufio"
+	"context"
 	"crypto/tls"
 	"errors"
 	"fmt"
@@ -96,20 +97,26 @@ func (srv *Server) startTransaction(c net.Conn) (t *Transaction) {
 		panic(err) // its extremely unlikely
 	}
 	mu := sync.Mutex{}
+	ctx, cancel := context.WithCancel(context.Background())
 	t = &Transaction{
 		ID:        id,
 		StartedAt: time.Now(),
 
 		server:     srv,
 		ServerName: srv.Hostname,
+		Logger:     srv.Logger,
 
 		conn:   c,
 		reader: bufio.NewReader(c),
 		writer: bufio.NewWriter(c),
 		Addr:   c.RemoteAddr(),
 
+		ctx:    ctx,
+		cancel: cancel,
+
 		facts:    make(map[string]string, 0),
 		counters: make(map[string]float64, 0),
+		flags:    make(map[string]bool, 0),
 		mu:       &mu,
 	}
 
