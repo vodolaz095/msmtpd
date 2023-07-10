@@ -41,6 +41,7 @@ func SenderIsResolvable(opts SenderIsResolvableOptions) msmptd.CheckerFunc {
 		mxRecords, err := resolver.LookupMX(ctx, domain)
 		if err != nil {
 			transaction.LogWarn("%s : while resolving MX records for domain %s of %s", err, domain, name)
+			mxRecords = nil
 		}
 		if len(mxRecords) > 0 {
 			for _, record := range mxRecords {
