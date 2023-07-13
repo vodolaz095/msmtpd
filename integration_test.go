@@ -519,7 +519,7 @@ func TestHandler(t *testing.T) {
 		if tr.RcptTo[0].Address != "recipient@example.net" {
 			t.Errorf("Unknown recipient: %v", tr.RcptTo[0].Address)
 		}
-		if string(tr.Body) != "This is the email body\n" {
+		if !strings.Contains(string(tr.Body), "This is the email body\n") {
 			t.Errorf("Wrong message body: %v", string(tr.Body))
 		}
 		return nil

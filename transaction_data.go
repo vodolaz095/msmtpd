@@ -32,6 +32,8 @@ func (t *Transaction) handleDATA(cmd command) {
 		// EOF was reached before MaxMessageSize
 		// Accept and deliver message
 		t.Body = data.Bytes()
+		// add received header
+		t.AddReceivedLine()
 		t.LogDebug("Processing clients message having %v bytes in it", data.Len())
 		for k := range t.server.DataHandlers {
 			deliverErr = t.server.DataHandlers[k](t)

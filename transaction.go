@@ -198,17 +198,9 @@ func (t *Transaction) AddHeader(name, value string) {
 // AddReceivedLine prepends a Received header to the Data
 func (t *Transaction) AddReceivedLine() {
 	tlsDetails := ""
-	tlsVersions := map[uint16]string{
-		tls.VersionSSL30: "SSL3.0",
-		tls.VersionTLS10: "TLS1.0",
-		tls.VersionTLS11: "TLS1.1",
-		tls.VersionTLS12: "TLS1.2",
-		tls.VersionTLS13: "TLS1.3",
-	}
-
 	if t.TLS != nil {
 		version := "unknown"
-		if val, ok := tlsVersions[t.TLS.Version]; ok {
+		if val, ok := TlsVersions[t.TLS.Version]; ok {
 			version = val
 		}
 		cipher := tls.CipherSuiteName(t.TLS.CipherSuite)
