@@ -24,7 +24,7 @@ type SenderIsResolvableOptions struct {
 
 const SenderIsNotResolvableComplain = "Seems like i cannot find your sender address mail servers using DNS, please, try again later"
 
-func SenderIsResolvable(opts SenderIsResolvableOptions) msmtpd.CheckerFunc {
+func SenderIsResolvable(opts SenderIsResolvableOptions) msmtpd.SenderChecker {
 	return func(transaction *msmtpd.Transaction) error {
 		possibleMxServers := make([]string, 0)
 		usableMxServers := make([]net.IP, 0)

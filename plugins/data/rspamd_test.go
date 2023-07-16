@@ -36,7 +36,7 @@ This is a test mailing
 `
 	addr, closer := runserver(t, &msmtpd.Server{
 		Logger: &testLogger{},
-		DataHandlers: []msmtpd.CheckerFunc{
+		DataHandlers: []msmtpd.DataHandler{
 			CheckPyRSPAMD(RspamdOpts{
 				Url:      testRspamdUrl,
 				Password: testRspamdPassword,

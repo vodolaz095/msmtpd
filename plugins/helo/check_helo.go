@@ -24,7 +24,7 @@ type Options struct {
 
 const complain = "I don't like the way you introduce yourself. Goodbye!"
 
-func CheckHELO(opts Options) msmtpd.CheckerFunc {
+func CheckHELO(opts Options) msmtpd.HelloChecker {
 	tlds := strings.Split(topListDomains, "\n")
 	return func(transaction *msmtpd.Transaction) error {
 		var pass bool

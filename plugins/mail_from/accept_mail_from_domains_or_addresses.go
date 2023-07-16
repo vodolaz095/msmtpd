@@ -10,7 +10,7 @@ import (
 
 // AcceptMailFromDomainsOrAddresses allows senders either from one of whilelisted domain, or from one of whitelisted addresses.
 // It is more complicated version of AcceptMailFromDomains and AcceptMailFromAddresses.
-func AcceptMailFromDomainsOrAddresses(whitelistedDomains, whitelistedAddresses []string) msmtpd.CheckerFunc {
+func AcceptMailFromDomainsOrAddresses(whitelistedDomains, whitelistedAddresses []string) msmtpd.SenderChecker {
 	var err error
 	var parsed *mail.Address
 	goodMailFroms := make(map[mail.Address]bool, 0)

@@ -36,7 +36,7 @@ func TestCheckHELO_Dynamic(t *testing.T) {
 		},
 	}
 	addr, closer := runserver(t, &msmtpd.Server{
-		ConnectionCheckers: []msmtpd.CheckerFunc{
+		ConnectionCheckers: []msmtpd.ConnectionChecker{
 			func(transaction *msmtpd.Transaction) error {
 				transaction.Addr = &net.TCPAddr{
 					IP:   net.ParseIP("193.41.76.125"),
@@ -45,7 +45,7 @@ func TestCheckHELO_Dynamic(t *testing.T) {
 				return nil
 			},
 		},
-		HeloCheckers: []msmtpd.CheckerFunc{
+		HeloCheckers: []msmtpd.HelloChecker{
 			CheckHELO(Options{
 				TolerateInvalidHostname: false,
 				TolerateBareIP:          false,
@@ -103,7 +103,7 @@ func TestCheckHELO_Default(t *testing.T) {
 		},
 	}
 	addr, closer := runserver(t, &msmtpd.Server{
-		ConnectionCheckers: []msmtpd.CheckerFunc{
+		ConnectionCheckers: []msmtpd.ConnectionChecker{
 			func(transaction *msmtpd.Transaction) error {
 				transaction.Addr = &net.TCPAddr{
 					IP:   net.ParseIP("193.41.76.125"),
@@ -112,7 +112,7 @@ func TestCheckHELO_Default(t *testing.T) {
 				return nil
 			},
 		},
-		HeloCheckers: []msmtpd.CheckerFunc{
+		HeloCheckers: []msmtpd.HelloChecker{
 			CheckHELO(Options{
 				TolerateInvalidHostname: false,
 				TolerateBareIP:          false,
@@ -170,7 +170,7 @@ func TestCheckHELO_IgnoreHostnameForLocalAddresses(t *testing.T) {
 		},
 	}
 	addr, closer := runserver(t, &msmtpd.Server{
-		ConnectionCheckers: []msmtpd.CheckerFunc{
+		ConnectionCheckers: []msmtpd.ConnectionChecker{
 			func(transaction *msmtpd.Transaction) error {
 				transaction.Addr = &net.TCPAddr{
 					IP:   net.ParseIP("192.168.1.2"),
@@ -179,7 +179,7 @@ func TestCheckHELO_IgnoreHostnameForLocalAddresses(t *testing.T) {
 				return nil
 			},
 		},
-		HeloCheckers: []msmtpd.CheckerFunc{
+		HeloCheckers: []msmtpd.HelloChecker{
 			CheckHELO(Options{
 				TolerateInvalidHostname:         false,
 				TolerateBareIP:                  false,

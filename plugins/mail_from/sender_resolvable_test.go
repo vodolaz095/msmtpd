@@ -28,7 +28,7 @@ func TestSenderIsResolvableDefault(t *testing.T) {
 	testCases["somebody@ivory.vodolaz095.ru"] = fmt.Errorf("421 %s", SenderIsNotResolvableComplain)
 
 	addr, closer := runserver(t, &msmtpd.Server{
-		SenderCheckers: []msmtpd.CheckerFunc{
+		SenderCheckers: []msmtpd.SenderChecker{
 			SenderIsResolvable(SenderIsResolvableOptions{}),
 		},
 	})
@@ -79,7 +79,7 @@ func TestSenderIsResolvableFallback(t *testing.T) {
 	testCases["somebody@ivory.vodolaz095.ru"] = fmt.Errorf("421 %s", SenderIsNotResolvableComplain)
 
 	addr, closer := runserver(t, &msmtpd.Server{
-		SenderCheckers: []msmtpd.CheckerFunc{
+		SenderCheckers: []msmtpd.SenderChecker{
 			SenderIsResolvable(SenderIsResolvableOptions{
 				FallbackToAddressRecord: true,
 			}),
@@ -131,7 +131,7 @@ func TestSenderIsResolvableLocal(t *testing.T) {
 	testCases["somebody@ivory.vodolaz095.ru"] = fmt.Errorf("421 %s", SenderIsNotResolvableComplain)
 
 	addr, closer := runserver(t, &msmtpd.Server{
-		SenderCheckers: []msmtpd.CheckerFunc{
+		SenderCheckers: []msmtpd.SenderChecker{
 			SenderIsResolvable(SenderIsResolvableOptions{
 				FallbackToAddressRecord: false,
 				AllowLocalAddresses:     true,
@@ -180,7 +180,7 @@ func TestSenderIsResolvableFallbackAndLocal(t *testing.T) {
 	testCases["somebody@ivory.vodolaz095.ru"] = nil
 
 	addr, closer := runserver(t, &msmtpd.Server{
-		SenderCheckers: []msmtpd.CheckerFunc{
+		SenderCheckers: []msmtpd.SenderChecker{
 			SenderIsResolvable(SenderIsResolvableOptions{
 				FallbackToAddressRecord: true,
 				AllowLocalAddresses:     true,

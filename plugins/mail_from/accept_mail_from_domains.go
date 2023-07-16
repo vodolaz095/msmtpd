@@ -7,7 +7,7 @@ import (
 )
 
 // AcceptMailFromDomains allows all senders from domain list provided
-func AcceptMailFromDomains(whitelist []string) msmtpd.CheckerFunc {
+func AcceptMailFromDomains(whitelist []string) msmtpd.SenderChecker {
 	goodDomains := make(map[string]bool, 0)
 	for _, raw := range whitelist {
 		goodDomains[strings.ToLower(raw)] = true

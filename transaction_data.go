@@ -34,6 +34,7 @@ func (t *Transaction) handleDATA(cmd command) {
 		t.Body = data.Bytes()
 		// add received header
 		t.AddReceivedLine()
+		t.AddHeader("MSMTPD-Transaction-Id", t.ID)
 		t.LogDebug("Processing clients message having %v bytes in it", data.Len())
 		for k := range t.server.DataHandlers {
 			deliverErr = t.server.DataHandlers[k](t)

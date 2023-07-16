@@ -9,7 +9,7 @@ import (
 
 // AcceptMailFromAddresses is filter to accept emails only from predefined whilelist of addresses,
 // it is more strict version of AcceptMailFromDomains which can accept email from every mailbox of domain
-func AcceptMailFromAddresses(whitelist []string) msmtpd.CheckerFunc {
+func AcceptMailFromAddresses(whitelist []string) msmtpd.SenderChecker {
 	var err error
 	var parsed *mail.Address
 	goodMailFroms := make(map[mail.Address]bool, 0)

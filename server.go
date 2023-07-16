@@ -20,6 +20,12 @@ import (
 type CheckerFunc func(transaction *Transaction) error
 type CheckerFuncRecipient func(transaction *Transaction, recipient *mail.Address) error
 
+type ConnectionChecker CheckerFunc
+type HelloChecker CheckerFunc
+type SenderChecker CheckerFunc
+type RecipientChecker func(transaction *Transaction, recipient *mail.Address) error
+type DataHandler CheckerFunc
+
 // AuthenticatorFunc is signature of function used to handle authentication
 type AuthenticatorFunc func(transaction *Transaction, username, password string) error
 
@@ -52,16 +58,16 @@ type Server struct {
 	// Checks are called synchronously, in usual order
 
 	// ConnectionCheckers are called when TCP connection is started
-	ConnectionCheckers []CheckerFunc
+	ConnectionCheckers []ConnectionChecker
 	// HeloCheckers are called after client send HELO/EHLO commands,
 	// 1st argument is Transaction, 2nd one - HELO/EHLO payload
-	HeloCheckers []CheckerFunc
+	HeloCheckers []HelloChecker
 	// SenderCheckers are called when client issues MAIL FROM command,
 	// 1st argument is Transaction, 2nd one - MAIL FROM payload
-	SenderCheckers []CheckerFunc
+	SenderCheckers []SenderChecker
 	// RecipientCheckers are called when client issues RCPT TO command,
 	// 1st argument is Transaction, 2nd one - RCPT TO payload
-	RecipientCheckers []CheckerFuncRecipient
+	RecipientCheckers []RecipientChecker
 
 	// Authenticator, while beign not nill, enables PLAIN/LOGIN authentication,
 	// only available after STARTTLS. Variable can be left empty for no authentication support.
@@ -70,7 +76,7 @@ type Server struct {
 	// DataHandlers are functions to process message body after DATA command.
 	// Can be left empty for a NOOP server.
 	// If an error is returned, it will be reported in the SMTP session.
-	DataHandlers []CheckerFunc
+	DataHandlers []DataHandler
 
 	// EnableXCLIENT enables XClient command support (disabled by default, since it is security risk)
 	EnableXCLIENT bool

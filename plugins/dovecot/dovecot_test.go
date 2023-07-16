@@ -13,11 +13,24 @@ var username, password, rcptTo string
 
 func TestLoadFromEnvironment(t *testing.T) {
 	username = os.Getenv("DOVECOT_USERNAME")
+	if username == "" {
+		t.Errorf("environment variable DOVECOT_USERNAME is not set")
+	}
 	password = os.Getenv("DOVECOT_PASSWORD")
+	if password == "" {
+		t.Errorf("environment variable DOVECOT_PASSWORD is not set")
+	}
 	rcptTo = os.Getenv("DOVECOT_RCPT_TO")
+	if rcptTo == "" {
+		t.Errorf("environment variable DOVECOT_RCPT_TO is not set")
+	}
 }
 
 func TestDovecot_Exists(t *testing.T) {
+	if rcptTo == "" {
+		t.Skipf("skipping, because environment variable DOVECOT_RCPT_TO is not set")
+	}
+
 	dvc := Dovecot{
 		PathToAuthUserDBSocket: DefaultAuthUserSocketPath,
 		PathToAuthClientSocket: DefaultClientSocketPath,
@@ -49,6 +62,13 @@ func TestDovecot_Exists(t *testing.T) {
 }
 
 func TestDovecot_Authenticate(t *testing.T) {
+	if username == "" {
+		t.Skipf("skipping, because environment variable DOVECOT_USERNAME is not set")
+	}
+	if password == "" {
+		t.Skipf("skipping, because environment variable DOVECOT_PASSWORD is not set")
+	}
+
 	dvc := Dovecot{
 		PathToAuthUserDBSocket: DefaultAuthUserSocketPath,
 		PathToAuthClientSocket: DefaultClientSocketPath,
@@ -84,6 +104,9 @@ X-Mailer: swaks v20190914.0 jetmore.org/john/code/swaks/
 This is a test mailing during dovecot unit test
 `
 
+	if rcptTo == "" {
+		t.Skipf("skipping, because environment variable DOVECOT_RCPT_TO is not set")
+	}
 	dvc := Dovecot{
 		PathToAuthUserDBSocket: DefaultAuthUserSocketPath,
 		PathToAuthClientSocket: DefaultClientSocketPath,
@@ -91,7 +114,7 @@ This is a test mailing during dovecot unit test
 		Timeout:                5 * time.Second,
 	}
 	tr := msmtpd.Transaction{
-		ID:        "dovecot_authenticate",
+		ID:        "dovecot_deliver",
 		StartedAt: time.Now(),
 		Body:      []byte(validMessage),
 		MailFrom:  mail.Address{Name: "who cares", Address: rcptTo},
