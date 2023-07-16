@@ -11,19 +11,19 @@ import (
 
 // Authenticate returns true if the password is valid for the user, false
 // otherwise.
-func (a *Auth) Authenticate(tr *msmtpd.Transaction, user, passwd string) error {
+func (d *Dovecot) Authenticate(tr *msmtpd.Transaction, user, passwd string) error {
 	if !isUsernameSafe(user) {
 		tr.LogWarn("user %s is considered unsafe for dovecot usage", user)
 		return permanentError
 	}
 
-	conn, err := a.dial("unix", a.PathToAuthClientSocket)
+	conn, err := d.dial("unix", d.PathToAuthClientSocket)
 	if err != nil {
 		tr.LogError(err, "while dialing address of dovecot's client socket")
 		return temporaryError
 	}
 	defer conn.Close()
-	tr.LogDebug("Dovecot responses seems sane on socket %s", a.PathToAuthClientSocket)
+	tr.LogDebug("Dovecot responses seems sane on socket %s", d.PathToAuthClientSocket)
 
 	// Send our version, and then our PID.
 	err = write(conn, fmt.Sprintf("VERSION\t1\t1\nCPID\t%d\n", os.Getpid()))
@@ -47,7 +47,7 @@ func (a *Auth) Authenticate(tr *msmtpd.Transaction, user, passwd string) error {
 
 	// We only support PLAIN authentication, so construct the request.
 	// Note we set the "secured" option, with the assumption that we got the
-	// password via a secure channel (like TLS).
+	// password via d secure channel (like TLS).
 	// TODO: does dovecot handle utf8 domains well? do we need to encode them
 	// in IDNA first?
 	resp := base64.StdEncoding.EncodeToString(

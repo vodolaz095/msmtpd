@@ -20,33 +20,28 @@ import (
 // to hang forever if something gets stuck.
 const DefaultTimeout = 5 * time.Second
 
-// Auth represents a particular Dovecot auth service to use.
-type Auth struct {
+// Dovecot represents a particular Dovecot auth service to use.
+type Dovecot struct {
+	// PathToAuthUserDBSocket is path for dovecot socket being used in Exists command to check if recipient exists
 	PathToAuthUserDBSocket string
+	// PathToAuthClientSocket is path for dovecot socket being used in Authenticate command to check if sender
+	// provided correct username and password
 	PathToAuthClientSocket string
+
+	// LtmpSocket is LMTP protocol socket for dovecot to accept email for local delivery
+	LtmpSocket string
 
 	// Timeout for connection and I/O operations (applies on each call).
 	// Set to DefaultTimeout by NewAuth.
 	Timeout time.Duration
 }
 
-// NewAuth returns a new connection against Dovecot authentication service. It
-// takes the addresses of userdb and client sockets (usually paths as
-// configured in dovecot).
-func NewAuth(userdb, client string) *Auth {
-	a := &Auth{}
-	a.PathToAuthUserDBSocket = userdb
-	a.PathToAuthClientSocket = client
-	a.Timeout = DefaultTimeout
-	return a
-}
-
-func (a *Auth) dial(network, addr string) (*textproto.Conn, error) {
-	nc, err := net.DialTimeout(network, addr, a.Timeout)
+func (d *Dovecot) dial(network, addr string) (*textproto.Conn, error) {
+	nc, err := net.DialTimeout(network, addr, d.Timeout)
 	if err != nil {
 		return nil, err
 	}
-	err = nc.SetDeadline(time.Now().Add(a.Timeout))
+	err = nc.SetDeadline(time.Now().Add(d.Timeout))
 	if err != nil {
 		return nil, err
 	}

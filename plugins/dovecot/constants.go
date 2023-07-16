@@ -8,8 +8,11 @@ const RecipientOverrideFact = "DovecotRecipientOverrideFact"
 // DefaultAuthUserSocketPath is path to dovecot socket being used for authorization
 const DefaultAuthUserSocketPath = "/var/run/dovecot/auth-userdb"
 
-// DefaultClientSocketPath is path to dovecot socket being used for checking if recepient exists
+// DefaultClientSocketPath is path to dovecot socket being used for checking if recipient exists
 const DefaultClientSocketPath = "/var/run/dovecot/auth-client"
+
+// DefaultLMTPSocketPath is path to dovecot socket which accepts email via LMTP protocol
+const DefaultLMTPSocketPath = "/var/run/dovecot/lmtp"
 
 var temporaryError = msmtpd.ErrorSMTP{
 	Code:    451,

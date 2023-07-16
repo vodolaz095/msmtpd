@@ -9,7 +9,7 @@ import (
 )
 
 // Exists returns true if the user exists, false otherwise.
-func (a *Auth) Exists(tr *msmtpd.Transaction, recipient *mail.Address) error {
+func (d *Dovecot) Exists(tr *msmtpd.Transaction, recipient *mail.Address) error {
 	var user string
 	alias, overrideFound := tr.GetFact(RecipientOverrideFact)
 	if overrideFound {
@@ -25,14 +25,14 @@ func (a *Auth) Exists(tr *msmtpd.Transaction, recipient *mail.Address) error {
 		return permanentError
 	}
 
-	conn, err := a.dial("unix", a.PathToAuthUserDBSocket)
+	conn, err := d.dial("unix", d.PathToAuthUserDBSocket)
 	if err != nil {
 		tr.LogError(err, "while getting dialing socket of dovecot's userdb")
 		return temporaryError
 
 	}
 	defer conn.Close()
-	tr.LogDebug("Dovecot connection established to socket %s", a.PathToAuthUserDBSocket)
+	tr.LogDebug("Dovecot connection established to socket %s", d.PathToAuthUserDBSocket)
 
 	// Dovecot greets us with version and server pid.
 	// VERSION\t<major>\t<minor>
@@ -42,7 +42,7 @@ func (a *Auth) Exists(tr *msmtpd.Transaction, recipient *mail.Address) error {
 		tr.LogError(err, "while receiving dovecot protocol version")
 		return temporaryError
 	}
-	tr.LogDebug("Dovecot responses seems sane on socket %s", a.PathToAuthUserDBSocket)
+	tr.LogDebug("Dovecot responses seems sane on socket %s", d.PathToAuthUserDBSocket)
 	err = expect(conn, "SPID\t")
 	if err != nil {
 		tr.LogError(err, "while receiving dovecot response with SPID")
