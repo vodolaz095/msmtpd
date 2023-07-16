@@ -1,5 +1,7 @@
 package msmtpd
 
+import "fmt"
+
 func (t *Transaction) handle(line string) {
 	t.LogTrace("Command received: %s", line)
 	cmd := parseLine(line)
@@ -64,7 +66,7 @@ func (t *Transaction) handleNOOP(cmd command) {
 }
 
 func (t *Transaction) handleQUIT(cmd command) {
-	t.reply(221, "Farewell, my friend!")
+	t.reply(221, fmt.Sprintf("Farewell, my friend! Transaction %s is finished", t.ID))
 	t.close()
 	return
 }
