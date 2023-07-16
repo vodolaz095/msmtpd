@@ -20,6 +20,9 @@ import (
 type CheckerFunc func(transaction *Transaction) error
 type CheckerFuncRecipient func(transaction *Transaction, recipient *mail.Address) error
 
+// AuthenticatorFunc is signature of function used to handle authentication
+type AuthenticatorFunc func(transaction *Transaction, username, password string) error
+
 // Server defines the parameters for running the SMTP server
 type Server struct {
 	// Hostname is how we name ourselves, default is "localhost.localdomain"
