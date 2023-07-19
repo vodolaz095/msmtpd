@@ -21,7 +21,7 @@ func (d *Dovecot) Deliver(tr *msmtpd.Transaction) (err error) {
 		tr.LogError(err, "while sending LHLO")
 		return temporaryError
 	}
-	err = expect(pr, "250")
+	err = expect(pr, "220")
 	if err != nil {
 		tr.LogError(err, "while getting response to LHLO")
 		return temporaryError
