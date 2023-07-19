@@ -16,6 +16,7 @@ func (d *Dovecot) Deliver(tr *msmtpd.Transaction) (err error) {
 		tr.LogError(err, "while dialing LMTP socket")
 		return temporaryError
 	}
+	tr.LogDebug("Sending LHLO localhost into socket %s", d.LtmpSocket)
 	err = write(pr, "LHLO localhost\r\n")
 	if err != nil {
 		tr.LogError(err, "while sending LHLO")
@@ -73,7 +74,7 @@ func (d *Dovecot) Deliver(tr *msmtpd.Transaction) (err error) {
 		tr.LogError(fmt.Errorf("NO_RECEPIENTS"), "no recipients found - both Transaction.RcptTo and Transaction.Aliases are empty")
 		return permanentError
 	}
-	tr.LogDebug("Sending DATA")
+	tr.LogDebug("Sending DATA...")
 	err = write(pr, "DATA\r\n")
 	if err != nil {
 		tr.LogError(err, "while sending DATA")
@@ -84,6 +85,7 @@ func (d *Dovecot) Deliver(tr *msmtpd.Transaction) (err error) {
 		tr.LogError(err, "while getting answer for DATA")
 		return temporaryError
 	}
+	tr.LogDebug("Streaming message...")
 	n, err := pr.W.Write(tr.Body)
 	if err != nil {
 		tr.LogError(err, "while writing message body")
@@ -100,12 +102,13 @@ func (d *Dovecot) Deliver(tr *msmtpd.Transaction) (err error) {
 		tr.LogError(err, "while getting answer for message uploaded")
 		return temporaryError
 	}
+	tr.LogDebug("Sending quit")
 	err = write(pr, "QUIT")
 	if err != nil {
 		tr.LogError(err, "while closing connection by QUIT")
 		return temporaryError
 	}
-	return expect(pr, "221")
+	return nil
 }
 
 /*
