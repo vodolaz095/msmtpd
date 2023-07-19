@@ -21,11 +21,12 @@ func (d *Dovecot) Deliver(tr *msmtpd.Transaction) (err error) {
 		tr.LogError(err, "while sending LHLO")
 		return temporaryError
 	}
-	err = expect(pr, "220")
+	err = expect(pr, "250")
 	if err != nil {
 		tr.LogError(err, "while getting response to LHLO")
 		return temporaryError
 	}
+	tr.LogDebug("Sending MAIL FROM:<%s>", tr.MailFrom.Address)
 	err = write(pr, fmt.Sprintf("MAIL FROM:<%s>\r\n", tr.MailFrom.Address))
 	if err != nil {
 		tr.LogError(err, "while sending MAIL FROM")
@@ -37,22 +38,42 @@ func (d *Dovecot) Deliver(tr *msmtpd.Transaction) (err error) {
 		return temporaryError
 	}
 	var atLeastOneRecipientFound bool
-	for i := range tr.RcptTo {
-		err = write(pr, fmt.Sprintf("RCPT TO:<%s>\r\n", tr.RcptTo[i].Address))
-		if err != nil {
-			tr.LogError(err, "while sending MAIL FROM")
-			return temporaryError
+	if len(tr.Aliases) == 0 {
+		for i := range tr.RcptTo {
+			tr.LogDebug("Sending RCPT TO:<%s>", tr.RcptTo[i].Address)
+			err = write(pr, fmt.Sprintf("RCPT TO:<%s>\r\n", tr.RcptTo[i].Address))
+			if err != nil {
+				tr.LogError(err, "while sending RCPT TO")
+				return temporaryError
+			}
+			err = expect(pr, "250")
+			if err != nil {
+				tr.LogError(err, "while getting answer for RCPT TO")
+			} else {
+				atLeastOneRecipientFound = true
+			}
 		}
-		err = expect(pr, "250")
-		if err != nil {
-			tr.LogError(err, "while getting answer for MAIL FROM")
-		} else {
-			atLeastOneRecipientFound = true
+	} else {
+		for i := range tr.Aliases {
+			tr.LogDebug("Sending RCPT TO:<%s>", tr.Aliases[i].Address)
+			err = write(pr, fmt.Sprintf("RCPT TO:<%s>\r\n", tr.Aliases[i].Address))
+			if err != nil {
+				tr.LogError(err, "while sending RCPT TO")
+				return temporaryError
+			}
+			err = expect(pr, "250")
+			if err != nil {
+				tr.LogError(err, "while getting answer for RCPT TO")
+			} else {
+				atLeastOneRecipientFound = true
+			}
 		}
 	}
 	if !atLeastOneRecipientFound {
+		tr.LogError(fmt.Errorf("NO_RECEPIENTS"), "no recipients found - both Transaction.RcptTo and Transaction.Aliases are empty")
 		return permanentError
 	}
+	tr.LogDebug("Sending DATA")
 	err = write(pr, "DATA\r\n")
 	if err != nil {
 		tr.LogError(err, "while sending DATA")
@@ -63,11 +84,12 @@ func (d *Dovecot) Deliver(tr *msmtpd.Transaction) (err error) {
 		tr.LogError(err, "while getting answer for MAIL FROM")
 		return temporaryError
 	}
-	_, err = pr.W.Write(tr.Body)
+	n, err := pr.W.Write(tr.Body)
 	if err != nil {
 		tr.LogError(err, "while writing message body")
 		return temporaryError
 	}
+	tr.LogDebug("%v bytes of message is written", n)
 	_, err = pr.W.WriteString("\r\n.\r\n")
 	if err != nil {
 		tr.LogError(err, "while writing ending dot")

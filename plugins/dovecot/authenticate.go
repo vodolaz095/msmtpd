@@ -71,7 +71,7 @@ func (d *Dovecot) Authenticate(tr *msmtpd.Transaction, user, passwd string) erro
 	} else if strings.HasPrefix(resp, "FAIL\t1") {
 		tr.LogInfo("Dovecot authorization failed for %s", user)
 		return msmtpd.ErrorSMTP{
-			Code:    451,
+			Code:    521,
 			Message: "authorization failed",
 		}
 	}

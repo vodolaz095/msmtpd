@@ -66,6 +66,8 @@ type Transaction struct {
 	counters map[string]float64
 	// flags are map of bool data related to transaction
 	flags map[string]bool
+	// Aliases are actual users addresses used by delivery plugins
+	Aliases []mail.Address
 
 	ctx    context.Context
 	cancel context.CancelFunc
