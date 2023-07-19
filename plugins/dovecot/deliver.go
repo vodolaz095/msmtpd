@@ -81,7 +81,7 @@ func (d *Dovecot) Deliver(tr *msmtpd.Transaction) (err error) {
 	}
 	err = expect(pr, "354")
 	if err != nil {
-		tr.LogError(err, "while getting answer for MAIL FROM")
+		tr.LogError(err, "while getting answer for DATA")
 		return temporaryError
 	}
 	n, err := pr.W.Write(tr.Body)
@@ -97,7 +97,7 @@ func (d *Dovecot) Deliver(tr *msmtpd.Transaction) (err error) {
 	}
 	err = expect(pr, "250")
 	if err != nil {
-		tr.LogError(err, "while getting answer for MAIL FROM")
+		tr.LogError(err, "while getting answer for message uploaded")
 		return temporaryError
 	}
 	err = write(pr, "QUIT")
@@ -105,5 +105,33 @@ func (d *Dovecot) Deliver(tr *msmtpd.Transaction) (err error) {
 		tr.LogError(err, "while closing connection by QUIT")
 		return temporaryError
 	}
-	return nil
+	return expect(pr, "221")
 }
+
+/*
+
+S: 220 foo.edu LMTP server ready
+C: LHLO foo.edu
+S: 250-foo.edu
+S: 250-PIPELINING
+S: 250 SIZE
+C: MAIL FROM:<chris@bar.com>
+S: 250 OK
+C: RCPT TO:<pat@foo.edu>
+S: 250 OK
+C: RCPT TO:<jones@foo.edu>
+S: 550 No such user here
+C: RCPT TO:<green@foo.edu>
+S: 250 OK
+C: DATA
+S: 354 Start mail input; end with <CRLF>.<CRLF>
+C: Blah blah blah...
+C: ...etc. etc. etc.
+C: .
+S: 250 OK
+S: 452 <green@foo.edu> is temporarily over quota
+C: QUIT
+S: 221 foo.edu closing connection
+
+
+*/
