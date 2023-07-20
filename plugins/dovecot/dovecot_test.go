@@ -93,7 +93,7 @@ func TestDovecot_Authenticate(t *testing.T) {
 	}
 }
 
-func TestDovecot_Deliver(t *testing.T) {
+func TestDovecot_DeliverRcptTo(t *testing.T) {
 	validMessage := `Date: Sun, 11 Jun 2023 19:49:29 +0300
 To: scuba@vodolaz095.ru
 From: scuba@vodolaz095.ru
@@ -101,7 +101,7 @@ Subject: test Sun, 11 Jun 2023 19:49:29 +0300
 Message-Id: <20230611194929.017435@localhost>
 X-Mailer: swaks v20190914.0 jetmore.org/john/code/swaks/
 
-This is a test mailing during dovecot unit test
+This is a test mailing during dovecot unit test for addresses
 `
 
 	if rcptTo == "" {
@@ -119,6 +119,42 @@ This is a test mailing during dovecot unit test
 		Body:      []byte(validMessage),
 		MailFrom:  mail.Address{Name: "who cares", Address: rcptTo},
 		RcptTo: []mail.Address{
+			{Name: "who cares", Address: rcptTo},
+			{Name: "somebody", Address: "somebody@example.org"},
+		},
+	}
+	err := dvc.Deliver(&tr)
+	if err != nil {
+		t.Errorf("%s : while delivering test message", err)
+	}
+}
+
+func TestDovecot_DeliverAliases(t *testing.T) {
+	validMessage := `Date: Sun, 11 Jun 2023 19:49:29 +0300
+To: scuba@vodolaz095.ru
+From: scuba@vodolaz095.ru
+Subject: test Sun, 11 Jun 2023 19:49:29 +0300
+Message-Id: <20230611194929.017436@localhost>
+X-Mailer: swaks v20190914.0 jetmore.org/john/code/swaks/
+
+This is a test mailing during dovecot unit test for aliases
+`
+
+	if rcptTo == "" {
+		t.Skipf("skipping, because environment variable DOVECOT_RCPT_TO is not set")
+	}
+	dvc := Dovecot{
+		PathToAuthUserDBSocket: DefaultAuthUserSocketPath,
+		PathToAuthClientSocket: DefaultClientSocketPath,
+		LtmpSocket:             DefaultLMTPSocketPath,
+		Timeout:                5 * time.Second,
+	}
+	tr := msmtpd.Transaction{
+		ID:        "dovecot_deliver",
+		StartedAt: time.Now(),
+		Body:      []byte(validMessage),
+		MailFrom:  mail.Address{Name: "who cares", Address: rcptTo},
+		Aliases: []mail.Address{
 			{Name: "who cares", Address: rcptTo},
 			{Name: "somebody", Address: "somebody@example.org"},
 		},

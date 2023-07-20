@@ -59,7 +59,7 @@ func (d *Dovecot) Deliver(tr *msmtpd.Transaction) (err error) {
 			if err != nil {
 				tr.LogError(err, "while getting answer for RCPT TO")
 			} else {
-				tr.LogInfo("Recipient <%s> is accepted!", tr.RcptTo[i].String())
+				tr.LogInfo("Recipient %s is accepted!", tr.RcptTo[i].String())
 				atLeastOneRecipientFound = true
 			}
 		}
@@ -75,7 +75,7 @@ func (d *Dovecot) Deliver(tr *msmtpd.Transaction) (err error) {
 			if err != nil {
 				tr.LogError(err, "while getting answer for RCPT TO")
 			} else {
-				tr.LogInfo("Alias <%s> is accepted!", tr.RcptTo[i].String())
+				tr.LogInfo("Alias %s is accepted!", tr.RcptTo[i].String())
 				atLeastOneRecipientFound = true
 			}
 		}
