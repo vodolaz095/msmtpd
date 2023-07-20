@@ -59,6 +59,7 @@ func (d *Dovecot) Deliver(tr *msmtpd.Transaction) (err error) {
 			if err != nil {
 				tr.LogError(err, "while getting answer for RCPT TO")
 			} else {
+				tr.LogInfo("Recipient <%s> is accepted!", tr.RcptTo[i].String())
 				atLeastOneRecipientFound = true
 			}
 		}
@@ -74,6 +75,7 @@ func (d *Dovecot) Deliver(tr *msmtpd.Transaction) (err error) {
 			if err != nil {
 				tr.LogError(err, "while getting answer for RCPT TO")
 			} else {
+				tr.LogInfo("Alias <%s> is accepted!", tr.RcptTo[i].String())
 				atLeastOneRecipientFound = true
 			}
 		}
@@ -116,7 +118,7 @@ func (d *Dovecot) Deliver(tr *msmtpd.Transaction) (err error) {
 		tr.LogError(err, "while closing connection by QUIT")
 		return temporaryError
 	}
-	tr.LogInfo("Message delivered to dovecot via LTMP %s", d.LtmpSocket)
+	tr.LogInfo("Message delivered to dovecot via LMTP %s", d.LtmpSocket)
 	return nil
 }
 
