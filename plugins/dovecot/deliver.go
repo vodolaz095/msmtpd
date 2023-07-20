@@ -16,17 +16,20 @@ func (d *Dovecot) Deliver(tr *msmtpd.Transaction) (err error) {
 		tr.LogError(err, "while dialing LMTP socket")
 		return temporaryError
 	}
+
 	tr.LogDebug("Sending LHLO localhost into socket %s", d.LtmpSocket)
 	err = write(pr, "LHLO localhost\r\n")
 	if err != nil {
 		tr.LogError(err, "while sending LHLO")
 		return temporaryError
 	}
-	err = expect(pr, "220")
+	code, features, err := pr.ReadResponse(250)
 	if err != nil {
-		tr.LogError(err, "while getting response to LHLO")
+		tr.LogError(err, "while parsing LHLO response")
 		return temporaryError
 	}
+	tr.LogDebug("Response for LHLO: %v %s", code, features)
+
 	tr.LogDebug("Sending MAIL FROM:<%s>", tr.MailFrom.Address)
 	err = write(pr, fmt.Sprintf("MAIL FROM:<%s>\r\n", tr.MailFrom.Address))
 	if err != nil {
@@ -113,28 +116,36 @@ func (d *Dovecot) Deliver(tr *msmtpd.Transaction) (err error) {
 
 /*
 
-S: 220 foo.edu LMTP server ready
-C: LHLO foo.edu
-S: 250-foo.edu
-S: 250-PIPELINING
-S: 250 SIZE
-C: MAIL FROM:<chris@bar.com>
-S: 250 OK
-C: RCPT TO:<pat@foo.edu>
-S: 250 OK
-C: RCPT TO:<jones@foo.edu>
-S: 550 No such user here
-C: RCPT TO:<green@foo.edu>
-S: 250 OK
-C: DATA
-S: 354 Start mail input; end with <CRLF>.<CRLF>
-C: Blah blah blah...
-C: ...etc. etc. etc.
-C: .
-S: 250 OK
-S: 452 <green@foo.edu> is temporarily over quota
-C: QUIT
-S: 221 foo.edu closing connection
-
+[vodolaz095@holod ~]$ swaks --protocol lmtp --lhlo localhost --socket /run/dovecot/lmtp --to=vodolaz095@localhost --from=anatolij@vodolaz095.ru
+=== Trying /run/dovecot/lmtp...
+=== Connected to /run/dovecot/lmtp.
+<-  220 localhost Dovecot ready.
+ -> LHLO localhost
+<-  250-localhost
+<-  250-8BITMIME
+<-  250-CHUNKING
+<-  250-ENHANCEDSTATUSCODES
+<-  250-PIPELINING
+<-  250 STARTTLS
+ -> MAIL FROM:<anatolij@vodolaz095.ru>
+<-  250 2.1.0 OK
+ -> RCPT TO:<vodolaz095@localhost>
+<-  250 2.1.5 OK
+ -> DATA
+<-  354 OK
+ -> Date: Thu, 20 Jul 2023 09:35:00 +0300
+ -> To: vodolaz095@localhost
+ -> From: anatolij@vodolaz095.ru
+ -> Subject: test Thu, 20 Jul 2023 09:35:00 +0300
+ -> Message-Id: <20230720093500.1700966@localhost>
+ -> X-Mailer: swaks v20181104.0 jetmore.org/john/code/swaks/
+ ->
+ -> This is a test mailing
+ ->
+ ->
+ -> .
+<-  250 2.0.0 <vodolaz095@localhost> s8G2G5TVuGRV8xkA0J78UA Saved
+ -> QUIT
+<-  221 2.0.0 Bye
 
 */
