@@ -16,6 +16,11 @@ func (d *Dovecot) Deliver(tr *msmtpd.Transaction) (err error) {
 		tr.LogError(err, "while dialing LMTP socket")
 		return temporaryError
 	}
+	err = expect(pr, "220")
+	if err != nil {
+		tr.LogError(err, "wrong lmtp greeting")
+		return temporaryError
+	}
 
 	tr.LogDebug("Sending LHLO localhost into socket %s", d.LtmpSocket)
 	err = write(pr, "LHLO localhost\r\n")
