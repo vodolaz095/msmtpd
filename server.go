@@ -125,6 +125,7 @@ func (srv *Server) startTransaction(c net.Conn) (t *Transaction) {
 		ctx:    ctx,
 		cancel: cancel,
 
+		Aliases:  nil,
 		facts:    make(map[string]string, 0),
 		counters: make(map[string]float64, 0),
 		flags:    make(map[string]bool, 0),

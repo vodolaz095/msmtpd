@@ -11,6 +11,8 @@ import (
 
 var username, password, rcptTo string
 
+// tested on actual dovecot-2.3.16-3.el8.rpm from Centos 8 stream repos
+
 func TestLoadFromEnvironment(t *testing.T) {
 	username = os.Getenv("DOVECOT_USERNAME")
 	if username == "" {
@@ -114,7 +116,7 @@ This is a test mailing during dovecot unit test for addresses
 		Timeout:                5 * time.Second,
 	}
 	tr := msmtpd.Transaction{
-		ID:        "dovecot_deliver",
+		ID:        "dovecot_deliver_rcpt",
 		StartedAt: time.Now(),
 		Body:      []byte(validMessage),
 		MailFrom:  mail.Address{Name: "who cares", Address: rcptTo},
@@ -150,7 +152,7 @@ This is a test mailing during dovecot unit test for aliases
 		Timeout:                5 * time.Second,
 	}
 	tr := msmtpd.Transaction{
-		ID:        "dovecot_deliver",
+		ID:        "dovecot_deliver_alias",
 		StartedAt: time.Now(),
 		Body:      []byte(validMessage),
 		MailFrom:  mail.Address{Name: "who cares", Address: rcptTo},

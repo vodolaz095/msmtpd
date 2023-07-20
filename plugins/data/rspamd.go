@@ -112,10 +112,10 @@ func CheckPyRSPAMD(opts RspamdOpts) func(transaction *msmtpd.Transaction) error 
 			req.Header.Add("Password", opts.Password)
 		}
 
-		recepients := make([]string, len(transaction.RcptTo))
-		for i := range transaction.RcptTo {
-			recepients[i] = transaction.RcptTo[i].String() // TODO - confirm
+		for i := range transaction.RcptTo { // Defines SMTP recipient (there may be several Rcpt headers)
+			req.Header.Add("Rcpt", transaction.RcptTo[i].String())
 		}
+
 		if transaction.Username != "" {
 			req.Header.Add("User", transaction.Username)
 		}
