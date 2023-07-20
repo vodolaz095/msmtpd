@@ -120,6 +120,7 @@ This is a test mailing during dovecot unit test
 		MailFrom:  mail.Address{Name: "who cares", Address: rcptTo},
 		RcptTo: []mail.Address{
 			{Name: "who cares", Address: rcptTo},
+			{Name: "somebody", Address: "somebody@example.org"},
 		},
 	}
 	err := dvc.Deliver(&tr)

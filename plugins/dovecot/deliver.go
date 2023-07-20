@@ -79,7 +79,7 @@ func (d *Dovecot) Deliver(tr *msmtpd.Transaction) (err error) {
 		}
 	}
 	if !atLeastOneRecipientFound {
-		tr.LogError(fmt.Errorf("NO_RECEPIENTS"), "no recipients found - both Transaction.RcptTo and Transaction.Aliases are empty")
+		tr.LogError(fmt.Errorf("no recipients allowed"), "no recipients found - both Transaction.RcptTo and Transaction.Aliases are empty")
 		return permanentError
 	}
 	tr.LogDebug("Sending DATA...")
@@ -94,13 +94,13 @@ func (d *Dovecot) Deliver(tr *msmtpd.Transaction) (err error) {
 		return temporaryError
 	}
 	tr.LogDebug("Streaming message...")
-	n, err := pr.W.Write(tr.Body)
+	n, err := pr.DotWriter().Write(tr.Body)
 	if err != nil {
 		tr.LogError(err, "while writing message body")
 		return temporaryError
 	}
 	tr.LogDebug("%v bytes of message is written", n)
-	_, err = pr.W.WriteString("\r\n.\r\n")
+	err = pr.DotWriter().Close()
 	if err != nil {
 		tr.LogError(err, "while writing ending dot")
 		return temporaryError
@@ -116,6 +116,7 @@ func (d *Dovecot) Deliver(tr *msmtpd.Transaction) (err error) {
 		tr.LogError(err, "while closing connection by QUIT")
 		return temporaryError
 	}
+	tr.LogInfo("Message delivered to dovecot via LTMP %s", d.LtmpSocket)
 	return nil
 }
 
