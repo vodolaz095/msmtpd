@@ -16,15 +16,15 @@ var username, password, rcptTo string
 func TestLoadFromEnvironment(t *testing.T) {
 	username = os.Getenv("DOVECOT_USERNAME")
 	if username == "" {
-		t.Errorf("environment variable DOVECOT_USERNAME is not set")
+		t.Skipf("environment variable DOVECOT_USERNAME is not set")
 	}
 	password = os.Getenv("DOVECOT_PASSWORD")
 	if password == "" {
-		t.Errorf("environment variable DOVECOT_PASSWORD is not set")
+		t.Skipf("environment variable DOVECOT_PASSWORD is not set")
 	}
 	rcptTo = os.Getenv("DOVECOT_RCPT_TO")
 	if rcptTo == "" {
-		t.Errorf("environment variable DOVECOT_RCPT_TO is not set")
+		t.Skipf("environment variable DOVECOT_RCPT_TO is not set")
 	}
 }
 
@@ -43,14 +43,14 @@ func TestDovecot_Exists(t *testing.T) {
 		ID:        "dovecot_exists",
 		StartedAt: time.Now(),
 	}
-	err := dvc.Exists(&tr, &mail.Address{
+	err := dvc.CheckRecipient(&tr, &mail.Address{
 		Name:    "who cares",
 		Address: rcptTo,
 	})
 	if err != nil {
 		t.Errorf("%s : while checking %s to exists", err, rcptTo)
 	}
-	err = dvc.Exists(&tr, &mail.Address{
+	err = dvc.CheckRecipient(&tr, &mail.Address{
 		Name:    "who cares",
 		Address: "somebody@example.org",
 	})

@@ -11,7 +11,8 @@ const tlsHandshakeFailedHate = 1
 const missingParameterPenalty = 1
 const unknownCommandPenalty = 2
 
-var TlsVersions = map[uint16]string{
+// TLSVersions is used to pretty print TLS protocol version being used
+var TLSVersions = map[uint16]string{
 	tls.VersionSSL30: "SSL3.0",
 	tls.VersionTLS10: "TLS1.0",
 	tls.VersionTLS11: "TLS1.1",

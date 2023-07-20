@@ -16,14 +16,22 @@ import (
 
 // CheckerFunc are signature of functions used in checks for client issuing HELO/EHLO, MAIL FROM, RCPT TO commands
 // First argument is current Transaction, 2nd one - is argument of clients commands.
-// Note that we can store counters and Facts in Transaction, in order to extract and reuse it in future.
+// Note that we can store counters and Facts in Transaction, in order to extract and reuse it in the future.
 type CheckerFunc func(transaction *Transaction) error
-type CheckerFuncRecipient func(transaction *Transaction, recipient *mail.Address) error
 
+// ConnectionChecker are called when tcp connection are established, if they return non-null error, connection is terminated
 type ConnectionChecker CheckerFunc
+
+// HelloChecker is called after client provided HELO/EHLO greeting, if they return non-null error, connection is closed
 type HelloChecker CheckerFunc
+
+// SenderChecker is called after client provided MAIL FROM, if they return non-null error, connection is closed
 type SenderChecker CheckerFunc
+
+// RecipientChecker is called for each RCPT TO client provided, if they return null error, recipient is added to Transaction.RcptTo
 type RecipientChecker func(transaction *Transaction, recipient *mail.Address) error
+
+// DataHandler are called when client provided message body, they can be used to either check message by rspamd and header validator, or even actually deliver message to LMTP or 3rd party SMTP server
 type DataHandler CheckerFunc
 
 // AuthenticatorFunc is signature of function used to handle authentication

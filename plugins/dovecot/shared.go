@@ -1,11 +1,10 @@
 // Package dovecot implements functions to interact with Dovecot's
 // authentication service.
-//
+package dovecot
+
 // https://wiki.dovecot.org/Design/AuthProtocol
 // https://wiki.dovecot.org/Services#auth
 // Code is partially borrowed from https://github.com/albertito/chasquid/tree/master/internal/dovecot
-
-package dovecot
 
 import (
 	"fmt"
@@ -22,7 +21,7 @@ const DefaultTimeout = 5 * time.Second
 
 // Dovecot represents a particular Dovecot auth service to use.
 type Dovecot struct {
-	// PathToAuthUserDBSocket is path for dovecot socket being used in Exists command to check if recipient exists
+	// PathToAuthUserDBSocket is path for dovecot socket being used in CheckRecipient command to check if recipient exists
 	PathToAuthUserDBSocket string
 	// PathToAuthClientSocket is path for dovecot socket being used in Authenticate command to check if sender
 	// provided correct username and password

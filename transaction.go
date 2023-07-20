@@ -202,7 +202,7 @@ func (t *Transaction) AddReceivedLine() {
 	tlsDetails := ""
 	if t.TLS != nil {
 		version := "unknown"
-		if val, ok := TlsVersions[t.TLS.Version]; ok {
+		if val, ok := TLSVersions[t.TLS.Version]; ok {
 			version = val
 		}
 		cipher := tls.CipherSuiteName(t.TLS.CipherSuite)

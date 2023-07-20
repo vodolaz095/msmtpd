@@ -10,6 +10,7 @@ import (
 // https://github.com/emersion/go-smtp/blob/master/lmtp_server_test.go
 // https://www.rfc-editor.org/rfc/rfc2033.html#section-4.2
 
+// Deliver actually delivers message into dovecot server LMTP socket
 func (d *Dovecot) Deliver(tr *msmtpd.Transaction) (err error) {
 	pr, err := d.dial("unix", d.LtmpSocket)
 	if err != nil {

@@ -120,7 +120,7 @@ func CheckPyRSPAMD(opts RspamdOpts) func(transaction *msmtpd.Transaction) error 
 			req.Header.Add("User", transaction.Username)
 		}
 		if transaction.TLS != nil {
-			tlsVer, found := msmtpd.TlsVersions[transaction.TLS.Version]
+			tlsVer, found := msmtpd.TLSVersions[transaction.TLS.Version]
 			if found {
 				req.Header.Add("TLS-Version", tlsVer)
 			}

@@ -8,8 +8,8 @@ import (
 	"msmtpd"
 )
 
-// Exists returns true if the user exists, false otherwise.
-func (d *Dovecot) Exists(tr *msmtpd.Transaction, recipient *mail.Address) error {
+// CheckRecipient returns true if the user exists, false otherwise.
+func (d *Dovecot) CheckRecipient(tr *msmtpd.Transaction, recipient *mail.Address) error {
 	var user string
 	alias, overrideFound := tr.GetFact(RecipientOverrideFact)
 	if overrideFound {
