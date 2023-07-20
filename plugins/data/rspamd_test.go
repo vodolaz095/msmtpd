@@ -9,13 +9,13 @@ import (
 	"msmtpd"
 )
 
-var testRspamdUrl, testRspamdPassword string
+var testRspamdURL, testRspamdPassword string
 
-func TestEnv(t *testing.T) {
+func TestRspamdEnv(t *testing.T) {
 	if os.Getenv("TEST_RSPAMD_URL") == "" {
 		t.Errorf("Environment variable TEST_RSPAMD_URL is not set")
 	} else {
-		testRspamdUrl = os.Getenv("TEST_RSPAMD_URL")
+		testRspamdURL = os.Getenv("TEST_RSPAMD_URL")
 	}
 	if os.Getenv("TEST_RSPAMD_PASSWORD") == "" {
 		t.Errorf("Environment variable TEST_RSPAMD_PASSWORD is not set")
@@ -38,7 +38,7 @@ This is a test mailing
 		Logger: &testLogger{},
 		DataHandlers: []msmtpd.DataHandler{
 			CheckPyRSPAMD(RspamdOpts{
-				Url:      testRspamdUrl,
+				URL:      testRspamdURL,
 				Password: testRspamdPassword,
 			}),
 		},

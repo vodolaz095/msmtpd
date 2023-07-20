@@ -1,4 +1,4 @@
-package mail_from
+package mailfrom
 
 import (
 	"net"
@@ -22,8 +22,10 @@ type SenderIsResolvableOptions struct {
 	AllowLocalAddresses bool
 }
 
+// SenderIsNotResolvableComplain is human readable thing we say to client with imaginary email address
 const SenderIsNotResolvableComplain = "Seems like i cannot find your sender address mail servers using DNS, please, try again later"
 
+// SenderIsResolvable is msmtpd.SenderChecker checker that performs DNS validations to proof we can send answer back to sender's email address
 func SenderIsResolvable(opts SenderIsResolvableOptions) msmtpd.SenderChecker {
 	return func(transaction *msmtpd.Transaction) error {
 		possibleMxServers := make([]string, 0)

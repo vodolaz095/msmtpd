@@ -9,7 +9,7 @@ import (
 	"msmtpd"
 )
 
-var generalError = fmt.Errorf("521 %s", complain)
+var errGeneralComplain = fmt.Errorf("521 %s", complain)
 
 type testCase struct {
 	HELO  string
@@ -20,11 +20,11 @@ func TestCheckHELO_Dynamic(t *testing.T) {
 	cases := []testCase{
 		{
 			HELO:  "Sodom",
-			Error: generalError,
+			Error: errGeneralComplain,
 		},
 		{
 			HELO:  "193.41.76.125",
-			Error: generalError,
+			Error: errGeneralComplain,
 		},
 		{
 			HELO:  "R193-41-76-125.utex-telecom.ru",
@@ -32,7 +32,7 @@ func TestCheckHELO_Dynamic(t *testing.T) {
 		},
 		{
 			HELO:  "mail.example.org",
-			Error: generalError,
+			Error: errGeneralComplain,
 		},
 	}
 	addr, closer := runserver(t, &msmtpd.Server{
@@ -87,19 +87,19 @@ func TestCheckHELO_Default(t *testing.T) {
 	cases := []testCase{
 		{
 			HELO:  "Sodom",
-			Error: generalError,
+			Error: errGeneralComplain,
 		},
 		{
 			HELO:  "193.41.76.125",
-			Error: generalError,
+			Error: errGeneralComplain,
 		},
 		{
 			HELO:  "R193-41-76-125.utex-telecom.ru",
-			Error: generalError,
+			Error: errGeneralComplain,
 		},
 		{
 			HELO:  "mail.example.org",
-			Error: generalError,
+			Error: errGeneralComplain,
 		},
 	}
 	addr, closer := runserver(t, &msmtpd.Server{

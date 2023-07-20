@@ -1,4 +1,4 @@
-package rcpt_to
+package rcptto
 
 import (
 	"fmt"

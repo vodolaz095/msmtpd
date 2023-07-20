@@ -9,6 +9,7 @@ import (
 	"msmtpd"
 )
 
+// Options used to tune how we check HELO/EHLO
 type Options struct {
 	// TolerateInvalidHostname allows HELO/EHLO argument to be invalid hostname
 	TolerateInvalidHostname bool
@@ -24,6 +25,7 @@ type Options struct {
 
 const complain = "I don't like the way you introduce yourself. Goodbye!"
 
+// CheckHELO is standard msmtpd.HelloChecker to check how client introduce itself
 func CheckHELO(opts Options) msmtpd.HelloChecker {
 	tlds := strings.Split(topListDomains, "\n")
 	return func(transaction *msmtpd.Transaction) error {

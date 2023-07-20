@@ -1,5 +1,8 @@
 package data
 
+// Good read
+// https://rspamd.com/doc/architecture/protocol.html
+
 import (
 	"bytes"
 	"crypto/tls"
@@ -20,17 +23,20 @@ func init() {
 	subjectRegex = regexp.MustCompile(`^Subject:.*$`)
 }
 
-// https://rspamd.com/doc/architecture/protocol.html
-
+// RspamdDefaultAddress is HTTP address where funny RSPAMD GUI is listening
 const RspamdDefaultAddress = "http://localhost:11334/"
+
+// RspamdDefaultEndpoint is endpoint being used for checks
 const RspamdDefaultEndpoint = "checkv2"
 
+// RspamdOpts used to configure how we dial RSPAMD
 type RspamdOpts struct {
-	Url        string
+	URL        string
 	Password   string
-	HttpClient *http.Client
+	HTTPClient *http.Client
 }
 
+// RspamdResponse used to parse JSON response of RSPAMD check
 type RspamdResponse struct {
 	IsSkipped     bool         `json:"is_skipped"`
 	Score         float64      `json:"score"`
@@ -38,14 +44,17 @@ type RspamdResponse struct {
 	Action        string       `json:"action"`
 	Urls          []string     `json:"urls"`
 	Emails        []string     `json:"emails"`
-	MessageId     string       `json:"message-id"`
+	MessageID     string       `json:"message-id"`
 	Subject       string       `json:"subject,omitempty"`
 	Milter        RspamdMilter `json:"milter"`
 }
 
+// RspamdMilter is part of RspamdResponse used to manipulate headers
 type RspamdMilter struct {
 	AddHeaders map[string]RspamdAddHeader `json:"add_headers"`
 }
+
+// RspamdAddHeader is part of RspamdMilter in RspamdResponse used to add headers
 type RspamdAddHeader struct {
 	Value string
 	Order string
@@ -71,33 +80,34 @@ const RspamdActionHardReject = "reject"
 
 const rspamdComplain = "Too many letters, i cannot read them all now. Please, resend your message later"
 
+// CheckPyRSPAMD is msmtpd.DataHandler function that calls RSPAMD API to validate message against it
 func CheckPyRSPAMD(opts RspamdOpts) func(transaction *msmtpd.Transaction) error {
-	if opts.Url == "" {
-		opts.Url = RspamdDefaultAddress
+	if opts.URL == "" {
+		opts.URL = RspamdDefaultAddress
 	}
-	if opts.HttpClient == nil {
-		opts.HttpClient = http.DefaultClient
+	if opts.HTTPClient == nil {
+		opts.HTTPClient = http.DefaultClient
 	}
 	var setupError error
-	resp, setupError := opts.HttpClient.Get(fmt.Sprintf("%sping", opts.Url))
+	resp, setupError := opts.HTTPClient.Get(fmt.Sprintf("%sping", opts.URL))
 	if setupError != nil {
-		log.Fatalf("%s : while trying to check rspamd server ping on %sping", setupError, opts.Url)
+		log.Fatalf("%s : while trying to check rspamd server ping on %sping", setupError, opts.URL)
 	}
 	if resp.StatusCode != http.StatusOK {
-		log.Fatalf("wrong status %s while trying to check rspamd server ping on %s", resp.Status, opts.Url)
+		log.Fatalf("wrong status %s while trying to check rspamd server ping on %s", resp.Status, opts.URL)
 	}
 	defer resp.Body.Close()
 	body, setupError := io.ReadAll(resp.Body)
 	if setupError != nil {
-		log.Fatalf("%s : while reading rspamd server ping response from %sping", setupError, opts.Url)
+		log.Fatalf("%s : while reading rspamd server ping response from %sping", setupError, opts.URL)
 	}
 	pong := string(body)
 	if pong != "pong\r\n" {
-		log.Fatalf("wrong response '%s' while reading rspamd server ping response from %sping", pong, opts.Url)
+		log.Fatalf("wrong response '%s' while reading rspamd server ping response from %sping", pong, opts.URL)
 	}
 	return func(transaction *msmtpd.Transaction) error {
 		payload := bytes.NewReader(transaction.Body)
-		req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s%s", opts.Url, RspamdDefaultEndpoint), payload)
+		req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s%s", opts.URL, RspamdDefaultEndpoint), payload)
 		if err != nil {
 			transaction.LogError(err, "error while making HTTP request to RSPAMD")
 			return msmtpd.ErrorSMTP{
@@ -127,7 +137,7 @@ func CheckPyRSPAMD(opts RspamdOpts) func(transaction *msmtpd.Transaction) error 
 			req.Header.Add("TLS-Cipher", tls.CipherSuiteName(transaction.TLS.CipherSuite))
 		}
 		req = req.WithContext(transaction.Context())
-		res, err := opts.HttpClient.Do(req)
+		res, err := opts.HTTPClient.Do(req)
 		if err != nil {
 			transaction.LogError(err, "error while doing HTTP request to RSPAMD")
 			return msmtpd.ErrorSMTP{
@@ -158,7 +168,7 @@ func CheckPyRSPAMD(opts RspamdOpts) func(transaction *msmtpd.Transaction) error 
 			}
 		}
 		transaction.LogInfo("Rspamd check result: message `%s` has score %.2f of %.2f required and action is %s",
-			rr.MessageId, rr.Score, rr.RequiredScore, rr.Action,
+			rr.MessageID, rr.Score, rr.RequiredScore, rr.Action,
 		)
 		switch rr.Action {
 		case RspamdActionNoop:

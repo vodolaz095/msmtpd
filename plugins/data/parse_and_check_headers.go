@@ -42,11 +42,11 @@ func ParseBodyAndCheckHeaders(headersRequired []string) func(transaction *msmtpd
 					Code:    521,
 					Message: complain,
 				}
-			} else {
-				transaction.LogDebug("Header %s is %s", header, val)
 			}
+			transaction.LogDebug("Header %s is %s", header, val)
 		}
 		transaction.Parsed = message
+		transaction.LogInfo("Headers are in place!")
 		return nil
 	}
 }

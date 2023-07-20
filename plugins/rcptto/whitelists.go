@@ -1,4 +1,4 @@
-package rcpt_to
+package rcptto
 
 import (
 	"log"
@@ -8,6 +8,7 @@ import (
 	"msmtpd"
 )
 
+// AcceptMailForDomainsOrAddresses is msmtpd.RecipientChecker function that accepts emails either for anything on domain list, or to predefined list of email addresses
 func AcceptMailForDomainsOrAddresses(whitelistedDomains, whitelistedAddresses []string) msmtpd.RecipientChecker {
 	var err error
 	var parsed *mail.Address
@@ -45,10 +46,12 @@ func AcceptMailForDomainsOrAddresses(whitelistedDomains, whitelistedAddresses []
 	}
 }
 
+// AcceptMailForDomains is msmtpd.RecipientChecker function that accepts emails either for anything on domain list
 func AcceptMailForDomains(whitelist []string) msmtpd.RecipientChecker {
 	return AcceptMailForDomainsOrAddresses(whitelist, nil)
 }
 
+// AcceptMailForAddresses is msmtpd.RecipientChecker function that accepts emails either for anything in list of addresses
 func AcceptMailForAddresses(whitelist []string) msmtpd.RecipientChecker {
 	return AcceptMailForDomainsOrAddresses(nil, whitelist)
 }

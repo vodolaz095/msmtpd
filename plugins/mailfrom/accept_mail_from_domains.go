@@ -1,4 +1,4 @@
-package mail_from
+package mailfrom
 
 import (
 	"strings"
