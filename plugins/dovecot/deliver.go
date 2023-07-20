@@ -88,7 +88,7 @@ func (d *Dovecot) Deliver(tr *msmtpd.Transaction) (err error) {
 		tr.LogError(err, "while sending DATA")
 		return temporaryError
 	}
-	err = expect(pr, "250")
+	err = expect(pr, "354")
 	if err != nil {
 		tr.LogError(err, "while getting answer for DATA")
 		return temporaryError
