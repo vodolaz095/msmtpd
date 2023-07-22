@@ -67,7 +67,7 @@ func CheckHELO(opts Options) msmtpd.HelloChecker {
 		}
 		if !opts.TolerateBareIP {
 			if net.ParseIP(transaction.HeloName) != nil {
-				transaction.LogWarn("HELO/EHLO hostname %s is base ip", transaction.HeloName)
+				transaction.LogWarn("HELO/EHLO hostname %s is bare ip", transaction.HeloName)
 				return msmtpd.ErrorSMTP{
 					Code:    521,
 					Message: complain,
@@ -77,10 +77,14 @@ func CheckHELO(opts Options) msmtpd.HelloChecker {
 		}
 		if !opts.TolerateDynamic {
 			// TODO: implement
-			transaction.LogWarn("HELO/EHLO hostname %s looks dynamic", transaction.HeloName)
-			return msmtpd.ErrorSMTP{
-				Code:    521,
-				Message: complain,
+			if isDynamic(transaction) {
+				transaction.LogWarn("HELO/EHLO hostname %s looks dynamic", transaction.HeloName)
+				return msmtpd.ErrorSMTP{
+					Code:    521,
+					Message: complain,
+				}
+			} else {
+				transaction.LogDebug("HELO/EHLO hostname %s looks static", transaction.HeloName)
 			}
 		}
 		if !opts.TolerateRDNSMismatch {
