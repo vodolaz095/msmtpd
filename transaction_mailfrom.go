@@ -16,14 +16,14 @@ func (t *Transaction) handleMAIL(cmd command) {
 		t.reply(502, "Please introduce yourself first.")
 		return
 	}
-	if t.server.Authenticator != nil && t.Username == "" {
-		t.Hate(missingParameterPenalty)
-		t.reply(530, "Authentication Required.")
-		return
-	}
 	if !t.Encrypted && t.server.ForceTLS {
 		t.Hate(missingParameterPenalty)
 		t.reply(502, "Please turn on TLS by issuing a STARTTLS command.")
+		return
+	}
+	if t.server.Authenticator != nil && t.Username == "" {
+		t.Hate(missingParameterPenalty)
+		t.reply(530, "Authentication Required.")
 		return
 	}
 	if t.MailFrom.Address != "" {

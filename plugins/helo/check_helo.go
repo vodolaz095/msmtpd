@@ -1,7 +1,6 @@
 package helo
 
 import (
-	"fmt"
 	"net"
 	"net/netip"
 	"strings"
@@ -17,7 +16,7 @@ type Options struct {
 	TolerateBareIP bool
 	// TolerateDynamic allows HELO/EHLO argument to include parts of connection IP address
 	TolerateDynamic bool
-	// TolerateRDNSMismatch reverseDNS server name of connecting IP to be different, than HELO provided
+	// TolerateRDNSMismatch allows reverse DNS (PTR) server name of connecting IP to be different, then HELO provided
 	TolerateRDNSMismatch bool
 	// IgnoreHostnameForLocalAddresses allows to provide wierd hostnames in HELO/EHLO from local ip ranges
 	IgnoreHostnameForLocalAddresses bool
@@ -91,18 +90,9 @@ func CheckHELO(opts Options) msmtpd.HelloChecker {
 			pass = false
 			needle := transaction.Addr.(*net.TCPAddr).IP.String()
 			transaction.LogDebug("Resolving PTR for %s...", needle)
-			ptr, err := transaction.Resolver().LookupAddr(transaction.Context(), needle)
-			if err != nil {
-				transaction.LogError(err, fmt.Sprintf("temporary error in PTR resolution for %s",
-					transaction.Addr.String()))
-				return msmtpd.ErrorSMTP{
-					Code:    421,
-					Message: "I cannot validate your HELO/EHLO right now, please, try again later!",
-				}
-			}
-			for i := range ptr {
-				transaction.LogDebug("For %s PTR %s is resolved", needle, ptr[i])
-				if ptr[i] == transaction.HeloName+"." {
+			for i := range transaction.PTRs {
+				transaction.LogDebug("For %s PTR %s is resolved", needle, transaction.PTRs[i])
+				if transaction.PTRs[i] == transaction.HeloName+"." {
 					pass = true
 				}
 			}
@@ -113,7 +103,7 @@ func CheckHELO(opts Options) msmtpd.HelloChecker {
 					Message: complain,
 				}
 			}
-			transaction.LogDebug("HELO/EHLO %s is matching RDNS record", transaction.HeloName)
+			transaction.LogInfo("HELO/EHLO %s is matching RDNS record", transaction.HeloName)
 		}
 		return nil
 	}

@@ -507,9 +507,15 @@ func TestMaxMessageSize(t *testing.T) {
 	}
 }
 
-func TestHandler(t *testing.T) {
+func TestDataHandler(t *testing.T) {
 	handlers := make([]DataHandler, 0)
 	handlers = append(handlers, func(tr *Transaction) error {
+		if len(tr.PTRs) != 1 {
+			t.Errorf("wrong length of PTR records for localhost - %v", len(tr.PTRs))
+		}
+		if tr.PTRs[0] != "localhost" {
+			t.Errorf("wrong PTR record for localhost - %v", tr.PTRs)
+		}
 		if tr.MailFrom.Address != "sender@example.org" {
 			t.Errorf("Unknown sender: %v", tr.MailFrom)
 		}

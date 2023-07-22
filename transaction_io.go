@@ -42,15 +42,6 @@ func (t *Transaction) reset() {
 }
 
 func (t *Transaction) welcome() {
-	var err error
-	for k := range t.server.ConnectionCheckers {
-		err = t.server.ConnectionCheckers[k](t)
-		if err != nil {
-			t.error(err)
-			t.close()
-			break
-		}
-	}
 	t.reply(220, t.server.WelcomeMessage)
 }
 

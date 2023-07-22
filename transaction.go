@@ -35,6 +35,11 @@ type Transaction struct {
 	// Addr depicts network address of remote client
 	Addr net.Addr
 	// TLS Connection details, if encryption is enabled
+	// Ptrs are DNS pointer record which provides the domain name associated with an IP address.
+	// A DNS PTR record is exactly the opposite of the 'A' record, which provides the IP address associated with a
+	// domain name.
+	PTRs []string
+
 	TLS *tls.ConnectionState
 	// Encrypted means connection is encrypted by TLS
 	Encrypted bool

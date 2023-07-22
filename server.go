@@ -61,6 +61,11 @@ type Server struct {
 	// Resolver is net.Resolver used by server and plugins to resolve remote resources against DNS servers
 	Resolver *net.Resolver
 
+	// SkipResolvingPTR disables resolving reverse/point DNS records of connecting IP address,
+	// it can be usefull in various DNS checks, but it reduces perfomance due to quite
+	// expensive and slow DNS calls. By default resolving PTR records is enabled
+	SkipResolvingPTR bool
+
 	// Enable various checks during the SMTP session.
 	// Can be left empty for no restrictions.
 	// If an error is returned, it will be reported in the SMTP session.
@@ -116,12 +121,15 @@ type Server struct {
 // client interactions via (E)SMTP protocol.
 func (srv *Server) startTransaction(c net.Conn) (t *Transaction) {
 	var err error
+	var ptrs []string
 	id, err := getRandomID()
 	if err != nil {
 		panic(err) // its extremely unlikely
 	}
 	mu := sync.Mutex{}
 	ctx, cancel := context.WithCancel(context.Background())
+	remoteAddr := c.RemoteAddr().(*net.TCPAddr).IP.String()
+
 	t = &Transaction{
 		ID:        id,
 		StartedAt: time.Now(),
@@ -134,7 +142,7 @@ func (srv *Server) startTransaction(c net.Conn) (t *Transaction) {
 		reader: bufio.NewReader(c),
 		writer: bufio.NewWriter(c),
 		Addr:   c.RemoteAddr(),
-
+		PTRs:   make([]string, 0),
 		ctx:    ctx,
 		cancel: cancel,
 
@@ -163,6 +171,27 @@ func (srv *Server) startTransaction(c net.Conn) (t *Transaction) {
 		}
 		state := tlsConn.ConnectionState()
 		t.TLS = &state
+	}
+	if !srv.SkipResolvingPTR {
+		ptrs, err = t.Resolver().LookupAddr(t.Context(), remoteAddr)
+		if err != nil {
+			t.LogError(err, "while resolving remote address PTR record")
+		} else {
+			t.LogDebug("PTR addresses resolved for %s : %v",
+				remoteAddr, ptrs,
+			)
+			t.PTRs = ptrs
+		}
+	} else {
+		t.LogDebug("PTR resolution disabled")
+	}
+	for k := range srv.ConnectionCheckers {
+		err = t.server.ConnectionCheckers[k](t)
+		if err != nil {
+			t.error(err)
+			t.close()
+			break
+		}
 	}
 	t.scanner = bufio.NewScanner(t.reader)
 	return
