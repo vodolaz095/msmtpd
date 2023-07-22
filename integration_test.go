@@ -1446,6 +1446,46 @@ func TestKarma(t *testing.T) {
 	}
 }
 
+func TestCloseHandlers(t *testing.T) {
+	wg := sync.WaitGroup{}
+	wg.Add(2)
+	var closeHandler1Called bool
+	var closeHandler2Called bool
+	addr, closer := runserver(t, &Server{
+		CloseHandlers: []CloseHandler{
+			func(transaction *Transaction) error {
+				t.Logf("Closing transaction %s by 1st handler", transaction.ID)
+				closeHandler1Called = true
+				wg.Done()
+				return nil
+			},
+			func(transaction *Transaction) error {
+				t.Logf("Closing transaction %s by 2nd handler", transaction.ID)
+				closeHandler2Called = true
+				wg.Done()
+				return fmt.Errorf("who cares")
+			},
+		},
+	})
+	defer closer()
+
+	c, err := smtp.Dial(addr)
+	if err != nil {
+		t.Errorf("Dial failed: %v", err)
+	}
+	err = c.Close()
+	if err != nil {
+		t.Errorf("Dial failed: %v", err)
+	}
+	wg.Wait()
+	if !closeHandler1Called {
+		t.Errorf("close handler 1 is not called")
+	}
+	if !closeHandler2Called {
+		t.Errorf("close handler 2 is not called")
+	}
+}
+
 func TestProxyNotEnabled(t *testing.T) {
 	addr, closer := runserver(t, &Server{
 		EnableProxyProtocol: false, // important

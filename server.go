@@ -34,6 +34,8 @@ type RecipientChecker func(transaction *Transaction, recipient *mail.Address) er
 // DataHandler are called when client provided message body, they can be used to either check message by rspamd and header validator, or even actually deliver message to LMTP or 3rd party SMTP server
 type DataHandler CheckerFunc
 
+type CloseHandler CheckerFunc
+
 // AuthenticatorFunc is signature of function used to handle authentication
 type AuthenticatorFunc func(transaction *Transaction, username, password string) error
 
@@ -85,6 +87,9 @@ type Server struct {
 	// Can be left empty for a NOOP server.
 	// If an error is returned, it will be reported in the SMTP session.
 	DataHandlers []DataHandler
+
+	// CloseHandlers are called after connection is closed
+	CloseHandlers []CloseHandler
 
 	// EnableXCLIENT enables XClient command support (disabled by default, since it is security risk)
 	EnableXCLIENT bool
@@ -176,6 +181,19 @@ func (srv *Server) ListenAndServe(addr string) error {
 	return srv.Serve(l)
 }
 
+func (srv *Server) runCloseHandlers(transaction *Transaction) {
+	var closeError error
+	for k := range srv.CloseHandlers {
+		srv.Logger.Debugf(transaction, "Starting close handler %v...", k)
+		closeError = srv.CloseHandlers[k](transaction)
+		if closeError != nil {
+			srv.Logger.Errorf(transaction, "%s : while calling close handler %v", closeError, k)
+		} else {
+			srv.Logger.Debugf(transaction, "closing handler %v is called", k)
+		}
+	}
+}
+
 // Serve starts the SMTP server and listens on the Listener provided
 func (srv *Server) Serve(l net.Listener) error {
 	if srv.inShutdown.Load() {
@@ -204,20 +222,24 @@ func (srv *Server) Serve(l net.Listener) error {
 			}
 			return e
 		}
-		session := srv.startTransaction(conn)
+		transaction := srv.startTransaction(conn)
 		srv.waitgrp.Add(1)
 		go func() {
 			defer srv.waitgrp.Done()
+			defer srv.runCloseHandlers(transaction)
 			if limiter != nil {
 				select {
 				case limiter <- struct{}{}:
-					session.serve()
+					transaction.serve()
+					srv.Logger.Infof(transaction, "transaction serving is finished")
 					<-limiter
 				default:
-					session.reject()
+					transaction.reject()
+					srv.Logger.Infof(transaction, "transaction is rejected, server is busy")
 				}
 			} else {
-				session.serve()
+				transaction.serve()
+				srv.Logger.Infof(transaction, "transaction serving is finished")
 			}
 		}()
 	}
