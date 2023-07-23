@@ -22,18 +22,17 @@ func (kh *Handler) ConnectionChecker(tr *msmtpd.Transaction) (err error) {
 		return
 	}
 	if karma > kh.HateLimit {
-		tr.LogDebug("network address %s has acceptable karma %v", tr.Addr, karma)
+		tr.LogInfo("network address %s has acceptable karma %v for limit %v", tr.Addr, karma, kh.HateLimit)
 		return nil
 	}
-
-	tr.LogDebug("network address %s has bad karma %v", tr.Addr, karma)
+	tr.LogWarn("network address %s has bad karma %v for limit %v", tr.Addr, karma, kh.HateLimit)
 	return msmtpd.ErrorSMTP{
 		Code:    521,
 		Message: "FUCK OFF!", // lol
 	}
 }
 
-func (kh *Handler) CloseChecker(tr *msmtpd.Transaction) (err error) {
+func (kh *Handler) CloseHandler(tr *msmtpd.Transaction) (err error) {
 	if tr.Karma() > kh.HateLimit {
 		tr.LogDebug("preparing to save transaction karma of %v as good", tr.Karma())
 		err = kh.Storage.SaveGood(tr)
@@ -44,7 +43,7 @@ func (kh *Handler) CloseChecker(tr *msmtpd.Transaction) (err error) {
 	if err != nil {
 		tr.LogError(err, fmt.Sprintf("while saving transaction %s karma %v", tr.ID, tr.Karma()))
 	} else {
-		tr.LogInfo("Transaction karma is saved")
+		tr.LogInfo("Transaction karma %v is saved", tr.Karma())
 	}
 	return
 }

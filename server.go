@@ -212,6 +212,7 @@ func (srv *Server) ListenAndServe(addr string) error {
 
 func (srv *Server) runCloseHandlers(transaction *Transaction) {
 	var closeError error
+	srv.Logger.Debugf(transaction, "Starting %v close handlers...", len(srv.CloseHandlers))
 	for k := range srv.CloseHandlers {
 		srv.Logger.Debugf(transaction, "Starting close handler %v...", k)
 		closeError = srv.CloseHandlers[k](transaction)
