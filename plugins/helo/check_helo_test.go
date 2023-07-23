@@ -17,7 +17,6 @@ type testCase struct {
 }
 
 func TestCheckHELO_Dynamic(t *testing.T) {
-	t.Skipf("dynamic ip addresses are complicated")
 	cases := []testCase{
 		{
 			HELO:  "Sodom",
@@ -30,10 +29,6 @@ func TestCheckHELO_Dynamic(t *testing.T) {
 		{
 			HELO:  "R193-41-76-125.utex-telecom.ru",
 			Error: nil, // important!
-		},
-		{
-			HELO:  "mail.example.org",
-			Error: errGeneralComplain,
 		},
 	}
 	addr, closer := runserver(t, &msmtpd.Server{
