@@ -7,6 +7,21 @@ func (t *Transaction) handleRCPT(cmd command) {
 		t.reply(502, "Invalid syntax.")
 		return
 	}
+	if t.HeloName == "" {
+		t.Hate(missingParameterPenalty)
+		t.reply(502, "Please introduce yourself first.")
+		return
+	}
+	if !t.Encrypted && t.server.ForceTLS {
+		t.Hate(missingParameterPenalty)
+		t.reply(502, "Please turn on TLS by issuing a STARTTLS command.")
+		return
+	}
+	if t.server.Authenticator != nil && t.Username == "" {
+		t.Hate(missingParameterPenalty)
+		t.reply(530, "Authentication Required.")
+		return
+	}
 	if t.MailFrom.Address == "" {
 		t.reply(502, "It seems you haven't called MAIL FROM in order to explain who sends your message.")
 		return
