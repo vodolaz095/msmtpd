@@ -61,6 +61,7 @@ func (t *Transaction) handleDATA(cmd command) {
 		}
 		t.LogDebug("DATA client message accepted!")
 		t.reply(250, "Thank you.")
+		t.Love(commandExecutedProperly)
 		t.reset()
 	}
 	if err != nil {
@@ -78,6 +79,7 @@ func (t *Transaction) handleDATA(cmd command) {
 		"Your message is too big, try to say it in less than %d bytes, please!",
 		t.server.MaxMessageSize,
 	))
+	t.Hate(tooBigMessagePenalty)
 	t.reset()
 	return
 }

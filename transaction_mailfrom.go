@@ -54,5 +54,6 @@ func (t *Transaction) handleMAIL(cmd command) {
 	}
 	t.LogInfo("MAIL FROM [%s] is checked!", t.MailFrom.String())
 	t.reply(250, "Ok, it makes sense, go ahead please!")
+	t.Love(commandExecutedProperly)
 	return
 }

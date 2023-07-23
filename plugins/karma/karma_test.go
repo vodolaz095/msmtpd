@@ -41,6 +41,9 @@ func TestKarmaPluginMemoryGood(t *testing.T) {
 	if err != nil {
 		t.Errorf("Dial failed: %v", err)
 	}
+	if err = c.Hello("localhost"); err != nil {
+		t.Errorf("Helo failed: %v", err)
+	}
 	if err = c.Mail("sender@example.org"); err != nil {
 		t.Errorf("MAIL failed: %v", err)
 	}

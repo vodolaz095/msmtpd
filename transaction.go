@@ -179,10 +179,12 @@ func (t *Transaction) Karma() int {
 
 // Love grants good points to karma, promising message to enter Paradise for SMTP transactions, aka dovecot server socket for accepting messages via SMTP
 func (t *Transaction) Love(delta int) (newVal int) {
+	t.LogDebug("Granting %v love for transaction", delta)
 	return int(t.Incr(karmaCounterName, float64(delta)))
 }
 
 // Hate grants bad points to karma, restricting message to enter Paradise for SMTP transactions, aka dovecot server socket for accepting messages via SMTP
 func (t *Transaction) Hate(delta int) (newVal int) {
+	t.LogDebug("Granting %v hate for transaction", delta)
 	return int(t.Incr(karmaCounterName, -float64(delta)))
 }

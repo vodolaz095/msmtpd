@@ -10,6 +10,9 @@ const lineLength = 76
 const tlsHandshakeFailedHate = 1
 const missingParameterPenalty = 1
 const unknownCommandPenalty = 2
+const tooManyRecipientsPenalty = 5
+const tooBigMessagePenalty = 5
+const commandExecutedProperly = 1
 
 // TLSVersions is used to pretty print TLS protocol version being used
 var TLSVersions = map[uint16]string{

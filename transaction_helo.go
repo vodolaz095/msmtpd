@@ -25,6 +25,7 @@ func (t *Transaction) handleHELO(cmd command) {
 	}
 	t.LogInfo("HELO <%s> is checked!", cmd.fields[1])
 	t.reply(250, "Go on, i'm listening...")
+	t.Love(commandExecutedProperly)
 	return
 }
 
@@ -76,5 +77,6 @@ func (t *Transaction) handleEHLO(cmd command) {
 		}
 	}
 	t.reply(250, extensions[len(extensions)-1])
+	t.Love(commandExecutedProperly)
 	return
 }

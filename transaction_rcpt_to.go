@@ -4,6 +4,7 @@ import "strings"
 
 func (t *Transaction) handleRCPT(cmd command) {
 	if len(cmd.params) != 2 || strings.ToUpper(cmd.params[0]) != "TO" {
+		t.Hate(missingParameterPenalty)
 		t.reply(502, "Invalid syntax.")
 		return
 	}
@@ -23,15 +24,18 @@ func (t *Transaction) handleRCPT(cmd command) {
 		return
 	}
 	if t.MailFrom.Address == "" {
+		t.Hate(missingParameterPenalty)
 		t.reply(502, "It seems you haven't called MAIL FROM in order to explain who sends your message.")
 		return
 	}
 	if len(t.RcptTo) >= t.server.MaxRecipients {
+		t.Hate(tooManyRecipientsPenalty)
 		t.reply(452, "Too many recipients")
 		return
 	}
 	addr, err := parseAddress(cmd.params[1])
 	if err != nil {
+		t.Hate(missingParameterPenalty)
 		t.reply(502, "Malformed e-mail address")
 		return
 	}
@@ -46,5 +50,6 @@ func (t *Transaction) handleRCPT(cmd command) {
 	t.RcptTo = append(t.RcptTo, *addr)
 	t.LogInfo("Recipient %s will be %v one in transaction", addr, len(t.RcptTo))
 	t.reply(250, "It seems i can handle delivery for this recipient, i'll do my best!")
+	t.Love(commandExecutedProperly)
 	return
 }
