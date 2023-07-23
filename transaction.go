@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"context"
 	"crypto/tls"
-	"fmt"
 	"net"
 	"net/mail"
 	"sync"
@@ -186,52 +185,4 @@ func (t *Transaction) Love(delta int) (newVal int) {
 // Hate grants bad points to karma, restricting message to enter Paradise for SMTP transactions, aka dovecot server socket for accepting messages via SMTP
 func (t *Transaction) Hate(delta int) (newVal int) {
 	return int(t.Incr(karmaCounterName, -float64(delta)))
-}
-
-/*
- * Header manipulation
- */
-
-// AddHeader adds header, it should be called before AddReceivedLine, since it adds
-// header to the top
-func (t *Transaction) AddHeader(name, value string) {
-	line := wrap([]byte(fmt.Sprintf("%s: %s\r\n", name, value)))
-	t.Body = append(t.Body, line...)
-	// Move the new newly added header line up front
-	copy(t.Body[len(line):], t.Body[0:len(t.Body)-len(line)])
-	copy(t.Body, line)
-}
-
-// AddReceivedLine prepends a Received header to the Data
-func (t *Transaction) AddReceivedLine() {
-	tlsDetails := ""
-	if t.TLS != nil {
-		version := "unknown"
-		if val, ok := TLSVersions[t.TLS.Version]; ok {
-			version = val
-		}
-		cipher := tls.CipherSuiteName(t.TLS.CipherSuite)
-		tlsDetails = fmt.Sprintf(
-			"\r\n\t(version=%s cipher=%s);",
-			version,
-			cipher,
-		)
-	}
-	peerIP := ""
-	if addr, ok := t.Addr.(*net.TCPAddr); ok {
-		peerIP = addr.IP.String()
-	}
-	line := wrap([]byte(fmt.Sprintf(
-		"Received: from %s ([%s]) by %s with %s;%s\r\n\t%s\r\n",
-		t.HeloName,
-		peerIP,
-		t.ServerName,
-		t.Protocol,
-		tlsDetails,
-		time.Now().Format(timeFormatForHeaders),
-	)))
-	t.Body = append(t.Body, line...)
-	// Move the new Received line up front
-	copy(t.Body[len(line):], t.Body[0:len(t.Body)-len(line)])
-	copy(t.Body, line)
 }
