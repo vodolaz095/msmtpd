@@ -12,7 +12,7 @@ const missingParameterPenalty = 1
 const unknownCommandPenalty = 2
 const tooManyRecipientsPenalty = 5
 const tooBigMessagePenalty = 5
-const commandExecutedProperly = 1
+const commandExecutedProperly = 3 // 3 - HELO/EHLO, 3 MAIL FROM, 3 RCPT TO, 3 DATA - good transaction is 12
 
 // TLSVersions is used to pretty print TLS protocol version being used
 var TLSVersions = map[uint16]string{

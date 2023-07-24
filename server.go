@@ -256,20 +256,22 @@ func (srv *Server) Serve(l net.Listener) error {
 		srv.waitgrp.Add(1)
 		go func() {
 			defer srv.waitgrp.Done()
-			defer srv.runCloseHandlers(transaction)
 			if limiter != nil {
 				select {
 				case limiter <- struct{}{}:
 					transaction.serve()
-					srv.Logger.Infof(transaction, "transaction serving is finished")
+					srv.runCloseHandlers(transaction)
+					srv.Logger.Infof(transaction, "transaction serving (limited) is finished")
 					<-limiter
 				default:
 					transaction.reject()
+					srv.runCloseHandlers(transaction)
 					srv.Logger.Infof(transaction, "transaction is rejected, server is busy")
 				}
 			} else {
 				transaction.serve()
-				srv.Logger.Infof(transaction, "transaction serving is finished")
+				srv.runCloseHandlers(transaction)
+				srv.Logger.Infof(transaction, "transaction serving (unlimited) is finished")
 			}
 		}()
 	}

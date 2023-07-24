@@ -98,9 +98,6 @@ func (t *Transaction) Context() context.Context {
 func (t *Transaction) SetFact(name, value string) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	if len(t.facts) == 0 {
-		t.facts = make(map[string]string, 0)
-	}
 	t.facts[name] = value
 }
 
@@ -114,16 +111,15 @@ func (t *Transaction) GetFact(name string) (value string, found bool) {
 func (t *Transaction) Incr(key string, delta float64) (newVal float64) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	if len(t.facts) == 0 {
-		t.counters = make(map[string]float64, 0)
-	}
 	old, found := t.counters[key]
 	if found {
 		newVal = old + delta
 		t.counters[key] = newVal
+		t.LogTrace("Incrementing %s by %v from %v to %v", key, delta, old, newVal)
 		return newVal
 	}
 	t.counters[key] = delta
+	t.LogTrace("Setting counter %s to %v", key, delta)
 	return t.counters[key]
 }
 
@@ -137,9 +133,6 @@ func (t *Transaction) GetCounter(key string) (val float64, found bool) {
 func (t *Transaction) SetFlag(name string) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	if len(t.flags) == 0 {
-		t.flags = make(map[string]bool, 0)
-	}
 	t.flags[name] = true
 }
 
