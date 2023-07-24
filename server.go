@@ -31,9 +31,13 @@ type SenderChecker CheckerFunc
 // RecipientChecker is called for each RCPT TO client provided, if they return null error, recipient is added to Transaction.RcptTo
 type RecipientChecker func(transaction *Transaction, recipient *mail.Address) error
 
-// DataHandler are called when client provided message body, they can be used to either check message by rspamd and header validator, or even actually deliver message to LMTP or 3rd party SMTP server
+// DataChecker is called when client provided message body, and we need to ensure it is sane. It is good place to use RSPAMD and other message body validators here
+type DataChecker CheckerFunc
+
+// DataHandler is called when client provided message body, they can be used to either check message by rspamd and header validator, or even actually deliver message to LMTP or 3rd party SMTP server
 type DataHandler CheckerFunc
 
+// CloseHandler is called when server terminates SMTP session, it can be used for, for example, storing Karma or reporting statistics
 type CloseHandler CheckerFunc
 
 // AuthenticatorFunc is signature of function used to handle authentication
@@ -87,6 +91,10 @@ type Server struct {
 	// Authenticator, while beign not nill, enables PLAIN/LOGIN authentication,
 	// only available after STARTTLS. Variable can be left empty for no authentication support.
 	Authenticator func(transaction *Transaction, username, password string) error
+
+	// DataCheckers are functions called to check message body before passing it
+	// to DataHandlers for delivery.
+	DataCheckers []DataChecker
 
 	// DataHandlers are functions to process message body after DATA command.
 	// Can be left empty for a NOOP server.
