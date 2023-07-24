@@ -54,7 +54,7 @@ func TestKarmaPluginMemoryGood(t *testing.T) {
 	if err != nil {
 		t.Errorf("Data failed: %v", err)
 	}
-	_, err = fmt.Fprintf(wc, "This is the email body")
+	_, err = fmt.Fprintf(wc, MakeTestMessage("sender@example.org", "recipient@example.net"))
 	if err != nil {
 		t.Errorf("Data body failed: %v", err)
 	}
