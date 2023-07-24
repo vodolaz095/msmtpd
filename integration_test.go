@@ -1390,8 +1390,9 @@ func TestKarma(t *testing.T) {
 	addr, closer := runserver(t, &Server{
 		SenderCheckers: []SenderChecker{
 			func(transaction *Transaction) error {
-				if transaction.Karma() != 0 {
-					t.Errorf("wrong initial karma")
+				karma := transaction.Karma()
+				if karma != commandExecutedProperly { // because HELO passed
+					t.Errorf("wrong initial karma %v", karma)
 				}
 				if transaction.MailFrom.Address == "scuba@vodolaz095.ru" {
 					transaction.Love(1000)
@@ -1401,8 +1402,8 @@ func TestKarma(t *testing.T) {
 		},
 		DataHandlers: []DataHandler{
 			func(tr *Transaction) error {
-				if tr.Karma() != 1000 {
-					t.Errorf("not enough karma")
+				if tr.Karma() < 1000 {
+					t.Errorf("not enough karma. Required at least 1000. Actual: %v", tr.Karma())
 				}
 				err := ErrorSMTP{
 					Code:    555,
@@ -1454,10 +1455,16 @@ func TestKarma(t *testing.T) {
 
 func TestCloseHandlers(t *testing.T) {
 	wg := sync.WaitGroup{}
-	wg.Add(2)
 	var closeHandler1Called bool
 	var closeHandler2Called bool
 	addr, closer := runserver(t, &Server{
+		ConnectionCheckers: []ConnectionChecker{
+			func(transaction *Transaction) error {
+				t.Logf("Giving 2 wg to transaction %s", transaction.ID)
+				wg.Add(2)
+				return nil
+			},
+		},
 		CloseHandlers: []CloseHandler{
 			func(transaction *Transaction) error {
 				t.Logf("Closing transaction %s by 1st handler", transaction.ID)

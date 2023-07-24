@@ -69,7 +69,6 @@ func (t *Transaction) close() {
 	t.LogDebug("Closing transaction...")
 	t.writer.Flush()
 	time.Sleep(200 * time.Millisecond)
-	t.server.runCloseHandlers(t)
 	t.conn.Close()
 	t.cancel()
 }
