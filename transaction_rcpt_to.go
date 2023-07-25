@@ -49,6 +49,7 @@ func (t *Transaction) handleRCPT(cmd command) {
 	for k := range t.server.RecipientCheckers {
 		err = t.server.RecipientCheckers[k](t, addr)
 		if err != nil {
+			t.Hate(unknownRecipientPenalty)
 			t.error(err)
 			return
 		}
@@ -56,6 +57,8 @@ func (t *Transaction) handleRCPT(cmd command) {
 	t.RcptTo = append(t.RcptTo, *addr)
 	t.LogInfo("Recipient %s will be %v one in transaction", addr, len(t.RcptTo))
 	t.reply(250, "It seems i can handle delivery for this recipient, i'll do my best!")
-	t.Love(commandExecutedProperly)
+	if len(t.RcptTo) == 1 { // too many recipients should not give too many love for transaction
+		t.Love(commandExecutedProperly)
+	}
 	return
 }

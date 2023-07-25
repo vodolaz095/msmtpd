@@ -6,6 +6,14 @@ import (
 	"msmtpd"
 )
 
+// DefaultLoveRequired are good karma points required for transaction to be considered ok
+const DefaultLoveRequired = 10
+
+// 3 - HELO/EHLO
+// 3 - MAIL FROM
+// 3 - RCP TO
+// 3 - DATA
+
 type Handler struct {
 	HateLimit int
 	Storage   Storage
@@ -14,12 +22,19 @@ type Handler struct {
 func (kh *Handler) ConnectionChecker(tr *msmtpd.Transaction) (err error) {
 	err = kh.Storage.Ping(tr.Context())
 	if err != nil {
-		tr.LogWarn("%s : while pinging karma storage", err)
+		tr.LogError(err, "while pinging karma storage")
+		return msmtpd.ErrorSMTP{
+			Code:    451,
+			Message: "temporary errors, please, try again later",
+		}
 	}
 	karma, err := kh.Storage.Get(tr)
 	if err != nil {
 		tr.LogError(err, fmt.Sprintf("while extracting transaction %s karma from storage", tr.ID))
-		return
+		return msmtpd.ErrorSMTP{
+			Code:    451,
+			Message: "temporary errors, please, try again later",
+		}
 	}
 	if karma > kh.HateLimit {
 		tr.LogInfo("network address %s has acceptable karma %v for limit %v", tr.Addr, karma, kh.HateLimit)
