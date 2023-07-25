@@ -14,16 +14,19 @@ func (t *Transaction) handleDATA(cmd command) {
 	var deliverErr error
 
 	if t.HeloName == "" {
+		t.LogDebug("DATA called without HELO/EHLO!")
 		t.Hate(missingParameterPenalty)
 		t.reply(502, "Please introduce yourself first.")
 		return
 	}
 	if !t.Encrypted && t.server.ForceTLS {
+		t.LogDebug("DATA called without STARTTLS!")
 		t.Hate(missingParameterPenalty)
 		t.reply(502, "Please turn on TLS by issuing a STARTTLS command.")
 		return
 	}
 	if t.server.Authenticator != nil && t.Username == "" {
+		t.LogDebug("DATA called without authentication!")
 		t.Hate(missingParameterPenalty)
 		t.reply(530, "Authentication Required.")
 		return
@@ -71,8 +74,11 @@ func (t *Transaction) handleDATA(cmd command) {
 				return
 			}
 		}
-		t.LogDebug("Body checked by %v DataCheckers. Delivering clients message having %v bytes in it",
-			len(t.server.DataCheckers), data.Len())
+		t.LogInfo("Body (%v bytes) checked by %v DataCheckers successfully",
+			data.Len(), len(t.server.DataCheckers))
+		t.Love(commandExecutedProperly)
+
+		t.LogDebug("Starting delivery by %v DataHandlers...", len(t.server.DataHandlers))
 		for k := range t.server.DataHandlers {
 			deliverErr = t.server.DataHandlers[k](t)
 			if deliverErr != nil {
@@ -80,7 +86,7 @@ func (t *Transaction) handleDATA(cmd command) {
 				return
 			}
 		}
-		t.LogDebug("DATA client message accepted!")
+		t.LogInfo("Message delivered by %v DataHandlers...", len(t.server.DataHandlers))
 		t.reply(250, "Thank you.")
 		t.Love(commandExecutedProperly)
 		t.reset()
