@@ -1,9 +1,7 @@
 package msmtpd
 
 import (
-	"bytes"
 	"crypto/tls"
-	"errors"
 	"fmt"
 	"net"
 	"net/mail"
@@ -12,6 +10,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"msmtpd/internal"
 )
 
 func TestSMTP(t *testing.T) {
@@ -46,7 +46,7 @@ func TestSMTP(t *testing.T) {
 	if err != nil {
 		t.Errorf("Data failed: %v", err)
 	}
-	_, err = fmt.Fprintf(wc, MakeTestMessage("sender@example.org", "recipient@example.net"))
+	_, err = fmt.Fprintf(wc, internal.MakeTestMessage("sender@example.org", "recipient@example.net"))
 	if err != nil {
 		t.Errorf("Data body failed: %v", err)
 	}
@@ -64,7 +64,7 @@ func TestSMTP(t *testing.T) {
 		t.Error("Unexpected support for VRFY")
 	}
 
-	if err = cmd(c.Text, 250, "NOOP"); err != nil {
+	if err = internal.DoCommand(c.Text, 250, "NOOP"); err != nil {
 		t.Errorf("NOOP failed: %v", err)
 	}
 
@@ -98,336 +98,6 @@ func TestListenAndServe(t *testing.T) {
 	}
 }
 
-func TestSTARTTLS(t *testing.T) {
-	addr, closer := RunServerWithTLS(t, &Server{
-		Authenticator: AuthenticatorForTestsThatAlwaysWorks,
-		ForceTLS:      true,
-	})
-	defer closer()
-	c, err := smtp.Dial(addr)
-	if err != nil {
-		t.Errorf("Dial failed: %v", err)
-	}
-	if supported, _ := c.Extension("AUTH"); supported {
-		t.Error("AUTH supported before TLS")
-	}
-	if err = c.Mail("sender@example.org"); err == nil {
-		t.Error("Mail workded before TLS with ForceTLS")
-	}
-	if err = cmd(c.Text, 220, "STARTTLS"); err != nil {
-		t.Errorf("STARTTLS failed: %v", err)
-	}
-	if err = cmd(c.Text, 250, "foobar"); err == nil {
-		t.Error("STARTTLS didn't fail with invalid handshake")
-	}
-	if err = c.StartTLS(&tls.Config{InsecureSkipVerify: true}); err != nil {
-		t.Errorf("STARTTLS failed: %v", err)
-	}
-	if err = c.StartTLS(&tls.Config{InsecureSkipVerify: true}); err == nil {
-		t.Error("STARTTLS worked twice")
-	}
-	if supported, _ := c.Extension("AUTH"); !supported {
-		t.Error("AUTH not supported after TLS")
-	}
-	if _, mechs := c.Extension("AUTH"); !strings.Contains(mechs, "PLAIN") {
-		t.Error("PLAIN AUTH not supported after TLS")
-	}
-	if _, mechs := c.Extension("AUTH"); !strings.Contains(mechs, "LOGIN") {
-		t.Error("LOGIN AUTH not supported after TLS")
-	}
-	if err = c.Auth(smtp.PlainAuth("foo", "foo", "bar", "127.0.0.1")); err != nil {
-		t.Errorf("Auth failed: %v", err)
-	}
-	if err = c.Mail("sender@example.org"); err != nil {
-		t.Errorf("Mail failed: %v", err)
-	}
-	if err = c.Rcpt("recipient@example.net"); err != nil {
-		t.Errorf("Rcpt failed: %v", err)
-	}
-	if err = c.Rcpt("recipient2@example.net"); err != nil {
-		t.Errorf("Rcpt2 failed: %v", err)
-	}
-	wc, err := c.Data()
-	if err != nil {
-		t.Errorf("Data failed: %v", err)
-	}
-	_, err = fmt.Fprintf(wc, MakeTestMessage("sender@example.org", "recipient@example.net"))
-	if err != nil {
-		t.Errorf("Data body failed: %v", err)
-	}
-	err = wc.Close()
-	if err != nil {
-		t.Errorf("Data close failed: %v", err)
-	}
-	if err = c.Quit(); err != nil {
-		t.Errorf("Quit failed: %v", err)
-	}
-}
-
-func TestAuthRejection(t *testing.T) {
-	addr, closer := RunServerWithTLS(t, &Server{
-		Authenticator: AuthenticatorForTestsThatAlwaysFails,
-		ForceTLS:      true,
-	})
-	defer closer()
-	c, err := smtp.Dial(addr)
-	if err != nil {
-		t.Errorf("Dial failed: %v", err)
-	}
-	if err = c.StartTLS(&tls.Config{InsecureSkipVerify: true}); err != nil {
-		t.Errorf("STARTTLS failed: %v", err)
-	}
-	if err = c.Auth(smtp.PlainAuth("foo", "foo", "bar", "127.0.0.1")); err == nil {
-		t.Error("Auth worked despite rejection")
-	}
-}
-
-func TestAuthNotSupported(t *testing.T) {
-	addr, closer := RunServerWithTLS(t, &Server{
-		ForceTLS: true,
-	})
-	defer closer()
-	c, err := smtp.Dial(addr)
-	if err != nil {
-		t.Errorf("Dial failed: %v", err)
-	}
-	if err = c.StartTLS(&tls.Config{InsecureSkipVerify: true}); err != nil {
-		t.Errorf("STARTTLS failed: %v", err)
-	}
-	if err = c.Auth(smtp.PlainAuth("foo", "foo", "bar", "127.0.0.1")); err == nil {
-		t.Error("Auth worked despite no authenticator")
-	}
-}
-
-func TestAuthBypass(t *testing.T) {
-	addr, closer := RunServerWithTLS(t, &Server{
-		Authenticator: AuthenticatorForTestsThatAlwaysFails,
-		ForceTLS:      true,
-	})
-	defer closer()
-	c, err := smtp.Dial(addr)
-	if err != nil {
-		t.Errorf("Dial failed: %v", err)
-	}
-	if err = c.StartTLS(&tls.Config{InsecureSkipVerify: true}); err != nil {
-		t.Errorf("STARTTLS failed: %v", err)
-	}
-	if err = c.Mail("sender@example.org"); err == nil {
-		t.Error("Unexpected MAIL success")
-	}
-}
-
-func TestConnectionCheck(t *testing.T) {
-	cc := make([]ConnectionChecker, 0)
-	cc = append(cc, func(tr *Transaction) error {
-		return ErrorSMTP{Code: 552, Message: "Denied"}
-	})
-	addr, closer := RunServerWithoutTLS(t, &Server{
-		ConnectionCheckers: cc,
-	})
-	defer closer()
-	if _, err := smtp.Dial(addr); err == nil {
-		t.Error("Dial succeeded despite ConnectionCheck")
-	}
-}
-
-func TestConnectionCheckSimpleError(t *testing.T) {
-	cc := make([]ConnectionChecker, 0)
-	cc = append(cc, func(tr *Transaction) error {
-		return errors.New("Denied")
-	})
-	addr, closer := RunServerWithoutTLS(t, &Server{
-		ConnectionCheckers: cc,
-	})
-	defer closer()
-	if _, err := smtp.Dial(addr); err == nil {
-		t.Error("Dial succeeded despite ConnectionCheck")
-	}
-}
-
-func TestHELOCheck(t *testing.T) {
-	addr, closer := RunServerWithoutTLS(t, &Server{
-		HeloCheckers: []HelloChecker{
-			func(transaction *Transaction) error {
-				name := transaction.HeloName
-				if name != "foobar.local" {
-					t.Error("Wrong HELO name")
-				}
-				return ErrorSMTP{Code: 552, Message: "Denied"}
-			},
-		},
-	})
-	defer closer()
-	c, err := smtp.Dial(addr)
-	if err != nil {
-		t.Errorf("Dial failed: %v", err)
-	}
-	if err = c.Hello("foobar.local"); err == nil {
-		t.Error("Unexpected HELO success")
-	}
-}
-
-func TestSenderCheck(t *testing.T) {
-	sc := make([]SenderChecker, 0)
-	sc = append(sc, func(tr *Transaction) error {
-		return ErrorSMTP{Code: 552, Message: "Denied"}
-	})
-	addr, closer := RunServerWithoutTLS(t, &Server{
-		SenderCheckers: sc,
-	})
-	defer closer()
-	c, err := smtp.Dial(addr)
-	if err != nil {
-		t.Errorf("Dial failed: %v", err)
-	}
-	if err = c.Mail("sender@example.org"); err == nil {
-		t.Error("Unexpected MAIL success")
-	}
-}
-
-func TestRecipientCheck(t *testing.T) {
-	rc := make([]RecipientChecker, 0)
-	rc = append(rc, func(tr *Transaction, name *mail.Address) error {
-		return ErrorSMTP{Code: 552, Message: "Denied"}
-	})
-	addr, closer := RunServerWithoutTLS(t, &Server{
-		RecipientCheckers: rc,
-	})
-	defer closer()
-	c, err := smtp.Dial(addr)
-	if err != nil {
-		t.Errorf("Dial failed: %v", err)
-	}
-	if err = c.Mail("sender@example.org"); err != nil {
-		t.Errorf("Mail failed: %v", err)
-	}
-	if err = c.Rcpt("recipient@example.net"); err == nil {
-		t.Error("Unexpected RCPT success")
-	}
-}
-
-func TestMaxMessageSize(t *testing.T) {
-	addr, closer := RunServerWithoutTLS(t, &Server{
-		MaxMessageSize: 5,
-	})
-	defer closer()
-	c, err := smtp.Dial(addr)
-	if err != nil {
-		t.Errorf("Dial failed: %v", err)
-	}
-	if err = c.Mail("sender@example.org"); err != nil {
-		t.Errorf("MAIL failed: %v", err)
-	}
-	if err = c.Rcpt("recipient@example.net"); err != nil {
-		t.Errorf("RCPT failed: %v", err)
-	}
-	wc, err := c.Data()
-	if err != nil {
-		t.Errorf("Data failed: %v", err)
-	}
-	_, err = fmt.Fprintf(wc, MakeTestMessage("sender@example.org", "recipient@example.net"))
-	if err != nil {
-		t.Errorf("Data body failed: %v", err)
-	}
-	err = wc.Close()
-	if err == nil {
-		t.Error("Allowed message larger than 5 bytes to pass.")
-	}
-	if err = c.Quit(); err != nil {
-		t.Errorf("QUIT failed: %v", err)
-	}
-}
-
-func TestDataHandler(t *testing.T) {
-	handlers := make([]DataHandler, 0)
-	handlers = append(handlers, func(tr *Transaction) error {
-		if len(tr.PTRs) != 1 {
-			t.Errorf("wrong length of PTR records for localhost - %v", len(tr.PTRs))
-		}
-		if tr.PTRs[0] != "localhost" {
-			t.Errorf("wrong PTR record for localhost - %v", tr.PTRs)
-		}
-		if tr.MailFrom.Address != "sender@example.org" {
-			t.Errorf("Unknown sender: %v", tr.MailFrom)
-		}
-		if len(tr.RcptTo) != 1 {
-			t.Errorf("Too many recipients: %d", len(tr.RcptTo))
-		}
-		if tr.RcptTo[0].Address != "recipient@example.net" {
-			t.Errorf("Unknown recipient: %v", tr.RcptTo[0].Address)
-		}
-		if !strings.Contains(string(tr.Body), "This is test message send from sender@example.org to recipient@example.net on") {
-			t.Errorf("Wrong message body: %v", string(tr.Body))
-		}
-		return nil
-	})
-	addr, closer := RunServerWithoutTLS(t, &Server{
-		DataHandlers: handlers,
-	})
-	defer closer()
-	c, err := smtp.Dial(addr)
-	if err != nil {
-		t.Errorf("Dial failed: %v", err)
-	}
-	if err = c.Mail("sender@example.org"); err != nil {
-		t.Errorf("MAIL failed: %v", err)
-	}
-	if err = c.Rcpt("recipient@example.net"); err != nil {
-		t.Errorf("RCPT failed: %v", err)
-	}
-	wc, err := c.Data()
-	if err != nil {
-		t.Errorf("Data failed: %v", err)
-	}
-	_, err = fmt.Fprintf(wc, MakeTestMessage("sender@example.org", "recipient@example.net"))
-	if err != nil {
-		t.Errorf("Data body failed: %v", err)
-	}
-	err = wc.Close()
-	if err != nil {
-		t.Errorf("Data close failed: %v", err)
-	}
-	if err = c.Quit(); err != nil {
-		t.Errorf("QUIT failed: %v", err)
-	}
-}
-
-func TestRejectHandler(t *testing.T) {
-	handlers := make([]DataHandler, 0)
-	handlers = append(handlers, func(tr *Transaction) error {
-		return ErrorSMTP{Code: 550, Message: "Rejected"}
-	})
-	addr, closer := RunServerWithoutTLS(t, &Server{
-		DataHandlers: handlers,
-	})
-	defer closer()
-	c, err := smtp.Dial(addr)
-	if err != nil {
-		t.Errorf("Dial failed: %v", err)
-	}
-	if err = c.Mail("sender@example.org"); err != nil {
-		t.Errorf("MAIL failed: %v", err)
-	}
-	if err = c.Rcpt("recipient@example.net"); err != nil {
-		t.Errorf("RCPT failed: %v", err)
-	}
-	wc, err := c.Data()
-	if err != nil {
-		t.Errorf("Data failed: %v", err)
-	}
-	_, err = fmt.Fprintf(wc, MakeTestMessage("sender@example.org", "recipient@example.net"))
-	if err != nil {
-		t.Errorf("Data body failed: %v", err)
-	}
-	err = wc.Close()
-	if err == nil {
-		t.Error("Unexpected accept of data")
-	}
-	if err = c.Quit(); err != nil {
-		t.Errorf("QUIT failed: %v", err)
-	}
-}
-
 func TestMaxConnections(t *testing.T) {
 	addr, closer := RunServerWithoutTLS(t, &Server{
 		MaxConnections: 1,
@@ -456,113 +126,6 @@ func TestNoMaxConnections(t *testing.T) {
 	c1.Close()
 }
 
-func TestMaxRecipients(t *testing.T) {
-	addr, closer := RunServerWithoutTLS(t, &Server{
-		MaxRecipients: 1,
-	})
-	defer closer()
-	c, err := smtp.Dial(addr)
-	if err != nil {
-		t.Errorf("Dial failed: %v", err)
-	}
-	if err = c.Mail("sender@example.org"); err != nil {
-		t.Errorf("MAIL failed: %v", err)
-	}
-	if err = c.Rcpt("recipient@example.net"); err != nil {
-		t.Errorf("RCPT failed: %v", err)
-	}
-	if err = c.Rcpt("recipient@example.net"); err == nil {
-		t.Error("RCPT succeeded despite MaxRecipients = 1")
-	}
-	if err = c.Quit(); err != nil {
-		t.Errorf("QUIT failed: %v", err)
-	}
-}
-
-func TestInvalidHelo(t *testing.T) {
-	addr, closer := RunServerWithoutTLS(t, &Server{})
-	defer closer()
-	c, err := smtp.Dial(addr)
-	if err != nil {
-		t.Errorf("Dial failed: %v", err)
-	}
-	if err = c.Hello(""); err == nil {
-		t.Error("Unexpected HELO success")
-	}
-}
-
-func TestInvalidSender(t *testing.T) {
-	addr, closer := RunServerWithoutTLS(t, &Server{})
-	defer closer()
-	c, err := smtp.Dial(addr)
-	if err != nil {
-		t.Errorf("Dial failed: %v", err)
-	}
-	if err = c.Mail("invalid@@example.org"); err == nil {
-		t.Error("Unexpected MAIL success")
-	}
-}
-
-func TestInvalidRecipient(t *testing.T) {
-	addr, closer := RunServerWithoutTLS(t, &Server{})
-	defer closer()
-	c, err := smtp.Dial(addr)
-	if err != nil {
-		t.Errorf("Dial failed: %v", err)
-	}
-	if err = c.Mail("sender@example.org"); err != nil {
-		t.Errorf("Mail failed: %v", err)
-	}
-	if err = c.Rcpt("invalid@@example.org"); err == nil {
-		t.Error("Unexpected RCPT success")
-	}
-}
-
-func TestRCPTbeforeMAIL(t *testing.T) {
-	addr, closer := RunServerWithoutTLS(t, &Server{})
-	defer closer()
-	c, err := smtp.Dial(addr)
-	if err != nil {
-		t.Errorf("Dial failed: %v", err)
-	}
-	if err = c.Rcpt("recipient@example.net"); err == nil {
-		t.Error("Unexpected RCPT success")
-	}
-}
-
-func TestDATAbeforeMailFrom(t *testing.T) {
-	addr, closer := RunServerWithoutTLS(t, &Server{})
-	defer closer()
-	c, err := smtp.Dial(addr)
-	if err != nil {
-		t.Errorf("Dial failed: %v", err)
-	}
-	if _, err = c.Data(); err == nil {
-		t.Error("Data accepted despite no sender")
-	}
-	if err = c.Quit(); err != nil {
-		t.Errorf("QUIT failed: %v", err)
-	}
-}
-
-func TestDATAbeforeRCPT(t *testing.T) {
-	addr, closer := RunServerWithoutTLS(t, &Server{})
-	defer closer()
-	c, err := smtp.Dial(addr)
-	if err != nil {
-		t.Errorf("Dial failed: %v", err)
-	}
-	if err = c.Mail("sender@example.org"); err != nil {
-		t.Errorf("MAIL failed: %v", err)
-	}
-	if _, err = c.Data(); err == nil {
-		t.Error("Data accepted despite no recipients")
-	}
-	if err = c.Quit(); err != nil {
-		t.Errorf("QUIT failed: %v", err)
-	}
-}
-
 func TestInterruptedDATA(t *testing.T) {
 	handlers := make([]DataHandler, 0)
 	handlers = append(handlers, func(tr *Transaction) error {
@@ -587,7 +150,7 @@ func TestInterruptedDATA(t *testing.T) {
 	if err != nil {
 		t.Errorf("Data failed: %v", err)
 	}
-	_, err = fmt.Fprintf(wc, MakeTestMessage("sender@example.org", "recipient@example.net"))
+	_, err = fmt.Fprintf(wc, internal.MakeTestMessage("sender@example.org", "recipient@example.net"))
 	if err != nil {
 		t.Errorf("Data body failed: %v", err)
 	}
@@ -793,333 +356,8 @@ func TestTLSTimeout(t *testing.T) {
 	}
 }
 
-func TestLongLine(t *testing.T) {
-	addr, closer := RunServerWithoutTLS(t, &Server{})
-	defer closer()
-	c, err := smtp.Dial(addr)
-	if err != nil {
-		t.Errorf("Dial failed: %v", err)
-	}
-	if err = c.Mail(fmt.Sprintf("%s@example.org", strings.Repeat("x", 65*1024))); err == nil {
-		t.Errorf("MAIL failed: %v", err)
-	}
-	if err = c.Quit(); err != nil {
-		t.Errorf("Quit failed: %v", err)
-	}
-}
-
-func TestXCLIENT(t *testing.T) {
-	sc := make([]SenderChecker, 0)
-	sc = append(sc, func(tr *Transaction) error {
-		if tr.HeloName != "new.example.net" {
-			t.Errorf("Didn't override HELO name: %v", tr.HeloName)
-		}
-		if tr.Addr.String() != "42.42.42.42:4242" {
-			t.Errorf("Didn't override IP/Port: %v", tr.Addr)
-		}
-		if tr.Username != "newusername" {
-			t.Errorf("Didn't override username: %v", tr.Username)
-		}
-		if tr.Protocol != SMTP {
-			t.Errorf("Didn't override protocol: %v", tr.Protocol)
-		}
-		return nil
-	})
-	addr, closer := RunServerWithoutTLS(t, &Server{
-		EnableXCLIENT:  true,
-		SenderCheckers: sc,
-	})
-	defer closer()
-	c, err := smtp.Dial(addr)
-	if err != nil {
-		t.Errorf("Dial failed: %v", err)
-	}
-	if supported, _ := c.Extension("XCLIENT"); !supported {
-		t.Error("XCLIENT not supported")
-	}
-	err = cmd(c.Text, 220, "XCLIENT NAME=ignored ADDR=42.42.42.42 PORT=4242 PROTO=SMTP HELO=new.example.net LOGIN=newusername")
-	if err != nil {
-		t.Errorf("XCLIENT failed: %v", err)
-	}
-	if err = c.Mail("sender@example.org"); err != nil {
-		t.Errorf("Mail failed: %v", err)
-	}
-	if err = c.Rcpt("recipient@example.net"); err != nil {
-		t.Errorf("Rcpt failed: %v", err)
-	}
-	if err = c.Rcpt("recipient2@example.net"); err != nil {
-		t.Errorf("Rcpt2 failed: %v", err)
-	}
-	wc, err := c.Data()
-	if err != nil {
-		t.Errorf("Data failed: %v", err)
-	}
-	_, err = fmt.Fprintf(wc, MakeTestMessage("sender@example.org", "recipient@example.net"))
-	if err != nil {
-		t.Errorf("Data body failed: %v", err)
-	}
-	err = wc.Close()
-	if err != nil {
-		t.Errorf("Data close failed: %v", err)
-	}
-	if err = c.Quit(); err != nil {
-		t.Errorf("Quit failed: %v", err)
-	}
-}
-
-func TestEnvelopeReceived(t *testing.T) {
-	addr, closer := RunServerWithTLS(t, &Server{
-		Hostname: "foobar.example.net",
-		DataHandlers: []DataHandler{
-			func(tr *Transaction) error {
-				if !bytes.HasPrefix(tr.Body, []byte("Received: from localhost ([127.0.0.1]) by foobar.example.net with ESMTP;")) {
-					t.Error("Wrong received line.")
-				}
-				return nil
-			},
-		},
-		ForceTLS: true,
-	})
-	defer closer()
-	c, err := smtp.Dial(addr)
-	if err != nil {
-		t.Errorf("Dial failed: %v", err)
-	}
-	if err = c.StartTLS(&tls.Config{InsecureSkipVerify: true}); err != nil {
-		t.Errorf("STARTTLS failed: %v", err)
-	}
-	if err = c.Mail("sender@example.org"); err != nil {
-		t.Errorf("MAIL failed: %v", err)
-	}
-	if err = c.Rcpt("recipient@example.net"); err != nil {
-		t.Errorf("RCPT failed: %v", err)
-	}
-	wc, err := c.Data()
-	if err != nil {
-		t.Errorf("Data failed: %v", err)
-	}
-	_, err = fmt.Fprintf(wc, MakeTestMessage("sender@example.org", "recipient@example.net"))
-	if err != nil {
-		t.Errorf("Data body failed: %v", err)
-	}
-	err = wc.Close()
-	if err != nil {
-		t.Errorf("Data close failed: %v", err)
-	}
-	if err = c.Quit(); err != nil {
-		t.Errorf("QUIT failed: %v", err)
-	}
-}
-
-func TestExtraHeader(t *testing.T) {
-	addr, closer := RunServerWithTLS(t, &Server{
-		Hostname: "foobar.example.net",
-		DataHandlers: []DataHandler{
-			func(tr *Transaction) error {
-				tr.AddHeader("Something", "interesting")
-				if !bytes.HasPrefix(tr.Body, []byte("Something: interesting")) {
-					t.Error("Wrong extra header line.")
-				}
-				return nil
-			},
-		},
-		ForceTLS: true,
-	})
-	defer closer()
-	c, err := smtp.Dial(addr)
-	if err != nil {
-		t.Errorf("Dial failed: %v", err)
-	}
-	if err = c.StartTLS(&tls.Config{InsecureSkipVerify: true}); err != nil {
-		t.Errorf("STARTTLS failed: %v", err)
-	}
-	if err = c.Mail("sender@example.org"); err != nil {
-		t.Errorf("MAIL failed: %v", err)
-	}
-	if err = c.Rcpt("recipient@example.net"); err != nil {
-		t.Errorf("RCPT failed: %v", err)
-	}
-	wc, err := c.Data()
-	if err != nil {
-		t.Errorf("Data failed: %v", err)
-	}
-	_, err = fmt.Fprintf(wc, MakeTestMessage("sender@example.org", "recipient@example.net"))
-	if err != nil {
-		t.Errorf("Data body failed: %v", err)
-	}
-	err = wc.Close()
-	if err != nil {
-		t.Errorf("Data close failed: %v", err)
-	}
-	if err = c.Quit(); err != nil {
-		t.Errorf("QUIT failed: %v", err)
-	}
-}
-
-func TestTwoExtraHeadersMakeMessageParsable(t *testing.T) {
-	addr, closer := RunServerWithTLS(t, &Server{
-		Hostname: "foobar.example.net",
-		DataHandlers: []DataHandler{
-			func(tr *Transaction) error {
-				tr.AddHeader("Something1", "interesting 1")
-				tr.AddHeader("Something2", "interesting 2")
-				tr.AddReceivedLine()
-				if !bytes.HasPrefix(tr.Body, []byte("Received: from localhost ([127.0.0.1]) by foobar.example.net with ESMTP;")) {
-					t.Error("Wrong received line.")
-				}
-				msg, err := mail.ReadMessage(bytes.NewReader(tr.Body))
-				if err != nil {
-					t.Errorf("%s : while parsing email message", err)
-					return err
-				}
-				if msg.Header.Get("Something1") != "interesting 1" {
-					t.Errorf("Header Something is wrong: `%s` instead of `interesting 1`",
-						msg.Header.Get("Something1"))
-				}
-				if msg.Header.Get("Something2") != "interesting 2" {
-					t.Errorf("Header Something is wrong: `%s` instead of `interesting 1`",
-						msg.Header.Get("Something1"))
-				}
-				return nil
-			},
-		},
-		ForceTLS: true,
-	})
-	defer closer()
-	c, err := smtp.Dial(addr)
-	if err != nil {
-		t.Errorf("Dial failed: %v", err)
-	}
-	if err = c.StartTLS(&tls.Config{InsecureSkipVerify: true}); err != nil {
-		t.Errorf("STARTTLS failed: %v", err)
-	}
-	if err = c.Mail("sender@example.org"); err != nil {
-		t.Errorf("MAIL failed: %v", err)
-	}
-	if err = c.Rcpt("recipient@example.net"); err != nil {
-		t.Errorf("RCPT failed: %v", err)
-	}
-	wc, err := c.Data()
-	if err != nil {
-		t.Errorf("Data failed: %v", err)
-	}
-
-	_, err = fmt.Fprintf(wc, MakeTestMessage("sender@example.org", "recipient@example.net"))
-	if err != nil {
-		t.Errorf("Data body failed: %v", err)
-	}
-	err = wc.Close()
-	if err != nil {
-		t.Errorf("Data close failed: %v", err)
-	}
-	if err = c.Quit(); err != nil {
-		t.Errorf("QUIT failed: %v", err)
-	}
-}
-
-func TestHELO(t *testing.T) {
-	addr, closer := RunServerWithoutTLS(t, &Server{})
-	defer closer()
-	c, err := smtp.Dial(addr)
-	if err != nil {
-		t.Errorf("Dial failed: %v", err)
-	}
-	if err = cmd(c.Text, 502, "MAIL FROM:<test@example.org>"); err != nil {
-		t.Errorf("MAIL before HELO didn't fail: %v", err)
-	}
-	if err = cmd(c.Text, 250, "HELO localhost"); err != nil {
-		t.Errorf("HELO failed: %v", err)
-	}
-	if err = cmd(c.Text, 250, "MAIL FROM:<test@example.org>"); err != nil {
-		t.Errorf("MAIL after HELO failed: %v", err)
-	}
-	if err = cmd(c.Text, 250, "HELO localhost"); err != nil {
-		t.Errorf("double HELO failed: %v", err)
-	}
-	if err = c.Quit(); err != nil {
-		t.Errorf("Quit failed: %v", err)
-	}
-}
-
-func TestLOGINAuth(t *testing.T) {
-	addr, closer := RunServerWithTLS(t, &Server{
-		Authenticator: AuthenticatorForTestsThatAlwaysWorks,
-	})
-	defer closer()
-	c, err := smtp.Dial(addr)
-	if err != nil {
-		t.Errorf("Dial failed: %v", err)
-	}
-	if err = c.StartTLS(&tls.Config{InsecureSkipVerify: true}); err != nil {
-		t.Errorf("STARTTLS failed: %v", err)
-	}
-	if err = cmd(c.Text, 334, "AUTH LOGIN"); err != nil {
-		t.Errorf("AUTH didn't work: %v", err)
-	}
-	if err = cmd(c.Text, 502, "foo"); err != nil {
-		t.Errorf("AUTH didn't fail: %v", err)
-	}
-	if err = cmd(c.Text, 334, "AUTH LOGIN"); err != nil {
-		t.Errorf("AUTH didn't work: %v", err)
-	}
-	if err = cmd(c.Text, 334, "Zm9v"); err != nil {
-		t.Errorf("AUTH didn't work: %v", err)
-	}
-	if err = cmd(c.Text, 502, "foo"); err != nil {
-		t.Errorf("AUTH didn't fail: %v", err)
-	}
-	if err = cmd(c.Text, 334, "AUTH LOGIN"); err != nil {
-		t.Errorf("AUTH didn't work: %v", err)
-	}
-	if err = cmd(c.Text, 334, "Zm9v"); err != nil {
-		t.Errorf("AUTH didn't work: %v", err)
-	}
-	if err = cmd(c.Text, 235, "Zm9v"); err != nil {
-		t.Errorf("AUTH didn't work: %v", err)
-	}
-	if err = c.Quit(); err != nil {
-		t.Errorf("Quit failed: %v", err)
-	}
-}
-
-func TestNullSender(t *testing.T) {
-	addr, closer := RunServerWithoutTLS(t, &Server{})
-	defer closer()
-	c, err := smtp.Dial(addr)
-	if err != nil {
-		t.Errorf("Dial failed: %v", err)
-	}
-	if err = cmd(c.Text, 250, "HELO localhost"); err != nil {
-		t.Errorf("HELO failed: %v", err)
-	}
-	if err = cmd(c.Text, 250, "MAIL FROM:<>"); err != nil {
-		t.Errorf("MAIL with null sender failed: %v", err)
-	}
-	if err = c.Quit(); err != nil {
-		t.Errorf("Quit failed: %v", err)
-	}
-}
-
-func TestNoBracketsSender(t *testing.T) {
-	addr, closer := RunServerWithoutTLS(t, &Server{})
-	defer closer()
-	c, err := smtp.Dial(addr)
-	if err != nil {
-		t.Errorf("Dial failed: %v", err)
-	}
-	if err = cmd(c.Text, 250, "HELO localhost"); err != nil {
-		t.Errorf("HELO failed: %v", err)
-	}
-	if err = cmd(c.Text, 250, "MAIL FROM:test@example.org"); err != nil {
-		t.Errorf("MAIL without brackets failed: %v", err)
-	}
-	if err = c.Quit(); err != nil {
-		t.Errorf("Quit failed: %v", err)
-	}
-}
-
 func TestErrors(t *testing.T) {
-	cert, err := tls.X509KeyPair(localhostCert, localhostKey)
+	cert, err := tls.X509KeyPair(internal.LocalhostCert, internal.LocalhostKey)
 	if err != nil {
 		t.Errorf("Cert load failed: %v", err)
 	}
@@ -1132,19 +370,19 @@ func TestErrors(t *testing.T) {
 	if err != nil {
 		t.Errorf("Dial failed: %v", err)
 	}
-	if err = cmd(c.Text, 502, "AUTH PLAIN foobar"); err != nil {
+	if err = internal.DoCommand(c.Text, 502, "AUTH PLAIN foobar"); err != nil {
 		t.Errorf("AUTH didn't fail: %v", err)
 	}
 	if err = c.Hello("localhost"); err != nil {
 		t.Errorf("HELO failed: %v", err)
 	}
-	if err = cmd(c.Text, 502, "AUTH PLAIN foobar"); err != nil {
+	if err = internal.DoCommand(c.Text, 502, "AUTH PLAIN foobar"); err != nil {
 		t.Errorf("AUTH didn't fail: %v", err)
 	}
 	if err = c.Mail("sender@example.org"); err == nil {
 		t.Errorf("MAIL didn't fail")
 	}
-	if err = cmd(c.Text, 502, "STARTTLS"); err != nil {
+	if err = internal.DoCommand(c.Text, 502, "STARTTLS"); err != nil {
 		t.Errorf("STARTTLS didn't fail: %v", err)
 	}
 	server.TLSConfig = &tls.Config{
@@ -1153,19 +391,19 @@ func TestErrors(t *testing.T) {
 	if err = c.StartTLS(&tls.Config{InsecureSkipVerify: true}); err != nil {
 		t.Errorf("STARTTLS failed: %v", err)
 	}
-	if err = cmd(c.Text, 502, "AUTH UNKNOWN"); err != nil {
+	if err = internal.DoCommand(c.Text, 502, "AUTH UNKNOWN"); err != nil {
 		t.Errorf("AUTH didn't fail: %v", err)
 	}
-	if err = cmd(c.Text, 502, "AUTH PLAIN foobar"); err != nil {
+	if err = internal.DoCommand(c.Text, 502, "AUTH PLAIN foobar"); err != nil {
 		t.Errorf("AUTH didn't fail: %v", err)
 	}
-	if err = cmd(c.Text, 502, "AUTH PLAIN Zm9vAGJhcg=="); err != nil {
+	if err = internal.DoCommand(c.Text, 502, "AUTH PLAIN Zm9vAGJhcg=="); err != nil {
 		t.Errorf("AUTH didn't fail: %v", err)
 	}
-	if err = cmd(c.Text, 334, "AUTH PLAIN"); err != nil {
+	if err = internal.DoCommand(c.Text, 334, "AUTH PLAIN"); err != nil {
 		t.Errorf("AUTH didn't work: %v", err)
 	}
-	if err = cmd(c.Text, 235, "Zm9vAGJhcgBxdXV4"); err != nil {
+	if err = internal.DoCommand(c.Text, 235, "Zm9vAGJhcgBxdXV4"); err != nil {
 		t.Errorf("AUTH didn't work: %v", err)
 	}
 	if err = c.Mail("sender@example.org"); err != nil {
@@ -1173,33 +411,6 @@ func TestErrors(t *testing.T) {
 	}
 	if err = c.Mail("sender@example.org"); err == nil {
 		t.Errorf("Duplicate MAIL didn't fail")
-	}
-	if err = c.Quit(); err != nil {
-		t.Errorf("Quit failed: %v", err)
-	}
-}
-
-func TestMalformedMAILFROM(t *testing.T) {
-	sc := make([]SenderChecker, 0)
-	sc = append(sc, func(tr *Transaction) error {
-		if tr.MailFrom.Address != "test@example.org" {
-			return ErrorSMTP{Code: 502, Message: "Denied"}
-		}
-		return nil
-	})
-	addr, closer := RunServerWithoutTLS(t, &Server{
-		SenderCheckers: sc,
-	})
-	defer closer()
-	c, err := smtp.Dial(addr)
-	if err != nil {
-		t.Errorf("Dial failed: %v", err)
-	}
-	if err = c.Hello("localhost"); err != nil {
-		t.Errorf("HELO failed: %v", err)
-	}
-	if err = cmd(c.Text, 250, "MAIL FROM: <test@example.org>"); err != nil {
-		t.Errorf("MAIL FROM failed with extra whitespace: %v", err)
 	}
 	if err = c.Quit(); err != nil {
 		t.Errorf("Quit failed: %v", err)
@@ -1291,7 +502,7 @@ func TestKarma(t *testing.T) {
 	if err != nil {
 		t.Errorf("Data failed: %v", err)
 	}
-	_, err = fmt.Fprintf(wc, MakeTestMessage("sender@example.org", "recipient@example.net"))
+	_, err = fmt.Fprintf(wc, internal.MakeTestMessage("sender@example.org", "recipient@example.net"))
 	if err != nil {
 		t.Errorf("Data body failed: %v", err)
 	}
@@ -1365,7 +576,7 @@ func TestProxyNotEnabled(t *testing.T) {
 	}
 
 	where := strings.Split(addr, ":")
-	err = cmd(c.Text, 550, "PROXY TCP4 8.8.8.8 %s 443 %s", where[0], where[1])
+	err = internal.DoCommand(c.Text, 550, "PROXY TCP4 8.8.8.8 %s 443 %s", where[0], where[1])
 	if err != nil {
 		t.Errorf("sending proxy command enabled from the box - %s", err)
 	}
@@ -1382,7 +593,7 @@ func TestProxyNotEnabled(t *testing.T) {
 }
 
 func TestTLSListener(t *testing.T) {
-	cert, err := tls.X509KeyPair(localhostCert, localhostKey)
+	cert, err := tls.X509KeyPair(internal.LocalhostCert, internal.LocalhostKey)
 	if err != nil {
 		t.Errorf("Cert load failed: %v", err)
 	}
@@ -1414,10 +625,10 @@ func TestTLSListener(t *testing.T) {
 	if err = c.Hello("localhost"); err != nil {
 		t.Errorf("HELO failed: %v", err)
 	}
-	if err = cmd(c.Text, 334, "AUTH PLAIN"); err != nil {
+	if err = internal.DoCommand(c.Text, 334, "AUTH PLAIN"); err != nil {
 		t.Errorf("AUTH didn't work: %v", err)
 	}
-	if err = cmd(c.Text, 235, "Zm9vAGJhcgBxdXV4"); err != nil {
+	if err = internal.DoCommand(c.Text, 235, "Zm9vAGJhcgBxdXV4"); err != nil {
 		t.Errorf("AUTH didn't work: %v", err)
 	}
 	if err = c.Quit(); err != nil {
