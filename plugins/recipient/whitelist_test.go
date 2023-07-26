@@ -1,4 +1,4 @@
-package rcptto
+package recipient
 
 import (
 	"fmt"

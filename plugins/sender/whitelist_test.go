@@ -1,4 +1,4 @@
-package mailfrom
+package sender
 
 import (
 	"fmt"
