@@ -11,7 +11,7 @@ func TestConnectionCheck(t *testing.T) {
 	cc = append(cc, func(tr *Transaction) error {
 		return ErrorSMTP{Code: 552, Message: "Denied"}
 	})
-	addr, closer := RunServerWithoutTLS(t, &Server{
+	addr, closer := RunTestServerWithoutTLS(t, &Server{
 		ConnectionCheckers: cc,
 	})
 	defer closer()
@@ -25,7 +25,7 @@ func TestConnectionCheckSimpleError(t *testing.T) {
 	cc = append(cc, func(tr *Transaction) error {
 		return errors.New("Denied")
 	})
-	addr, closer := RunServerWithoutTLS(t, &Server{
+	addr, closer := RunTestServerWithoutTLS(t, &Server{
 		ConnectionCheckers: cc,
 	})
 	defer closer()

@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestLogger(t *testing.T) {
+func TestTransactionLogger(t *testing.T) {
 	buffer := bytes.NewBufferString("")
 	backend := log.New(buffer, "", log.Lshortfile)
 	testLoggerForThisTest := DefaultLogger{

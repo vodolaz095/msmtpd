@@ -8,7 +8,7 @@ import (
 )
 
 func TestHELOCheck(t *testing.T) {
-	addr, closer := RunServerWithoutTLS(t, &Server{
+	addr, closer := RunTestServerWithoutTLS(t, &Server{
 		HeloCheckers: []HelloChecker{
 			func(transaction *Transaction) error {
 				name := transaction.HeloName
@@ -30,7 +30,7 @@ func TestHELOCheck(t *testing.T) {
 }
 
 func TestHELO(t *testing.T) {
-	addr, closer := RunServerWithoutTLS(t, &Server{})
+	addr, closer := RunTestServerWithoutTLS(t, &Server{})
 	defer closer()
 	c, err := smtp.Dial(addr)
 	if err != nil {
@@ -54,7 +54,7 @@ func TestHELO(t *testing.T) {
 }
 
 func TestInvalidHelo(t *testing.T) {
-	addr, closer := RunServerWithoutTLS(t, &Server{})
+	addr, closer := RunTestServerWithoutTLS(t, &Server{})
 	defer closer()
 	c, err := smtp.Dial(addr)
 	if err != nil {

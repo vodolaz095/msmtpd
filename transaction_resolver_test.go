@@ -23,7 +23,7 @@ func TestTransaction_Resolver(t *testing.T) {
 }
 
 func TestTransaction_Resolver_In_Server(t *testing.T) {
-	addr, closer := RunServerWithoutTLS(t, &Server{
+	addr, closer := RunTestServerWithoutTLS(t, &Server{
 		HeloCheckers: []HelloChecker{
 			func(tr *Transaction) error {
 				name := tr.HeloName
@@ -65,7 +65,7 @@ func TestTransaction_Resolver_In_Server(t *testing.T) {
 }
 
 func TestTransaction_Resolver_In_Server_Custom(t *testing.T) {
-	addr, closer := RunServerWithoutTLS(t, &Server{
+	addr, closer := RunTestServerWithoutTLS(t, &Server{
 		Resolver: &net.Resolver{
 			PreferGo: true,
 			Dial: func(ctx context.Context, network, address string) (net.Conn, error) {

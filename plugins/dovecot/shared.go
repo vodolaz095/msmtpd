@@ -36,6 +36,9 @@ type Dovecot struct {
 }
 
 func (d *Dovecot) dial(network, addr string) (*textproto.Conn, error) {
+	if d.Timeout == 0 {
+		d.Timeout = DefaultTimeout
+	}
 	nc, err := net.DialTimeout(network, addr, d.Timeout)
 	if err != nil {
 		return nil, err

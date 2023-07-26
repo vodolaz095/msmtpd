@@ -1,5 +1,7 @@
 package internal
 
+import "crypto/tls"
+
 var LocalhostCert = []byte(`-----BEGIN CERTIFICATE-----
 MIIFkzCCA3ugAwIBAgIUQvhoyGmvPHq8q6BHrygu4dPp0CkwDQYJKoZIhvcNAQEL
 BQAwWTELMAkGA1UEBhMCQVUxEzARBgNVBAgMClNvbWUtU3RhdGUxITAfBgNVBAoM
@@ -85,3 +87,13 @@ d6OWtKINyuVosvlGzquht+ZnejJAgr1XsgF9cCxZonecwYQRlBvOjMRidCTpjzCu
 TXU5YrNA8ao1B6CFdyjmLzoY2C9d9SDQTXMX8f8f3GUo9gZ0IzSIFVGFpsKBU0QM
 hBgHM6A0WJC9MO3aAKRBcp48y6DXNA==
 -----END PRIVATE KEY-----`)
+
+func MakeTLSForLocalhost() (cfg *tls.Config, err error) {
+	cert, err := tls.X509KeyPair(LocalhostCert, LocalhostKey)
+	if err != nil {
+		return
+	}
+	return &tls.Config{
+		Certificates: []tls.Certificate{cert},
+	}, nil
+}

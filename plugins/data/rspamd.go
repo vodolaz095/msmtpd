@@ -80,8 +80,8 @@ const RspamdActionHardReject = "reject"
 
 const rspamdComplain = "Too many letters, i cannot read them all now. Please, resend your message later"
 
-// CheckPyRSPAMD is msmtpd.DataHandler function that calls RSPAMD API to validate message against it
-func CheckPyRSPAMD(opts RspamdOpts) func(transaction *msmtpd.Transaction) error {
+// CheckByRSPAMD is msmtpd.DataHandler function that calls RSPAMD API to validate message against it
+func CheckByRSPAMD(opts RspamdOpts) msmtpd.DataChecker {
 	if opts.URL == "" {
 		opts.URL = RspamdDefaultAddress
 	}

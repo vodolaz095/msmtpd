@@ -13,7 +13,7 @@ import (
 )
 
 func TestMaxMessageSize(t *testing.T) {
-	addr, closer := RunServerWithoutTLS(t, &Server{
+	addr, closer := RunTestServerWithoutTLS(t, &Server{
 		MaxMessageSize: 5,
 	})
 	defer closer()
@@ -67,7 +67,7 @@ func TestDataHandler(t *testing.T) {
 		}
 		return nil
 	})
-	addr, closer := RunServerWithoutTLS(t, &Server{
+	addr, closer := RunTestServerWithoutTLS(t, &Server{
 		DataHandlers: handlers,
 	})
 	defer closer()
@@ -103,7 +103,7 @@ func TestRejectHandler(t *testing.T) {
 	handlers = append(handlers, func(tr *Transaction) error {
 		return ErrorSMTP{Code: 550, Message: "Rejected"}
 	})
-	addr, closer := RunServerWithoutTLS(t, &Server{
+	addr, closer := RunTestServerWithoutTLS(t, &Server{
 		DataHandlers: handlers,
 	})
 	defer closer()
@@ -135,7 +135,7 @@ func TestRejectHandler(t *testing.T) {
 }
 
 func TestEnvelopeReceived(t *testing.T) {
-	addr, closer := RunServerWithTLS(t, &Server{
+	addr, closer := RunTestServerWithTLS(t, &Server{
 		Hostname: "foobar.example.net",
 		DataHandlers: []DataHandler{
 			func(tr *Transaction) error {
@@ -179,7 +179,7 @@ func TestEnvelopeReceived(t *testing.T) {
 }
 
 func TestExtraHeader(t *testing.T) {
-	addr, closer := RunServerWithTLS(t, &Server{
+	addr, closer := RunTestServerWithTLS(t, &Server{
 		Hostname: "foobar.example.net",
 		DataHandlers: []DataHandler{
 			func(tr *Transaction) error {
@@ -224,7 +224,7 @@ func TestExtraHeader(t *testing.T) {
 }
 
 func TestTwoExtraHeadersMakeMessageParsable(t *testing.T) {
-	addr, closer := RunServerWithTLS(t, &Server{
+	addr, closer := RunTestServerWithTLS(t, &Server{
 		Hostname: "foobar.example.net",
 		DataHandlers: []DataHandler{
 			func(tr *Transaction) error {

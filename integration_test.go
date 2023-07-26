@@ -15,7 +15,7 @@ import (
 )
 
 func TestSMTP(t *testing.T) {
-	addr, closer := RunServerWithoutTLS(t, &Server{})
+	addr, closer := RunTestServerWithoutTLS(t, &Server{})
 	defer closer()
 	c, err := smtp.Dial(addr)
 	if err != nil {
@@ -75,7 +75,7 @@ func TestSMTP(t *testing.T) {
 
 func TestListenAndServe(t *testing.T) {
 	server := &Server{}
-	addr, closer := RunServerWithoutTLS(t, server)
+	addr, closer := RunTestServerWithoutTLS(t, server)
 	closer()
 	go func() {
 		lsErr := server.ListenAndServe(addr)
@@ -99,7 +99,7 @@ func TestListenAndServe(t *testing.T) {
 }
 
 func TestMaxConnections(t *testing.T) {
-	addr, closer := RunServerWithoutTLS(t, &Server{
+	addr, closer := RunTestServerWithoutTLS(t, &Server{
 		MaxConnections: 1,
 	})
 	defer closer()
@@ -115,7 +115,7 @@ func TestMaxConnections(t *testing.T) {
 }
 
 func TestNoMaxConnections(t *testing.T) {
-	addr, closer := RunServerWithoutTLS(t, &Server{
+	addr, closer := RunTestServerWithoutTLS(t, &Server{
 		MaxConnections: -1,
 	})
 	defer closer()
@@ -132,7 +132,7 @@ func TestInterruptedDATA(t *testing.T) {
 		t.Error("Accepted DATA despite disconnection")
 		return nil
 	})
-	addr, closer := RunServerWithoutTLS(t, &Server{
+	addr, closer := RunTestServerWithoutTLS(t, &Server{
 		DataHandlers: handlers,
 	})
 	defer closer()
@@ -160,7 +160,7 @@ func TestInterruptedDATA(t *testing.T) {
 func TestContext(t *testing.T) {
 	wg := sync.WaitGroup{}
 	wg.Add(1)
-	addr, closer := RunServerWithoutTLS(t, &Server{
+	addr, closer := RunTestServerWithoutTLS(t, &Server{
 		ConnectionCheckers: []ConnectionChecker{
 			func(transaction *Transaction) error {
 				ctx := transaction.Context()
@@ -192,7 +192,7 @@ func TestContext(t *testing.T) {
 }
 
 func TestMeta(t *testing.T) {
-	addr, closer := RunServerWithoutTLS(t, &Server{
+	addr, closer := RunTestServerWithoutTLS(t, &Server{
 		MaxConnections: 1,
 		HeloCheckers: []HelloChecker{
 			func(transaction *Transaction) error {
@@ -298,7 +298,7 @@ func TestMeta(t *testing.T) {
 }
 
 func TestTimeoutClose(t *testing.T) {
-	addr, closer := RunServerWithoutTLS(t, &Server{
+	addr, closer := RunTestServerWithoutTLS(t, &Server{
 		MaxConnections: 1,
 		ReadTimeout:    time.Second,
 		WriteTimeout:   time.Second,
@@ -326,7 +326,7 @@ func TestTimeoutClose(t *testing.T) {
 }
 
 func TestTLSTimeout(t *testing.T) {
-	addr, closer := RunServerWithTLS(t, &Server{
+	addr, closer := RunTestServerWithTLS(t, &Server{
 		ReadTimeout:  time.Second * 2,
 		WriteTimeout: time.Second * 2,
 	})
@@ -364,7 +364,7 @@ func TestErrors(t *testing.T) {
 	server := &Server{
 		Authenticator: AuthenticatorForTestsThatAlwaysWorks,
 	}
-	addr, closer := RunServerWithoutTLS(t, server)
+	addr, closer := RunTestServerWithoutTLS(t, server)
 	defer closer()
 	c, err := smtp.Dial(addr)
 	if err != nil {
@@ -418,7 +418,7 @@ func TestErrors(t *testing.T) {
 }
 
 func TestUnparsableMessageBody(t *testing.T) {
-	addr, closer := RunServerWithoutTLS(t, &Server{})
+	addr, closer := RunTestServerWithoutTLS(t, &Server{})
 	defer closer()
 	c, err := smtp.Dial(addr)
 	if err != nil {
@@ -452,7 +452,7 @@ func TestUnparsableMessageBody(t *testing.T) {
 }
 
 func TestKarma(t *testing.T) {
-	addr, closer := RunServerWithoutTLS(t, &Server{
+	addr, closer := RunTestServerWithoutTLS(t, &Server{
 		SenderCheckers: []SenderChecker{
 			func(transaction *Transaction) error {
 				karma := transaction.Karma()
@@ -522,7 +522,7 @@ func TestCloseHandlers(t *testing.T) {
 	wg := sync.WaitGroup{}
 	var closeHandler1Called bool
 	var closeHandler2Called bool
-	addr, closer := RunServerWithoutTLS(t, &Server{
+	addr, closer := RunTestServerWithoutTLS(t, &Server{
 		ConnectionCheckers: []ConnectionChecker{
 			func(transaction *Transaction) error {
 				t.Logf("Giving 2 wg to transaction %s", transaction.ID)
@@ -565,7 +565,7 @@ func TestCloseHandlers(t *testing.T) {
 }
 
 func TestProxyNotEnabled(t *testing.T) {
-	addr, closer := RunServerWithoutTLS(t, &Server{
+	addr, closer := RunTestServerWithoutTLS(t, &Server{
 		EnableProxyProtocol: false, // important
 	})
 	defer closer()

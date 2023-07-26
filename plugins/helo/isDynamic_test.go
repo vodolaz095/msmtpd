@@ -31,7 +31,7 @@ func TestIsDynamic(t *testing.T) {
 			"a4-12.smtp-out.eu-west-1.amazonses.com.", false,
 		},
 	}
-	logger := testLogger{}
+	logger := msmtpd.TestLogger{Suite: t}
 	for i := range cases {
 		tr = msmtpd.Transaction{
 			ID: fmt.Sprintf("transaction %v %s %s", i,

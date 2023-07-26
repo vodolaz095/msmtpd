@@ -9,7 +9,7 @@ import (
 )
 
 func TestAuthRejection(t *testing.T) {
-	addr, closer := RunServerWithTLS(t, &Server{
+	addr, closer := RunTestServerWithTLS(t, &Server{
 		Authenticator: AuthenticatorForTestsThatAlwaysFails,
 		ForceTLS:      true,
 	})
@@ -27,7 +27,7 @@ func TestAuthRejection(t *testing.T) {
 }
 
 func TestAuthNotSupported(t *testing.T) {
-	addr, closer := RunServerWithTLS(t, &Server{
+	addr, closer := RunTestServerWithTLS(t, &Server{
 		ForceTLS: true,
 	})
 	defer closer()
@@ -44,7 +44,7 @@ func TestAuthNotSupported(t *testing.T) {
 }
 
 func TestAuthBypass(t *testing.T) {
-	addr, closer := RunServerWithTLS(t, &Server{
+	addr, closer := RunTestServerWithTLS(t, &Server{
 		Authenticator: AuthenticatorForTestsThatAlwaysFails,
 		ForceTLS:      true,
 	})
@@ -62,7 +62,7 @@ func TestAuthBypass(t *testing.T) {
 }
 
 func TestLOGINAuth(t *testing.T) {
-	addr, closer := RunServerWithTLS(t, &Server{
+	addr, closer := RunTestServerWithTLS(t, &Server{
 		Authenticator: AuthenticatorForTestsThatAlwaysWorks,
 	})
 	defer closer()

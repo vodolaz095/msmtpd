@@ -11,7 +11,7 @@ import (
 )
 
 func TestSTARTTLS(t *testing.T) {
-	addr, closer := RunServerWithTLS(t, &Server{
+	addr, closer := RunTestServerWithTLS(t, &Server{
 		Authenticator: AuthenticatorForTestsThatAlwaysWorks,
 		ForceTLS:      true,
 	})

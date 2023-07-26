@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"msmtpd"
+	"msmtpd/internal"
 )
 
 var testRspamdURL, testRspamdPassword string
@@ -25,22 +26,21 @@ func TestRspamdEnv(t *testing.T) {
 }
 
 func TestCheckPyRSPAMD(t *testing.T) {
-	validMessage := `Date: Sun, 11 Jun 2023 19:49:29 +0300
-To: scuba@vodolaz095.ru
-From: scuba@vodolaz095.ru
-Subject: test Sun, 11 Jun 2023 19:49:29 +0300
-Message-Id: <20230611194929.017435@localhost>
-X-Mailer: swaks v20190914.0 jetmore.org/john/code/swaks/
-
-This is a test mailing
-`
-	addr, closer := runserver(t, &msmtpd.Server{
-		Logger: &testLogger{},
-		DataHandlers: []msmtpd.DataHandler{
-			CheckPyRSPAMD(RspamdOpts{
+	validMessage := internal.MakeTestMessage("sender@example.org", "sender@example.org")
+	addr, closer := msmtpd.RunTestServerWithoutTLS(t, &msmtpd.Server{
+		DataCheckers: []msmtpd.DataChecker{
+			CheckByRSPAMD(RspamdOpts{
 				URL:      testRspamdURL,
 				Password: testRspamdPassword,
 			}),
+		},
+		DataHandlers: []msmtpd.DataHandler{
+			func(transaction *msmtpd.Transaction) error {
+				for k, v := range transaction.Parsed.Header {
+					t.Logf("%s : %v", k, v)
+				}
+				return nil
+			},
 		},
 	})
 	defer closer()

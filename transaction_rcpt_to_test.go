@@ -11,7 +11,7 @@ func TestRecipientCheck(t *testing.T) {
 	rc = append(rc, func(tr *Transaction, name *mail.Address) error {
 		return ErrorSMTP{Code: 552, Message: "Denied"}
 	})
-	addr, closer := RunServerWithoutTLS(t, &Server{
+	addr, closer := RunTestServerWithoutTLS(t, &Server{
 		RecipientCheckers: rc,
 	})
 	defer closer()
@@ -28,7 +28,7 @@ func TestRecipientCheck(t *testing.T) {
 }
 
 func TestMaxRecipients(t *testing.T) {
-	addr, closer := RunServerWithoutTLS(t, &Server{
+	addr, closer := RunTestServerWithoutTLS(t, &Server{
 		MaxRecipients: 1,
 	})
 	defer closer()
@@ -51,7 +51,7 @@ func TestMaxRecipients(t *testing.T) {
 }
 
 func TestInvalidRecipient(t *testing.T) {
-	addr, closer := RunServerWithoutTLS(t, &Server{})
+	addr, closer := RunTestServerWithoutTLS(t, &Server{})
 	defer closer()
 	c, err := smtp.Dial(addr)
 	if err != nil {
@@ -66,7 +66,7 @@ func TestInvalidRecipient(t *testing.T) {
 }
 
 func TestDataCalledBeforeRCPT(t *testing.T) {
-	addr, closer := RunServerWithoutTLS(t, &Server{})
+	addr, closer := RunTestServerWithoutTLS(t, &Server{})
 	defer closer()
 	c, err := smtp.Dial(addr)
 	if err != nil {

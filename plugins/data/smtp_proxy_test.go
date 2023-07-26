@@ -30,8 +30,7 @@ TestDeliverViaSMTPProxy - this is a test mailing
 
 `
 
-	addr, closer := runserver(t, &msmtpd.Server{
-		Logger: &testLogger{},
+	addr, closer := msmtpd.RunTestServerWithoutTLS(t, &msmtpd.Server{
 		DataHandlers: []msmtpd.DataHandler{
 			DeliverViaSMTPProxy(SMTPProxyOptions{
 				Network: "tcp",

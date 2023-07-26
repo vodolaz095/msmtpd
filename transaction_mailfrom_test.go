@@ -10,7 +10,7 @@ import (
 )
 
 func TestLongLineInMailFrom(t *testing.T) {
-	addr, closer := RunServerWithoutTLS(t, &Server{})
+	addr, closer := RunTestServerWithoutTLS(t, &Server{})
 	defer closer()
 	c, err := smtp.Dial(addr)
 	if err != nil {
@@ -25,7 +25,7 @@ func TestLongLineInMailFrom(t *testing.T) {
 }
 
 func TestNoBracketsSender(t *testing.T) {
-	addr, closer := RunServerWithoutTLS(t, &Server{})
+	addr, closer := RunTestServerWithoutTLS(t, &Server{})
 	defer closer()
 	c, err := smtp.Dial(addr)
 	if err != nil {
@@ -43,7 +43,7 @@ func TestNoBracketsSender(t *testing.T) {
 }
 
 func TestInvalidSender(t *testing.T) {
-	addr, closer := RunServerWithoutTLS(t, &Server{})
+	addr, closer := RunTestServerWithoutTLS(t, &Server{})
 	defer closer()
 	c, err := smtp.Dial(addr)
 	if err != nil {
@@ -55,7 +55,7 @@ func TestInvalidSender(t *testing.T) {
 }
 
 func TestNullSender(t *testing.T) {
-	addr, closer := RunServerWithoutTLS(t, &Server{})
+	addr, closer := RunTestServerWithoutTLS(t, &Server{})
 	defer closer()
 	c, err := smtp.Dial(addr)
 	if err != nil {
@@ -80,7 +80,7 @@ func TestSenderCheck(t *testing.T) {
 		}
 		return ErrorSMTP{Code: 552, Message: "Denied"}
 	})
-	addr, closer := RunServerWithoutTLS(t, &Server{
+	addr, closer := RunTestServerWithoutTLS(t, &Server{
 		SenderCheckers: sc,
 	})
 	defer closer()
@@ -101,7 +101,7 @@ func TestMalformedMAILFROM(t *testing.T) {
 		}
 		return nil
 	})
-	addr, closer := RunServerWithoutTLS(t, &Server{
+	addr, closer := RunTestServerWithoutTLS(t, &Server{
 		SenderCheckers: sc,
 	})
 	defer closer()
@@ -121,7 +121,7 @@ func TestMalformedMAILFROM(t *testing.T) {
 }
 
 func TestRcptToBeforeMAIL(t *testing.T) {
-	addr, closer := RunServerWithoutTLS(t, &Server{})
+	addr, closer := RunTestServerWithoutTLS(t, &Server{})
 	defer closer()
 	c, err := smtp.Dial(addr)
 	if err != nil {
@@ -133,7 +133,7 @@ func TestRcptToBeforeMAIL(t *testing.T) {
 }
 
 func TestDataBeforeMailFrom(t *testing.T) {
-	addr, closer := RunServerWithoutTLS(t, &Server{})
+	addr, closer := RunTestServerWithoutTLS(t, &Server{})
 	defer closer()
 	c, err := smtp.Dial(addr)
 	if err != nil {

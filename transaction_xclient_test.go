@@ -25,7 +25,7 @@ func TestXCLIENT(t *testing.T) {
 		}
 		return nil
 	})
-	addr, closer := RunServerWithoutTLS(t, &Server{
+	addr, closer := RunTestServerWithoutTLS(t, &Server{
 		EnableXCLIENT:  true,
 		SenderCheckers: sc,
 	})

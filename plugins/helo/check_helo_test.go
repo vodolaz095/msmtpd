@@ -31,7 +31,7 @@ func TestCheckHELO_Dynamic(t *testing.T) {
 			Error: nil, // important!
 		},
 	}
-	addr, closer := runserver(t, &msmtpd.Server{
+	addr, closer := msmtpd.RunTestServerWithoutTLS(t, &msmtpd.Server{
 		ConnectionCheckers: []msmtpd.ConnectionChecker{
 			func(transaction *msmtpd.Transaction) error {
 				transaction.Addr = &net.TCPAddr{
@@ -98,7 +98,7 @@ func TestCheckHELO_Default(t *testing.T) {
 			Error: errGeneralComplain,
 		},
 	}
-	addr, closer := runserver(t, &msmtpd.Server{
+	addr, closer := msmtpd.RunTestServerWithTLS(t, &msmtpd.Server{
 		ConnectionCheckers: []msmtpd.ConnectionChecker{
 			func(transaction *msmtpd.Transaction) error {
 				transaction.Addr = &net.TCPAddr{
@@ -165,7 +165,7 @@ func TestCheckHELO_IgnoreHostnameForLocalAddresses(t *testing.T) {
 			Error: nil, // because we ran from local IP address :-)
 		},
 	}
-	addr, closer := runserver(t, &msmtpd.Server{
+	addr, closer := msmtpd.RunTestServerWithTLS(t, &msmtpd.Server{
 		ConnectionCheckers: []msmtpd.ConnectionChecker{
 			func(transaction *msmtpd.Transaction) error {
 				transaction.Addr = &net.TCPAddr{

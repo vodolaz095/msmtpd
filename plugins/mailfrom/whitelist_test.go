@@ -17,7 +17,7 @@ func TestAcceptMailFromDomains(t *testing.T) {
 	cases["a@gmail.com"] = fmt.Errorf("521 I'm sorry, but your email address is not in whitelist")
 	cases["b@gmail.com"] = fmt.Errorf("521 I'm sorry, but your email address is not in whitelist")
 
-	addr, closer := runserver(t, &msmtpd.Server{
+	addr, closer := msmtpd.RunTestServerWithoutTLS(t, &msmtpd.Server{
 		SenderCheckers: []msmtpd.SenderChecker{
 			AcceptMailFromDomains([]string{ // it should have higher priority
 				"example.org",
@@ -60,7 +60,7 @@ func TestAcceptMailFromAddresses(t *testing.T) {
 	cases["d@gmail.com"] = fmt.Errorf("521 I'm sorry, but your email address is not in whitelist")
 	cases["e@gmail.com"] = fmt.Errorf("521 I'm sorry, but your email address is not in whitelist")
 
-	addr, closer := runserver(t, &msmtpd.Server{
+	addr, closer := msmtpd.RunTestServerWithoutTLS(t, &msmtpd.Server{
 		SenderCheckers: []msmtpd.SenderChecker{
 			AcceptMailFromAddresses([]string{ // it should have higher priority
 				"a@gmail.com",
@@ -109,7 +109,7 @@ func TestAcceptMailFromDomainsOrAddresses(t *testing.T) {
 	cases["e@gmail.com"] = fmt.Errorf("521 I'm sorry, but your email address is not in whitelist")
 	cases["info@yandex.ru"] = fmt.Errorf("521 I'm sorry, but your email address is not in whitelist")
 
-	addr, closer := runserver(t, &msmtpd.Server{
+	addr, closer := msmtpd.RunTestServerWithoutTLS(t, &msmtpd.Server{
 		SenderCheckers: []msmtpd.SenderChecker{
 			AcceptMailFromDomainsOrAddresses(
 				[]string{

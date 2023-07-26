@@ -27,7 +27,7 @@ func TestSenderIsResolvableDefault(t *testing.T) {
 	testCases["somebody@feedback.vodolaz095.ru"] = fmt.Errorf("421 %s", SenderIsNotResolvableComplain)
 	testCases["somebody@ivory.vodolaz095.ru"] = fmt.Errorf("421 %s", SenderIsNotResolvableComplain)
 
-	addr, closer := runserver(t, &msmtpd.Server{
+	addr, closer := msmtpd.RunTestServerWithoutTLS(t, &msmtpd.Server{
 		SenderCheckers: []msmtpd.SenderChecker{
 			SenderIsResolvable(SenderIsResolvableOptions{}),
 		},
@@ -78,7 +78,7 @@ func TestSenderIsResolvableFallback(t *testing.T) {
 	testCases["somebody@feedback.vodolaz095.ru"] = fmt.Errorf("421 %s", SenderIsNotResolvableComplain)
 	testCases["somebody@ivory.vodolaz095.ru"] = fmt.Errorf("421 %s", SenderIsNotResolvableComplain)
 
-	addr, closer := runserver(t, &msmtpd.Server{
+	addr, closer := msmtpd.RunTestServerWithoutTLS(t, &msmtpd.Server{
 		SenderCheckers: []msmtpd.SenderChecker{
 			SenderIsResolvable(SenderIsResolvableOptions{
 				FallbackToAddressRecord: true,
@@ -130,7 +130,7 @@ func TestSenderIsResolvableLocal(t *testing.T) {
 	// but this should fail, we disabled A/AAAA record fallback delivery
 	testCases["somebody@ivory.vodolaz095.ru"] = fmt.Errorf("421 %s", SenderIsNotResolvableComplain)
 
-	addr, closer := runserver(t, &msmtpd.Server{
+	addr, closer := msmtpd.RunTestServerWithoutTLS(t, &msmtpd.Server{
 		SenderCheckers: []msmtpd.SenderChecker{
 			SenderIsResolvable(SenderIsResolvableOptions{
 				FallbackToAddressRecord: false,
@@ -179,7 +179,7 @@ func TestSenderIsResolvableFallbackAndLocal(t *testing.T) {
 	testCases["somebody@feedback.vodolaz095.ru"] = nil
 	testCases["somebody@ivory.vodolaz095.ru"] = nil
 
-	addr, closer := runserver(t, &msmtpd.Server{
+	addr, closer := msmtpd.RunTestServerWithoutTLS(t, &msmtpd.Server{
 		SenderCheckers: []msmtpd.SenderChecker{
 			SenderIsResolvable(SenderIsResolvableOptions{
 				FallbackToAddressRecord: true,
