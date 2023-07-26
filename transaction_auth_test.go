@@ -76,11 +76,11 @@ func TestAuthPlain(t *testing.T) {
 	}
 	err = c.Auth(smtp.PlainAuth("", "mr.bubbles", "who cares", "127.0.0.1"))
 	if err != nil {
-		t.Errorf("%s : while performing plain authorization")
+		t.Errorf("%s : while performing plain authorization", err)
 	}
 	err = c.Quit()
 	if err != nil {
-		t.Errorf("%s : while performing plain authorization")
+		t.Errorf("%s : while performing plain authorization", err)
 	}
 }
 
