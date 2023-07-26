@@ -208,7 +208,7 @@ func TestDovecotIntegration(t *testing.T) {
 	} else {
 		t.Logf("STARTTLS PASSED")
 	}
-	err = c.Auth(smtp.PlainAuth("", username, password, addr))
+	err = c.Auth(smtp.PlainAuth("", username, password, "127.0.0.1"))
 	if err != nil {
 		t.Errorf("%s : while performing authentication", err)
 		return
