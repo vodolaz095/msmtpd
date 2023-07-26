@@ -21,6 +21,7 @@ func Whitelist(ipAddressesToAccept []string) func(transaction *msmtpd.Transactio
 		if found {
 			return nil
 		}
+		transaction.LogDebug("IP address %s is not whitelisted", transaction.Addr.String())
 		return msmtpd.ErrorSMTP{
 			Code:    521,
 			Message: "FUCK OFF!", // lol
@@ -46,6 +47,7 @@ func Blacklist(ipAddressesToBlock []string) func(transaction *msmtpd.Transaction
 				Message: "FUCK OFF!", // lol
 			}
 		}
+		transaction.LogDebug("IP address %s is not blacklisted", transaction.Addr.String())
 		return nil
 	}
 }
