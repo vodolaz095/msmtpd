@@ -61,6 +61,29 @@ func TestAuthBypass(t *testing.T) {
 	}
 }
 
+func TestAuthPlain(t *testing.T) {
+	addr, closer := RunTestServerWithTLS(t, &Server{
+		ForceTLS:      true,
+		Authenticator: AuthenticatorForTestsThatAlwaysWorks,
+	})
+	defer closer()
+	c, err := smtp.Dial(addr)
+	if err != nil {
+		t.Errorf("Dial failed: %v", err)
+	}
+	if err = c.StartTLS(&tls.Config{InsecureSkipVerify: true}); err != nil {
+		t.Errorf("STARTTLS failed: %v", err)
+	}
+	err = c.Auth(smtp.PlainAuth("", "mr.bubbles", "who cares", "127.0.0.1"))
+	if err != nil {
+		t.Errorf("%s : while performing plain authorization")
+	}
+	err = c.Quit()
+	if err != nil {
+		t.Errorf("%s : while performing plain authorization")
+	}
+}
+
 func TestLOGINAuth(t *testing.T) {
 	addr, closer := RunTestServerWithTLS(t, &Server{
 		Authenticator: AuthenticatorForTestsThatAlwaysWorks,

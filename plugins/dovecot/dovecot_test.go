@@ -178,10 +178,10 @@ func TestDovecotIntegration(t *testing.T) {
 		LtmpSocket:             DefaultLMTPSocketPath,
 		Timeout:                5 * time.Second,
 	}
-
 	validMessage := internal.MakeTestMessage("sender@example.org", rcptTo)
 	addr, closer := msmtpd.RunTestServerWithTLS(t, &msmtpd.Server{
 		Hostname:      "localhost", // required for authentication
+		ForceTLS:      true,
 		Authenticator: dvc.Authenticate,
 		RecipientCheckers: []msmtpd.RecipientChecker{
 			dvc.CheckRecipient,
@@ -194,30 +194,50 @@ func TestDovecotIntegration(t *testing.T) {
 	c, err := smtp.Dial(addr)
 	if err != nil {
 		t.Errorf("Dial failed: %v", err)
+		return
 	}
 	if err = c.Hello("localhost"); err != nil {
 		t.Errorf("HELO failed: %v", err)
+		return
+	} else {
+		t.Logf("HELO PASSED")
 	}
 	if err = c.StartTLS(&tls.Config{InsecureSkipVerify: true}); err != nil {
 		t.Errorf("STARTTLS failed: %v", err)
+		return
+	} else {
+		t.Logf("STARTTLS PASSED")
 	}
-	err = c.Auth(smtp.CRAMMD5Auth(username, password))
+	err = c.Auth(smtp.PlainAuth("", username, password, addr))
 	if err != nil {
 		t.Errorf("%s : while performing authentication", err)
+		return
+	} else {
+		t.Logf("AUTH PASSED")
 	}
 	if err = c.Mail("sender@example.org"); err != nil {
 		t.Errorf("Mail failed: %v", err)
+		return
+	} else {
+		t.Logf("MAIL FROM PASSED")
 	}
 	if err = c.Rcpt(rcptTo); err != nil {
 		t.Errorf("Rcpt failed: %v", err)
+		return
+	} else {
+		t.Logf("RCPT TO PASSED")
 	}
 	wc, err := c.Data()
 	if err != nil {
 		t.Errorf("Data failed: %v", err)
+		return
 	}
 	_, err = fmt.Fprintf(wc, validMessage)
 	if err != nil {
 		t.Errorf("Data body failed: %v", err)
+		return
+	} else {
+		t.Logf("DATA PASSED")
 	}
 	err = wc.Close()
 	if err != nil {

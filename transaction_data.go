@@ -90,11 +90,12 @@ func (t *Transaction) handleDATA(cmd command) {
 		t.reply(250, "Thank you.")
 		t.Love(commandExecutedProperly)
 		t.reset()
-	}
-	if err != nil {
-		t.LogDebug("possible network error: %s", err)
-		// Network error, ignore
-		return
+	} else {
+		if err != nil {
+			t.LogDebug("possible network error: %s", err)
+			// Network error, ignore
+			return
+		}
 	}
 	// Discard the rest and report an error.
 	_, err = io.Copy(io.Discard, reader)
