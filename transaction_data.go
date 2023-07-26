@@ -49,54 +49,54 @@ func (t *Transaction) handleDATA(cmd command) {
 	data := bytes.NewBufferString("")
 	reader := textproto.NewReader(t.reader).DotReader()
 	_, err := io.CopyN(data, reader, int64(t.server.MaxMessageSize))
-	if err == io.EOF {
-		// EOF was reached before MaxMessageSize, so we can accept and deliver message
-		t.Body = data.Bytes()
-		t.AddHeader("MSMTPD-Transaction-Id", t.ID)
-		t.AddReceivedLine() // will be added as first one
-		t.LogDebug("Parsing message body with size %v...", data.Len())
-		t.Parsed, checkErr = mail.ReadMessage(bytes.NewReader(t.Body))
-		if checkErr != nil {
-			t.LogError(checkErr, "while parsing message body")
-			t.Hate(tooBigMessagePenalty)
-			t.error(ErrorSMTP{
-				Code:    521,
-				Message: "Stop sending me this nonsense, please!",
-			})
-			return
-		}
-		t.LogDebug("Message body of %v bytes is parsed, calling %v DataCheckers on it",
-			data.Len(), len(t.server.DataCheckers))
-		for j := range t.server.DataCheckers {
-			checkErr = t.server.DataCheckers[j](t)
+	if err != nil {
+		if err == io.EOF {
+			// EOF was reached before MaxMessageSize, so we can accept and deliver message
+			t.Body = data.Bytes()
+			t.AddHeader("MSMTPD-Transaction-Id", t.ID)
+			t.AddReceivedLine() // will be added as first one
+			t.LogDebug("Parsing message body with size %v...", data.Len())
+			t.Parsed, checkErr = mail.ReadMessage(bytes.NewReader(t.Body))
 			if checkErr != nil {
-				t.error(checkErr)
+				t.LogError(checkErr, "while parsing message body")
+				t.Hate(tooBigMessagePenalty)
+				t.error(ErrorSMTP{
+					Code:    521,
+					Message: "Stop sending me this nonsense, please!",
+				})
 				return
 			}
-		}
-		t.LogInfo("Body (%v bytes) checked by %v DataCheckers successfully",
-			data.Len(), len(t.server.DataCheckers))
-		t.Love(commandExecutedProperly)
+			t.LogDebug("Message body of %v bytes is parsed, calling %v DataCheckers on it",
+				data.Len(), len(t.server.DataCheckers))
+			for j := range t.server.DataCheckers {
+				checkErr = t.server.DataCheckers[j](t)
+				if checkErr != nil {
+					t.error(checkErr)
+					return
+				}
+			}
+			t.LogInfo("Body (%v bytes) checked by %v DataCheckers successfully",
+				data.Len(), len(t.server.DataCheckers))
+			t.Love(commandExecutedProperly)
 
-		t.LogDebug("Starting delivery by %v DataHandlers...", len(t.server.DataHandlers))
-		for k := range t.server.DataHandlers {
-			deliverErr = t.server.DataHandlers[k](t)
-			if deliverErr != nil {
-				t.error(deliverErr)
-				return
+			t.LogDebug("Starting delivery by %v DataHandlers...", len(t.server.DataHandlers))
+			for k := range t.server.DataHandlers {
+				deliverErr = t.server.DataHandlers[k](t)
+				if deliverErr != nil {
+					t.error(deliverErr)
+					return
+				}
 			}
-		}
-		t.LogInfo("Message delivered by %v DataHandlers...", len(t.server.DataHandlers))
-		t.reply(250, "Thank you.")
-		t.Love(commandExecutedProperly)
-		t.reset()
-	} else {
-		if err != nil {
-			t.LogDebug("possible network error: %s", err)
-			// Network error, ignore
+			t.LogInfo("Message delivered by %v DataHandlers...", len(t.server.DataHandlers))
+			t.reply(250, "Thank you.")
+			t.Love(commandExecutedProperly)
+			t.reset()
 			return
+		} else {
+			t.LogError(err, "possible network error while reading message data")
 		}
 	}
+
 	// Discard the rest and report an error.
 	_, err = io.Copy(io.Discard, reader)
 	if err != nil {

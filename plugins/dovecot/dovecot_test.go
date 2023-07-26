@@ -172,6 +172,15 @@ This is a test mailing during dovecot unit test for aliases
 }
 
 func TestDovecotIntegration(t *testing.T) {
+	if username == "" {
+		t.Skipf("skipping, because environment variable DOVECOT_USERNAME is not set")
+	}
+	if password == "" {
+		t.Skipf("skipping, because environment variable DOVECOT_PASSWORD is not set")
+	}
+	if rcptTo == "" {
+		t.Skipf("skipping, because environment variable DOVECOT_RCPT_TO is not set")
+	}
 	dvc := Dovecot{
 		PathToAuthUserDBSocket: DefaultAuthUserSocketPath,
 		PathToAuthClientSocket: DefaultClientSocketPath,
