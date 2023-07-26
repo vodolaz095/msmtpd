@@ -283,3 +283,68 @@ func TestTwoExtraHeadersMakeMessageParsable(t *testing.T) {
 		t.Errorf("QUIT failed: %v", err)
 	}
 }
+
+func TestMalformedMessageBody(t *testing.T) {
+	addr, closer := RunTestServerWithoutTLS(t, &Server{})
+	defer closer()
+	c, err := smtp.Dial(addr)
+	if err != nil {
+		t.Errorf("Dial failed: %v", err)
+	}
+	if err = c.Mail("sender@example.org"); err != nil {
+		t.Errorf("MAIL failed: %v", err)
+	}
+	if err = c.Rcpt("recipient@example.net"); err != nil {
+		t.Errorf("RCPT failed: %v", err)
+	}
+	wc, err := c.Data()
+	if err != nil {
+		t.Errorf("Data failed: %v", err)
+	}
+	_, err = fmt.Fprintf(wc, "this is nonsense")
+	if err != nil {
+		t.Errorf("Data body failed: %v", err)
+	}
+	err = wc.Close()
+	if err != nil {
+		if err.Error() != "521 Stop sending me this nonsense, please!" {
+			t.Errorf("%s : while closing message body", err)
+		}
+	} else {
+		t.Errorf("error not returned for sending malformed message body")
+	}
+	if err = c.Quit(); err != nil {
+		t.Errorf("QUIT failed: %v", err)
+	}
+}
+
+func TestInterruptedDATA(t *testing.T) {
+	handlers := make([]DataHandler, 0)
+	handlers = append(handlers, func(tr *Transaction) error {
+		t.Error("Accepted DATA despite disconnection")
+		return nil
+	})
+	addr, closer := RunTestServerWithoutTLS(t, &Server{
+		DataHandlers: handlers,
+	})
+	defer closer()
+	c, err := smtp.Dial(addr)
+	if err != nil {
+		t.Errorf("Dial failed: %v", err)
+	}
+	if err = c.Mail("sender@example.org"); err != nil {
+		t.Errorf("MAIL failed: %v", err)
+	}
+	if err = c.Rcpt("recipient@example.net"); err != nil {
+		t.Errorf("RCPT failed: %v", err)
+	}
+	wc, err := c.Data()
+	if err != nil {
+		t.Errorf("Data failed: %v", err)
+	}
+	_, err = fmt.Fprintf(wc, internal.MakeTestMessage("sender@example.org", "recipient@example.net"))
+	if err != nil {
+		t.Errorf("Data body failed: %v", err)
+	}
+	c.Close()
+}

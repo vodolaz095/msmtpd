@@ -91,6 +91,9 @@ func TestSenderCheck(t *testing.T) {
 	if err = c.Mail("sender@example.org"); err == nil {
 		t.Error("Unexpected MAIL success")
 	}
+	if err = c.Quit(); err != nil {
+		t.Errorf("%s : while quiting", err)
+	}
 }
 
 func TestMalformedMAILFROM(t *testing.T) {
@@ -129,6 +132,9 @@ func TestRcptToBeforeMAIL(t *testing.T) {
 	}
 	if err = c.Rcpt("recipient@example.net"); err == nil {
 		t.Error("Unexpected RCPT success")
+	}
+	if err = c.Quit(); err != nil {
+		t.Errorf("%s : while quiting", err)
 	}
 }
 

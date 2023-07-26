@@ -124,3 +124,64 @@ func TestLOGINAuth(t *testing.T) {
 		t.Errorf("Quit failed: %v", err)
 	}
 }
+
+func TestAuthenticationErrors(t *testing.T) {
+	cert, err := tls.X509KeyPair(internal.LocalhostCert, internal.LocalhostKey)
+	if err != nil {
+		t.Errorf("Cert load failed: %v", err)
+	}
+	server := &Server{
+		Authenticator: AuthenticatorForTestsThatAlwaysWorks,
+	}
+	addr, closer := RunTestServerWithoutTLS(t, server)
+	defer closer()
+	c, err := smtp.Dial(addr)
+	if err != nil {
+		t.Errorf("Dial failed: %v", err)
+	}
+	if err = internal.DoCommand(c.Text, 502, "AUTH PLAIN foobar"); err != nil {
+		t.Errorf("AUTH didn't fail: %v", err)
+	}
+	if err = c.Hello("localhost"); err != nil {
+		t.Errorf("HELO failed: %v", err)
+	}
+	if err = internal.DoCommand(c.Text, 502, "AUTH PLAIN foobar"); err != nil {
+		t.Errorf("AUTH didn't fail: %v", err)
+	}
+	if err = c.Mail("sender@example.org"); err == nil {
+		t.Errorf("MAIL didn't fail")
+	}
+	if err = internal.DoCommand(c.Text, 502, "STARTTLS"); err != nil {
+		t.Errorf("STARTTLS didn't fail: %v", err)
+	}
+	server.TLSConfig = &tls.Config{
+		Certificates: []tls.Certificate{cert},
+	}
+	if err = c.StartTLS(&tls.Config{InsecureSkipVerify: true}); err != nil {
+		t.Errorf("STARTTLS failed: %v", err)
+	}
+	if err = internal.DoCommand(c.Text, 502, "AUTH UNKNOWN"); err != nil {
+		t.Errorf("AUTH didn't fail: %v", err)
+	}
+	if err = internal.DoCommand(c.Text, 502, "AUTH PLAIN foobar"); err != nil {
+		t.Errorf("AUTH didn't fail: %v", err)
+	}
+	if err = internal.DoCommand(c.Text, 502, "AUTH PLAIN Zm9vAGJhcg=="); err != nil {
+		t.Errorf("AUTH didn't fail: %v", err)
+	}
+	if err = internal.DoCommand(c.Text, 334, "AUTH PLAIN"); err != nil {
+		t.Errorf("AUTH didn't work: %v", err)
+	}
+	if err = internal.DoCommand(c.Text, 235, "Zm9vAGJhcgBxdXV4"); err != nil {
+		t.Errorf("AUTH didn't work: %v", err)
+	}
+	if err = c.Mail("sender@example.org"); err != nil {
+		t.Errorf("MAIL failed: %v", err)
+	}
+	if err = c.Mail("sender@example.org"); err == nil {
+		t.Errorf("Duplicate MAIL didn't fail")
+	}
+	if err = c.Quit(); err != nil {
+		t.Errorf("Quit failed: %v", err)
+	}
+}
