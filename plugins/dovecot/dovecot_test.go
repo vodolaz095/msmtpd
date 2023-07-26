@@ -171,7 +171,7 @@ This is a test mailing during dovecot unit test for aliases
 	}
 }
 
-func TestIntegration(t *testing.T) {
+func TestDovecotIntegration(t *testing.T) {
 	dvc := Dovecot{
 		PathToAuthUserDBSocket: DefaultAuthUserSocketPath,
 		PathToAuthClientSocket: DefaultClientSocketPath,
@@ -181,6 +181,7 @@ func TestIntegration(t *testing.T) {
 
 	validMessage := internal.MakeTestMessage("sender@example.org", rcptTo)
 	addr, closer := msmtpd.RunTestServerWithTLS(t, &msmtpd.Server{
+		Hostname:      "localhost", // required for authentication
 		Authenticator: dvc.Authenticate,
 		RecipientCheckers: []msmtpd.RecipientChecker{
 			dvc.CheckRecipient,
@@ -200,7 +201,7 @@ func TestIntegration(t *testing.T) {
 	if err = c.StartTLS(&tls.Config{InsecureSkipVerify: true}); err != nil {
 		t.Errorf("STARTTLS failed: %v", err)
 	}
-	err = c.Auth(smtp.PlainAuth("", username, password, "localhost"))
+	err = c.Auth(smtp.CRAMMD5Auth(username, password))
 	if err != nil {
 		t.Errorf("%s : while performing authentication", err)
 	}
