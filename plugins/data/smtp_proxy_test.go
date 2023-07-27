@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"msmtpd"
+	"msmtpd/internal"
 )
 
 var testProxyServer, testProxyUsername, testProxyPassword, testProxySender, testProxyRecipient string
@@ -21,15 +22,7 @@ func TestProxyEnv(t *testing.T) {
 }
 
 func TestDeliverViaSMTPProxy(t *testing.T) {
-	validMessage := `Date: Sun, 11 Jun 2023 19:49:29 +0300
-To: scuba@vodolaz095.ru
-From: scuba@vodolaz095.ru
-Subject: TestDeliverViaSMTPProxy
-
-TestDeliverViaSMTPProxy - this is a test mailing
-
-`
-
+	validMessage := internal.MakeTestMessage("scuba@vodolaz095.ru", "scuba@vodolaz095.ru")
 	addr, closer := msmtpd.RunTestServerWithoutTLS(t, &msmtpd.Server{
 		DataHandlers: []msmtpd.DataHandler{
 			DeliverViaSMTPProxy(SMTPProxyOptions{
@@ -80,5 +73,4 @@ TestDeliverViaSMTPProxy - this is a test mailing
 	if err != nil {
 		t.Errorf("Data close failed: %v", err)
 	}
-
 }
