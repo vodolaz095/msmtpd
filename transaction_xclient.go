@@ -82,5 +82,8 @@ func (t *Transaction) handleXCLIENT(cmd command) {
 	if newProto != "" {
 		t.Protocol = newProto
 	}
+	if newAddr != nil && newTCPPort != 0 {
+		t.Addr = tcpAddr
+	}
 	t.welcome()
 }

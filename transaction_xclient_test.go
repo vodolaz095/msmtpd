@@ -8,7 +8,29 @@ import (
 	"msmtpd/internal"
 )
 
-func TestXCLIENT(t *testing.T) {
+func TestXCLIENTNotEnabled(t *testing.T) {
+	addr, closer := RunTestServerWithoutTLS(t, &Server{
+		EnableXCLIENT: false,
+	})
+	defer closer()
+	c, err := smtp.Dial(addr)
+	if err != nil {
+		t.Errorf("Dial failed: %v", err)
+	}
+	if supported, _ := c.Extension("XCLIENT"); supported {
+		t.Error("XCLIENT is supported from the box???")
+	}
+	err = internal.DoCommand(c.Text, 550, "XCLIENT NAME=ignored ADDR=42.42.42.42 PORT=4242 PROTO=SMTP HELO=new.example.net LOGIN=newusername")
+	if err != nil {
+		t.Errorf("XCLIENT failed: %v", err)
+	}
+	err = c.Close()
+	if err != nil {
+		t.Errorf("Close failed: %v", err)
+	}
+}
+
+func TestXCLIENTSuccess(t *testing.T) {
 	sc := make([]SenderChecker, 0)
 	sc = append(sc, func(tr *Transaction) error {
 		if tr.HeloName != "new.example.net" {
@@ -36,6 +58,14 @@ func TestXCLIENT(t *testing.T) {
 	}
 	if supported, _ := c.Extension("XCLIENT"); !supported {
 		t.Error("XCLIENT not supported")
+	}
+	err = internal.DoCommand(c.Text, 502, "XCLIENT")
+	if err != nil {
+		t.Errorf("XCLIENT failed: %v", err)
+	}
+	err = internal.DoCommand(c.Text, 502, "XCLIENT SOMETHING")
+	if err != nil {
+		t.Errorf("XCLIENT failed: %v", err)
 	}
 	err = internal.DoCommand(c.Text, 220, "XCLIENT NAME=ignored ADDR=42.42.42.42 PORT=4242 PROTO=SMTP HELO=new.example.net LOGIN=newusername")
 	if err != nil {
