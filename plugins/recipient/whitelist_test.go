@@ -24,7 +24,7 @@ func TestAcceptMailFromDomainsOrAddresses(t *testing.T) {
 	cases["e@gmail.com"] = errRecipientNotWhitelisted
 	cases["info@yandex.ru"] = errRecipientNotWhitelisted
 
-	addr, closer := runserver(t, &msmtpd.Server{
+	addr, closer := msmtpd.RunTestServerWithoutTLS(t, &msmtpd.Server{
 		RecipientCheckers: []msmtpd.RecipientChecker{
 			AcceptMailForDomainsOrAddresses(
 				[]string{
@@ -85,7 +85,7 @@ func TestAcceptMailFromDomains(t *testing.T) {
 	cases["e@gmail.com"] = errRecipientNotWhitelisted
 	cases["info@yandex.ru"] = errRecipientNotWhitelisted
 
-	addr, closer := runserver(t, &msmtpd.Server{
+	addr, closer := msmtpd.RunTestServerWithoutTLS(t, &msmtpd.Server{
 		RecipientCheckers: []msmtpd.RecipientChecker{
 			AcceptMailForDomains(
 				[]string{
@@ -142,7 +142,7 @@ func TestAcceptMailFromAddresses(t *testing.T) {
 	cases["e@gmail.com"] = errRecipientNotWhitelisted
 	cases["info@yandex.ru"] = errRecipientNotWhitelisted
 
-	addr, closer := runserver(t, &msmtpd.Server{
+	addr, closer := msmtpd.RunTestServerWithoutTLS(t, &msmtpd.Server{
 		RecipientCheckers: []msmtpd.RecipientChecker{
 			AcceptMailForAddresses(
 				[]string{

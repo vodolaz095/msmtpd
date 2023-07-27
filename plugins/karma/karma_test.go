@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"msmtpd"
+	"msmtpd/internal"
 	"msmtpd/plugins/karma/storage/memory"
 )
 
@@ -24,7 +25,7 @@ func TestKarmaPluginMemoryGood(t *testing.T) {
 		Storage:   &memStorage,
 	}
 
-	addr, closer := runserver(t, &msmtpd.Server{
+	addr, closer := msmtpd.RunTestServerWithoutTLS(t, &msmtpd.Server{
 		ConnectionCheckers: []msmtpd.ConnectionChecker{
 			kh.ConnectionChecker,
 		},
@@ -54,7 +55,7 @@ func TestKarmaPluginMemoryGood(t *testing.T) {
 	if err != nil {
 		t.Errorf("Data failed: %v", err)
 	}
-	_, err = fmt.Fprintf(wc, MakeTestMessage("sender@example.org", "recipient@example.net"))
+	_, err = fmt.Fprintf(wc, internal.MakeTestMessage("sender@example.org", "recipient@example.net"))
 	if err != nil {
 		t.Errorf("Data body failed: %v", err)
 	}
@@ -96,7 +97,7 @@ func TestKarmaPluginMemoryBad(t *testing.T) {
 		Storage:   &memStorage,
 	}
 
-	addr, closer := runserver(t, &msmtpd.Server{
+	addr, closer := msmtpd.RunTestServerWithoutTLS(t, &msmtpd.Server{
 		ConnectionCheckers: []msmtpd.ConnectionChecker{
 			kh.ConnectionChecker,
 		},
