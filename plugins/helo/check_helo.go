@@ -82,9 +82,8 @@ func CheckHELO(opts Options) msmtpd.HelloChecker {
 					Code:    521,
 					Message: complain,
 				}
-			} else {
-				transaction.LogDebug("HELO/EHLO hostname %s looks static", transaction.HeloName)
 			}
+			transaction.LogDebug("HELO/EHLO hostname %s looks static", transaction.HeloName)
 		}
 		if !opts.TolerateRDNSMismatch {
 			pass = false

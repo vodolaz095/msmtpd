@@ -7,6 +7,7 @@ import (
 	"time"
 )
 
+// MakeTestMessage makes test email message body suitable for unit tests
 func MakeTestMessage(from string, to ...string) string {
 	now := time.Now()
 	buh := bytes.NewBufferString("Date: " + now.Format(time.RFC1123Z) + "\r\n")

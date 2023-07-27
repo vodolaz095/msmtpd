@@ -6,6 +6,7 @@ import (
 	"msmtpd"
 )
 
+// Whitelist prevents connecting from remote addresses in not present in list
 func Whitelist(ipAddressesToAccept []string) func(transaction *msmtpd.Transaction) error {
 	return func(transaction *msmtpd.Transaction) error {
 		var found bool
@@ -29,6 +30,7 @@ func Whitelist(ipAddressesToAccept []string) func(transaction *msmtpd.Transactio
 	}
 }
 
+// Blacklist prevents connecting from remote addresses in list
 func Blacklist(ipAddressesToBlock []string) func(transaction *msmtpd.Transaction) error {
 	return func(transaction *msmtpd.Transaction) error {
 		var found bool

@@ -208,34 +208,30 @@ func TestDovecotIntegration(t *testing.T) {
 	if err = c.Hello("localhost"); err != nil {
 		t.Errorf("HELO failed: %v", err)
 		return
-	} else {
-		t.Logf("HELO PASSED")
 	}
+	t.Logf("HELO PASSED")
 	if err = c.StartTLS(&tls.Config{InsecureSkipVerify: true}); err != nil {
 		t.Errorf("STARTTLS failed: %v", err)
 		return
-	} else {
-		t.Logf("STARTTLS PASSED")
 	}
+	t.Logf("STARTTLS PASSED")
 	err = c.Auth(smtp.PlainAuth("", username, password, "127.0.0.1"))
 	if err != nil {
 		t.Errorf("%s : while performing authentication", err)
 		return
-	} else {
-		t.Logf("AUTH PASSED")
 	}
+	t.Logf("AUTH PASSED")
 	if err = c.Mail("sender@example.org"); err != nil {
 		t.Errorf("Mail failed: %v", err)
 		return
-	} else {
-		t.Logf("MAIL FROM PASSED")
 	}
+	t.Logf("MAIL FROM PASSED")
 	if err = c.Rcpt(rcptTo); err != nil {
 		t.Errorf("Rcpt failed: %v", err)
 		return
-	} else {
-		t.Logf("RCPT TO PASSED")
 	}
+	t.Logf("RCPT TO PASSED")
+
 	wc, err := c.Data()
 	if err != nil {
 		t.Errorf("Data failed: %v", err)
@@ -245,9 +241,9 @@ func TestDovecotIntegration(t *testing.T) {
 	if err != nil {
 		t.Errorf("Data body failed: %v", err)
 		return
-	} else {
-		t.Logf("DATA PASSED")
 	}
+	t.Logf("DATA PASSED")
+
 	err = wc.Close()
 	if err != nil {
 		t.Errorf("Data close failed: %v", err)

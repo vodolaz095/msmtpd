@@ -14,14 +14,14 @@ import (
 
 func TestQuarantine(t *testing.T) {
 	dir := filepath.Join(os.TempDir(), "msmptd")
-	var tId string
+	var tID string
 	var createdAt time.Time
 	validMessage := internal.MakeTestMessage("scuba@vodolaz095.ru", "scuba@vodolaz095.ru")
 	addr, closer := msmtpd.RunTestServerWithoutTLS(t, &msmtpd.Server{
 		DataCheckers: []msmtpd.DataChecker{
 			func(tr *msmtpd.Transaction) error {
 				tr.SetFlag(QuarantineFlag)
-				tId = tr.ID
+				tID = tr.ID
 				createdAt = tr.StartedAt
 				return nil
 			},
@@ -62,7 +62,7 @@ func TestQuarantine(t *testing.T) {
 		createdAt.Format("2006"),
 		createdAt.Format("01"),
 		createdAt.Format("02"),
-		tId+".eml",
+		tID+".eml",
 	))
 	if err != nil {
 		t.Errorf("%s : while reading file", err)

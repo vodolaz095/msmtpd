@@ -9,8 +9,8 @@ import (
 
 // Good read - https://en.wikipedia.org/wiki/MX_record
 
-// SenderIsResolvableOptions are options for SenderIsResolvable plugin, default values are recommended
-type SenderIsResolvableOptions struct {
+// IsResolvableOptions are options for IsResolvable plugin, default values are recommended
+type IsResolvableOptions struct {
 	// FallbackToAddressRecord allows to delivery to 25th port of address resolved by A or AAAA
 	// queries if MX records are not present
 	// See https://en.wikipedia.org/wiki/MX_record#Fallback_to_the_address_record
@@ -22,11 +22,11 @@ type SenderIsResolvableOptions struct {
 	AllowLocalAddresses bool
 }
 
-// SenderIsNotResolvableComplain is human readable thing we say to client with imaginary email address
-const SenderIsNotResolvableComplain = "Seems like i cannot find your sender address mail servers using DNS, please, try again later"
+// IsNotResolvableComplain is human readable thing we say to client with imaginary email address
+const IsNotResolvableComplain = "Seems like i cannot find your sender address mail servers using DNS, please, try again later"
 
-// SenderIsResolvable is msmtpd.SenderChecker checker that performs DNS validations to proof we can send answer back to sender's email address
-func SenderIsResolvable(opts SenderIsResolvableOptions) msmtpd.SenderChecker {
+// IsResolvable is msmtpd.SenderChecker checker that performs DNS validations to proof we can send answer back to sender's email address
+func IsResolvable(opts IsResolvableOptions) msmtpd.SenderChecker {
 	return func(transaction *msmtpd.Transaction) error {
 		possibleMxServers := make([]string, 0)
 		usableMxServers := make([]net.IP, 0)
@@ -53,7 +53,7 @@ func SenderIsResolvable(opts SenderIsResolvableOptions) msmtpd.SenderChecker {
 			} else {
 				return msmtpd.ErrorSMTP{
 					Code:    421,
-					Message: SenderIsNotResolvableComplain,
+					Message: IsNotResolvableComplain,
 				}
 			}
 		}
@@ -61,7 +61,7 @@ func SenderIsResolvable(opts SenderIsResolvableOptions) msmtpd.SenderChecker {
 			transaction.LogDebug("For domain %s there are no possible email exchanges", domain)
 			return msmtpd.ErrorSMTP{
 				Code:    421,
-				Message: SenderIsNotResolvableComplain,
+				Message: IsNotResolvableComplain,
 			}
 		}
 		transaction.LogDebug("For domain %s there are %v possible email exchanges",
@@ -131,7 +131,7 @@ func SenderIsResolvable(opts SenderIsResolvableOptions) msmtpd.SenderChecker {
 		}
 		return msmtpd.ErrorSMTP{
 			Code:    421,
-			Message: SenderIsNotResolvableComplain,
+			Message: IsNotResolvableComplain,
 		}
 	}
 }

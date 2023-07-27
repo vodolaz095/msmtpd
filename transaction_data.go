@@ -92,9 +92,8 @@ func (t *Transaction) handleDATA(cmd command) {
 			t.Love(commandExecutedProperly)
 			t.reset()
 			return
-		} else {
-			t.LogError(err, "possible network error while reading message data")
 		}
+		t.LogError(err, "possible network error while reading message data")
 	}
 
 	// Discard the rest and report an error.

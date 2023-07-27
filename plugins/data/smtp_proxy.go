@@ -8,6 +8,7 @@ import (
 	"msmtpd"
 )
 
+// SMTPProxyOptions used to configure DeliverViaSMTPProxy
 type SMTPProxyOptions struct {
 	Network  string
 	Address  string
@@ -23,6 +24,7 @@ var errProxyMalfunction = msmtpd.ErrorSMTP{
 	Message: "temporary errors, please, try again later",
 }
 
+// DeliverViaSMTPProxy adds DataHandler that performs delivery via 3rd party SMTP server
 func DeliverViaSMTPProxy(opts SMTPProxyOptions) msmtpd.DataHandler {
 	return func(tr *msmtpd.Transaction) error {
 		var i int

@@ -2,6 +2,7 @@ package internal
 
 import "crypto/tls"
 
+// LocalhostCert is certificate for localhost
 var LocalhostCert = []byte(`-----BEGIN CERTIFICATE-----
 MIIFkzCCA3ugAwIBAgIUQvhoyGmvPHq8q6BHrygu4dPp0CkwDQYJKoZIhvcNAQEL
 BQAwWTELMAkGA1UEBhMCQVUxEzARBgNVBAgMClNvbWUtU3RhdGUxITAfBgNVBAoM
@@ -35,6 +36,7 @@ A2wsUyutzK19nt4hjVrTX0At9ku3gMmViXFlbvyA1Y4TuhdUYqJauMBrWKl2ybDW
 yhdKg/V3yTwgBUtb3QO4m1khNQjQLuPFVxULGEA38Y5dXSONsYnt
 -----END CERTIFICATE-----`)
 
+// LocalhostKey is key for LocalhostCert
 var LocalhostKey = []byte(`-----BEGIN PRIVATE KEY-----
 MIIJQgIBADANBgkqhkiG9w0BAQEFAASCCSwwggkoAgEAAoICAQCTvvemXJ8ri7a4
 ghnofu8SdNvmolPpH8oJj3KeJG8IVX6MKshICz3SmBT78/yJ4+dlEZtEIYa3UH7X
@@ -88,6 +90,7 @@ TXU5YrNA8ao1B6CFdyjmLzoY2C9d9SDQTXMX8f8f3GUo9gZ0IzSIFVGFpsKBU0QM
 hBgHM6A0WJC9MO3aAKRBcp48y6DXNA==
 -----END PRIVATE KEY-----`)
 
+// MakeTLSForLocalhost makes TLS config for localhost
 func MakeTLSForLocalhost() (cfg *tls.Config, err error) {
 	cert, err := tls.X509KeyPair(LocalhostCert, LocalhostKey)
 	if err != nil {

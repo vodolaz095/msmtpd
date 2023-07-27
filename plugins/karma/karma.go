@@ -14,11 +14,13 @@ const DefaultLoveRequired = 10
 // 3 - RCP TO
 // 3 - DATA
 
+// Handler is struct exposing Checkers for karma
 type Handler struct {
 	HateLimit int
 	Storage   Storage
 }
 
+// ConnectionChecker checks karma of remote IP address using data from Storage
 func (kh *Handler) ConnectionChecker(tr *msmtpd.Transaction) (err error) {
 	err = kh.Storage.Ping(tr.Context())
 	if err != nil {
@@ -47,6 +49,7 @@ func (kh *Handler) ConnectionChecker(tr *msmtpd.Transaction) (err error) {
 	}
 }
 
+// CloseHandler saves Transaction Karma into Storage after connection is finished
 func (kh *Handler) CloseHandler(tr *msmtpd.Transaction) (err error) {
 	if tr.Karma() > kh.HateLimit {
 		tr.LogDebug("preparing to save transaction karma of %v as good", tr.Karma())
