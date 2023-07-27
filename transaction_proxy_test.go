@@ -41,6 +41,29 @@ func TestProxyNotEnabled(t *testing.T) {
 func TestProxyEnabledSuccess(t *testing.T) {
 	addr, closer := RunTestServerWithoutTLS(t, &Server{
 		EnableProxyProtocol: true, // important
+		ConnectionCheckers: []ConnectionChecker{
+			func(tr *Transaction) error {
+				tr.LogInfo("Remote address for connection checker is %s", tr.Addr)
+				tr.SetFact("originalRemote", tr.Addr.String())
+				return nil
+			},
+		},
+		HeloCheckers: []HelloChecker{
+			func(tr *Transaction) error {
+				tr.LogInfo("Remote address for HELO is %s", tr.Addr)
+				if tr.Addr.String() != "8.8.8.8:443" {
+					t.Errorf("remote address is not set properly %s", tr.Addr)
+				}
+				original, found := tr.GetFact("originalRemote")
+				if !found {
+					t.Errorf("original address is not set")
+				}
+				if original == tr.Addr.String() {
+					t.Errorf("address not changed")
+				}
+				return nil
+			},
+		},
 	})
 	defer closer()
 
