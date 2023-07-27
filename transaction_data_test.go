@@ -134,6 +134,138 @@ func TestRejectHandler(t *testing.T) {
 	}
 }
 
+func TestWrongOrderForData(t *testing.T) {
+	addr, closer := RunTestServerWithTLS(t, &Server{
+		ForceTLS:      true,
+		Authenticator: AuthenticatorForTestsThatAlwaysWorks,
+	})
+	defer closer()
+	c, err := smtp.Dial(addr)
+	if err != nil {
+		t.Errorf("Dial failed: %v", err)
+	}
+	_, err = c.Data()
+	if err != nil {
+		if err.Error() != "502 Please introduce yourself first." {
+			t.Errorf("%s : wrong error while helo not called", err)
+		}
+	} else {
+		t.Error("error not thrown when DATA called before HELO")
+	}
+	err = c.Hello("localhost")
+	if err != nil {
+		t.Errorf("%s : while sending HELO", err)
+	}
+	_, err = c.Data()
+	if err != nil {
+		if err.Error() != "502 Please turn on TLS by issuing a STARTTLS command." {
+			t.Errorf("%s : wrong error while STARTTLS not called", err)
+		}
+	} else {
+		t.Error("error not thrown when DATA called before STARTTLS")
+	}
+	err = c.StartTLS(&tls.Config{InsecureSkipVerify: true})
+	if err != nil {
+		t.Errorf("%s : while sending STARTTLS", err)
+	}
+	_, err = c.Data()
+	if err != nil {
+		if err.Error() != "530 Authentication Required." {
+			t.Errorf("%s : wrong error while STARTTLS not called", err)
+		}
+	} else {
+		t.Error("error not thrown when DATA called before AUTH")
+	}
+	err = c.Auth(smtp.PlainAuth("", "who", "cares", "127.0.0.1"))
+	if err != nil {
+		t.Errorf("%s : while sending AUTH", err)
+	}
+	_, err = c.Data()
+	if err != nil {
+		if err.Error() != "502 It seems you haven't called MAIL FROM in order to explain who sends your message." {
+			t.Errorf("%s : wrong error while MAIL FROM not called", err)
+		}
+	} else {
+		t.Error("error not thrown when DATA called before MAIL FROM")
+	}
+	err = c.Mail("somebody@example.org")
+	if err != nil {
+		t.Errorf("%s : while sending MAILFROM", err)
+	}
+	_, err = c.Data()
+	if err != nil {
+		if err.Error() != "502 It seems you haven't called RCPT TO in order to explain for whom do you want to deliver your message." {
+			t.Errorf("%s : wrong error while RCPT TO not called", err)
+		}
+	} else {
+		t.Error("error not thrown when DATA called before RCPT TO")
+	}
+	err = c.Rcpt("bill.gates@microsoft.com")
+	if err != nil {
+		t.Errorf("%s : while sending RCPT TO", err)
+	}
+	_, err = c.Data()
+	if err != nil {
+		t.Errorf("%s : while sending RCPT TO", err)
+	}
+	err = c.Reset()
+	if err != nil {
+		t.Errorf("%s : while sending RSET", err)
+	}
+	err = c.Close()
+	if err != nil {
+		t.Errorf("%s : while closing", err)
+	}
+}
+
+func TestRejectByDataChecker(t *testing.T) {
+	addr, closer := RunTestServerWithoutTLS(t, &Server{
+		DataCheckers: []DataChecker{
+			func(tr *Transaction) error {
+				tr.LogInfo("Data checker called!")
+				return fmt.Errorf("something is broken")
+			},
+		},
+		DataHandlers: []DataHandler{
+			func(tr *Transaction) error {
+				tr.LogInfo("Data checker called!")
+				t.Errorf("data handler called")
+				return nil
+			},
+		},
+	})
+	defer closer()
+	c, err := smtp.Dial(addr)
+	if err != nil {
+		t.Errorf("Dial failed: %v", err)
+	}
+	if err = c.Mail("sender@example.org"); err != nil {
+		t.Errorf("MAIL failed: %v", err)
+	}
+	if err = c.Rcpt("recipient@example.net"); err != nil {
+		t.Errorf("RCPT failed: %v", err)
+	}
+	wc, err := c.Data()
+	if err != nil {
+		t.Errorf("Data failed: %v", err)
+	}
+	_, err = fmt.Fprintf(wc, internal.MakeTestMessage("sender@example.org", "recipient@example.net"))
+	if err != nil {
+		t.Errorf("Data body failed: %v", err)
+	}
+	err = wc.Close()
+	if err != nil {
+		if err.Error() != "502 something is broken" {
+			t.Errorf("%s : while closing data", err)
+		}
+	} else {
+		t.Errorf("error not thrown")
+	}
+	if err = c.Quit(); err != nil {
+		t.Errorf("QUIT failed: %v", err)
+	}
+}
+
 func TestEnvelopeReceived(t *testing.T) {
 	addr, closer := RunTestServerWithTLS(t, &Server{
 		Hostname: "foobar.example.net",

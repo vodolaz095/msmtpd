@@ -96,7 +96,7 @@ func TestSenderCheck(t *testing.T) {
 	}
 }
 
-func TestMalformedMAILFROM(t *testing.T) {
+func TestMailFromWithExtraSpace(t *testing.T) {
 	sc := make([]SenderChecker, 0)
 	sc = append(sc, func(tr *Transaction) error {
 		if tr.MailFrom.Address != "test@example.org" {
@@ -114,6 +114,10 @@ func TestMalformedMAILFROM(t *testing.T) {
 	}
 	if err = c.Hello("localhost"); err != nil {
 		t.Errorf("HELO failed: %v", err)
+	}
+	err = internal.DoCommand(c.Text, 502, "MAIL")
+	if err != nil {
+		t.Errorf("%s : while sending malformed command", err)
 	}
 	if err = internal.DoCommand(c.Text, 250, "MAIL FROM: <test@example.org>"); err != nil {
 		t.Errorf("MAIL FROM failed with extra whitespace: %v", err)
