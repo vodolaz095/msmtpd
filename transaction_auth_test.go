@@ -21,6 +21,10 @@ func TestAuthRejection(t *testing.T) {
 	if err = c.StartTLS(&tls.Config{InsecureSkipVerify: true}); err != nil {
 		t.Errorf("STARTTLS failed: %v", err)
 	}
+	err = internal.DoCommand(c.Text, 502, "AUTH SOMETHING")
+	if err != nil {
+		t.Errorf("%s : while making malformed auth", err)
+	}
 	if err = c.Auth(smtp.PlainAuth("foo", "foo", "bar", "127.0.0.1")); err == nil {
 		t.Error("Auth worked despite rejection")
 	}
