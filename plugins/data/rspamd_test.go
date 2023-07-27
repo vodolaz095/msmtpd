@@ -26,7 +26,7 @@ func TestRspamdEnv(t *testing.T) {
 }
 
 func TestCheckPyRSPAMD(t *testing.T) {
-	validMessage := internal.MakeTestMessage("sender@example.org", "sender@example.org")
+	validMessage := internal.MakeTestMessage("sender@example.org", "recipient@example.net", "recipient2@example.net")
 	addr, closer := msmtpd.RunTestServerWithoutTLS(t, &msmtpd.Server{
 		DataCheckers: []msmtpd.DataChecker{
 			CheckByRSPAMD(RspamdOpts{
