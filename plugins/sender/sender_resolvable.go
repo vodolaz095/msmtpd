@@ -93,7 +93,7 @@ func IsResolvable(opts IsResolvableOptions) msmtpd.SenderChecker {
 					continue
 				}
 				if ip.IsUnspecified() {
-					transaction.LogDebug("MX server %s ip %s of domain %s is uspecified!",
+					transaction.LogDebug("MX server %s ip %s of domain %s is unspecified!",
 						record, ip.String(), domain)
 					continue
 				}

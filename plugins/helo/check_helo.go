@@ -75,7 +75,6 @@ func CheckHELO(opts Options) msmtpd.HelloChecker {
 			transaction.LogDebug("HELO/EHLO %s seems to be not bare IP", transaction.HeloName)
 		}
 		if !opts.TolerateDynamic {
-			// TODO: implement
 			if isDynamic(transaction) {
 				transaction.LogWarn("HELO/EHLO hostname %s looks dynamic", transaction.HeloName)
 				return msmtpd.ErrorSMTP{

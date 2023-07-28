@@ -14,7 +14,7 @@ func isDynamic(tr *msmtpd.Transaction) (yes bool) {
 	var needles []string
 	raw := tr.Addr.(*net.TCPAddr).IP
 	if raw.To4() == nil {
-		// i never encountered ham being send from IPv6
+		// i haven't encountered ham being send from IPv6
 		tr.LogDebug("IP %s looks like IPv6", raw.String())
 		return true
 	}

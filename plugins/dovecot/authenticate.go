@@ -9,8 +9,7 @@ import (
 	"msmtpd"
 )
 
-// Authenticate returns true if the password is valid for the user, false
-// otherwise.
+// Authenticate performs authorization via AuthClientSocket of dovecot
 func (d *Dovecot) Authenticate(tr *msmtpd.Transaction, user, passwd string) error {
 	if !isUsernameSafe(user) {
 		tr.LogWarn("user %s is considered unsafe for dovecot usage", user)

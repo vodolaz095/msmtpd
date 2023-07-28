@@ -87,6 +87,9 @@ type Transaction struct {
 
 // Context returns transaction context, which is canceled when transaction is closed
 func (t *Transaction) Context() context.Context {
+	if t.ctx == nil {
+		return context.TODO()
+	}
 	return t.ctx
 }
 

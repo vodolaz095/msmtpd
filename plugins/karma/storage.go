@@ -6,13 +6,6 @@ import (
 	"msmtpd"
 )
 
-// Result is history for remote address connections
-type Result struct {
-	Connections uint
-	Good        uint
-	Bad         uint
-}
-
 // Storage is interface to abstract away saving\retrieving Result with remote IP address karma in it
 type Storage interface {
 	// Ping ensures Storage works
@@ -26,11 +19,3 @@ type Storage interface {
 	// Get gets karma score for transaction IP address
 	Get(*msmtpd.Transaction) (int, error)
 }
-
-// TODO - for redis
-//
-// key - karma|65.49.20.88
-// keytype hash
-// connections - 4
-// good - 3
-// bad - 1

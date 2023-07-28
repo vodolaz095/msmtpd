@@ -21,8 +21,11 @@ type Storage struct {
 	Data map[string]Score
 }
 
-// Ping does nothing
+// Ping does nothing, but somehow prepares memory storage
 func (m *Storage) Ping(ctx context.Context) error {
+	if m.Data == nil {
+		m.Data = make(map[string]Score, 0)
+	}
 	return nil
 }
 
