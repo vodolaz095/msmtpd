@@ -1,4 +1,4 @@
-module msmtpd
+module github.com/vodolaz095/msmtpd
 
 go 1.19
 
