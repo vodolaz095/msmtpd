@@ -51,7 +51,7 @@ func (t *Transaction) handleMAIL(cmd command) {
 	} else {
 		t.MailFrom = mail.Address{}
 	}
-	t.LogDebug("Checking MAIL FROM [%s] by %v SenderCheckers...",
+	t.LogDebug("Checking MAIL FROM %s by %v SenderCheckers...",
 		t.MailFrom.String(), len(t.server.SenderCheckers),
 	)
 	t.Span.SetAttributes(attribute.String("from", t.MailFrom.String()))
