@@ -21,7 +21,7 @@ This is a test mailing
 
 	addr, closer := msmtpd.RunTestServerWithoutTLS(t, &msmtpd.Server{
 		DataCheckers: []msmtpd.DataChecker{
-			ParseBodyAndCheckHeaders(DefaultHeadersToRequire),
+			CheckHeaders(DefaultHeadersToRequire),
 		},
 	})
 	defer closer()
@@ -56,7 +56,7 @@ func TestBodyParseAndCheckHeadersMalformed(t *testing.T) {
 	malformedMessage := `This is a test mailing`
 	addr, closer := msmtpd.RunTestServerWithoutTLS(t, &msmtpd.Server{
 		DataCheckers: []msmtpd.DataChecker{
-			ParseBodyAndCheckHeaders(DefaultHeadersToRequire),
+			CheckHeaders(DefaultHeadersToRequire),
 		},
 	})
 	defer closer()
@@ -105,7 +105,7 @@ This is a test mailing
 
 	addr, closer := msmtpd.RunTestServerWithoutTLS(t, &msmtpd.Server{
 		DataCheckers: []msmtpd.DataChecker{
-			ParseBodyAndCheckHeaders(DefaultHeadersToRequire),
+			CheckHeaders(DefaultHeadersToRequire),
 		},
 	})
 	defer closer()

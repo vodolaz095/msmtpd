@@ -1,9 +1,6 @@
 package data
 
 import (
-	"bytes"
-	"net/mail"
-
 	"github.com/vodolaz095/msmtpd"
 )
 
@@ -20,22 +17,14 @@ var DefaultHeadersToRequire = []string{
 	"Subject",
 }
 
-// ParseBodyAndCheckHeaders is Handler for processing message body to ensure is
+// CheckHeaders is Handler for processing message body to ensure is
 // 1. parsable as email message
 // 2. contains minimal headers required
-func ParseBodyAndCheckHeaders(headersRequired []string) func(transaction *msmtpd.Transaction) error {
+func CheckHeaders(headersRequired []string) func(transaction *msmtpd.Transaction) error {
 	return func(transaction *msmtpd.Transaction) error {
 		var val string
-		message, err := mail.ReadMessage(bytes.NewReader(transaction.Body))
-		if err != nil {
-			transaction.LogWarn("%s : while parsing message body", err)
-			return msmtpd.ErrorSMTP{
-				Code:    521,
-				Message: complain,
-			}
-		}
 		for _, header := range headersRequired {
-			val = message.Header.Get(header)
+			val = transaction.Parsed.Header.Get(header)
 			if val == "" {
 				transaction.LogWarn("header %s is missing", header)
 				return msmtpd.ErrorSMTP{
@@ -45,7 +34,6 @@ func ParseBodyAndCheckHeaders(headersRequired []string) func(transaction *msmtpd
 			}
 			transaction.LogDebug("Header %s is %s", header, val)
 		}
-		transaction.Parsed = message
 		transaction.LogInfo("Headers are in place!")
 		return nil
 	}
