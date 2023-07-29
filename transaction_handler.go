@@ -3,7 +3,7 @@ package msmtpd
 import "fmt"
 
 func (t *Transaction) handle(line string) {
-	t.LogTrace("Command received: %s", line)
+	t.LogDebug("Command received: %s", line)
 	cmd := parseLine(line)
 	// Commands are dispatched to the appropriate handler functions.
 	// If a network error occurs during handling, the handler should

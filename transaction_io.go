@@ -15,7 +15,7 @@ func (t *Transaction) serve() {
 	for {
 		for t.scanner.Scan() {
 			line := t.scanner.Text()
-			t.LogTrace("received: %s", strings.TrimSpace(line))
+			t.LogTrace("Received: %s", strings.TrimSpace(line))
 			t.handle(line)
 		}
 		err := t.scanner.Err()
@@ -46,7 +46,7 @@ func (t *Transaction) welcome() {
 }
 
 func (t *Transaction) reply(code int, message string) {
-	t.LogTrace("sending: %d %s", code, message)
+	t.LogTrace("Sending: %d %s", code, message)
 	fmt.Fprintf(t.writer, "%d %s\r\n", code, message)
 	t.flush()
 }
