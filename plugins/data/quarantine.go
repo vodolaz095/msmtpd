@@ -12,7 +12,7 @@ import (
 // QuarantineFlag is name of flag used to mark transaction's message as being quarantined
 const QuarantineFlag = "quarantine"
 
-// Quarantine saves messages of flagged by QuarantineFlag transactions into directory using patern directory/YYYY/MM/DD/{transactionID}.eml
+// Quarantine saves messages of flagged by QuarantineFlag transactions into directory using pattern directory/YYYY/MM/DD/{transactionID}.eml
 func Quarantine(directory string) msmtpd.DataHandler {
 	err := os.MkdirAll(directory, 0755)
 	if err != nil {

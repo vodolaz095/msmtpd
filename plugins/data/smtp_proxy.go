@@ -10,13 +10,20 @@ import (
 
 // SMTPProxyOptions used to configure DeliverViaSMTPProxy
 type SMTPProxyOptions struct {
-	Network  string
-	Address  string
-	HELO     string
-	TLS      *tls.Config
-	Auth     smtp.Auth
+	// Network defines how we dial SMTP Proxy, can be tcp or unix
+	Network string
+	// Address defines where remote SMTP Proxy is available
+	Address string
+	// HELO sets greeting for remote server
+	HELO string
+	// TLS, if not null, enables STARTTLS with this options
+	TLS *tls.Config
+	// Auth sets authentication mechanism for proxy backend
+	Auth smtp.Auth
+	// MailFrom defines senders override, if empty, value from Transaction.MailFrom will be used
 	MailFrom string
-	RcptTo   []string
+	// RcptTo defines recipients' override, if empty, values from Transaction.Aliases or Transaction.RcptTo will be used
+	RcptTo []string
 }
 
 var errProxyMalfunction = msmtpd.ErrorSMTP{
