@@ -63,7 +63,7 @@ func (t *Transaction) handleMAIL(cmd command) {
 			return
 		}
 	}
-	t.LogInfo("MAIL FROM [%s] is checked by %v SenderCheckers and accepted!",
+	t.LogInfo("MAIL FROM %s is checked by %v SenderCheckers and accepted!",
 		t.MailFrom.String(), len(t.server.SenderCheckers),
 	)
 	t.reply(250, "Ok, it makes sense, go ahead please!")

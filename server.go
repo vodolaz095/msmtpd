@@ -284,17 +284,17 @@ func (srv *Server) Serve(l net.Listener) error {
 				case limiter <- struct{}{}:
 					transaction.serve()
 					srv.runCloseHandlers(transaction)
-					srv.Logger.Infof(transaction, "transaction serving (limited) is finished")
+					srv.Logger.Debugf(transaction, "Transaction serving (limited) is finished")
 					<-limiter
 				default:
 					transaction.reject()
 					srv.runCloseHandlers(transaction)
-					srv.Logger.Infof(transaction, "transaction is rejected, server is busy")
+					srv.Logger.Debugf(transaction, "Transaction is rejected, server is busy")
 				}
 			} else {
 				transaction.serve()
 				srv.runCloseHandlers(transaction)
-				srv.Logger.Infof(transaction, "transaction serving (unlimited) is finished")
+				srv.Logger.Debugf(transaction, "Transaction serving (unlimited) is finished")
 			}
 		}()
 	}
