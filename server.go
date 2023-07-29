@@ -138,10 +138,12 @@ func (srv *Server) startTransaction(c net.Conn) (t *Transaction) {
 	mu := sync.Mutex{}
 	ctx, cancel := context.WithCancel(context.Background())
 	remoteAddr := c.RemoteAddr().(*net.TCPAddr)
-	ctxWithTracer, span := srv.Tracer.Start(ctx, "SMTP transaction")
-	span.SetAttributes(attribute.String("remote_addr", c.RemoteAddr().String()))
-	span.SetAttributes(attribute.String("remote_ip", remoteAddr.IP.String()))
-	span.SetAttributes(attribute.Int("remote_port", remoteAddr.Port))
+	ctxWithTracer, span := srv.Tracer.Start(ctx, "SMTP transaction",
+		trace.WithSpanKind(trace.SpanKindServer), // важно
+		trace.WithAttributes(attribute.String("remote_addr", c.RemoteAddr().String())),
+		trace.WithAttributes(attribute.String("remote_ip", remoteAddr.IP.String())),
+		trace.WithAttributes(attribute.Int("remote_port", remoteAddr.Port)),
+	)
 	t = &Transaction{
 		ID:        span.SpanContext().TraceID().String(),
 		StartedAt: time.Now(),
