@@ -6,7 +6,7 @@ import (
 	"net"
 
 	"github.com/redis/go-redis/v9"
-	"msmtpd"
+	"github.com/vodolaz095/msmtpd"
 )
 
 type Storage struct {

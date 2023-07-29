@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"msmtpd"
-	"msmtpd/internal"
+	"github.com/vodolaz095/msmtpd"
+	"github.com/vodolaz095/msmtpd/internal"
 )
 
 func TestQuarantine(t *testing.T) {

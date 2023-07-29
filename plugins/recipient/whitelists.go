@@ -5,7 +5,7 @@ import (
 	"net/mail"
 	"strings"
 
-	"msmtpd"
+	"github.com/vodolaz095/msmtpd"
 )
 
 // AcceptMailForDomainsOrAddresses is msmtpd.RecipientChecker function that accepts emails either for anything on domain list, or to predefined list of email addresses

@@ -1,10 +1,11 @@
 package data
 
 import (
+	"fmt"
+	"net/smtp"
 	"testing"
-	"time"
 
-	"msmtpd"
+	"github.com/vodolaz095/msmtpd"
 )
 
 func TestBodyParseAndCheckHeadersOK(t *testing.T) {
@@ -18,49 +19,78 @@ X-Mailer: swaks v20190914.0 jetmore.org/john/code/swaks/
 This is a test mailing
 `
 
-	transaction := msmtpd.Transaction{
-		ID:         "TestBodyParseAndCheckHeadersOK",
-		StartedAt:  time.Now(),
-		ServerName: "",
-		Body:       []byte(validMessage),
-	}
-	handler := ParseBodyAndCheckHeaders(DefaultHeadersToRequire)
-
-	err := handler(&transaction)
+	addr, closer := msmtpd.RunTestServerWithoutTLS(t, &msmtpd.Server{
+		DataCheckers: []msmtpd.DataChecker{
+			ParseBodyAndCheckHeaders(DefaultHeadersToRequire),
+		},
+	})
+	defer closer()
+	c, err := smtp.Dial(addr)
 	if err != nil {
-		t.Errorf("%s : while checking properly formated message", err)
+		t.Errorf("Dial failed: %v", err)
+	}
+	if err = c.Hello("localhost"); err != nil {
+		t.Errorf("HELO failed: %v", err)
+	}
+	if err = c.Mail("scuba@vodolaz095.ru"); err != nil {
+		t.Errorf("Mail failed: %v", err)
+	}
+	if err = c.Rcpt("scuba@vodolaz095.ru"); err != nil {
+		t.Errorf("Rcpt failed: %v", err)
+	}
+	wc, err := c.Data()
+	if err != nil {
+		t.Errorf("Data failed: %v", err)
+	}
+	_, err = fmt.Fprintf(wc, validMessage)
+	if err != nil {
+		t.Errorf("Data body failed: %v", err)
+	}
+	err = wc.Close()
+	if err != nil {
+		t.Errorf("Data close failed: %v", err)
 	}
 }
 
 func TestBodyParseAndCheckHeadersMalformed(t *testing.T) {
 	malformedMessage := `This is a test mailing`
-
-	transaction := msmtpd.Transaction{
-		ID:         "TestBodyParseAndCheckHeadersOK",
-		StartedAt:  time.Now(),
-		ServerName: "",
-		Body:       []byte(malformedMessage),
-	}
-	handler := ParseBodyAndCheckHeaders(DefaultHeadersToRequire)
-
-	err := handler(&transaction)
+	addr, closer := msmtpd.RunTestServerWithoutTLS(t, &msmtpd.Server{
+		DataCheckers: []msmtpd.DataChecker{
+			ParseBodyAndCheckHeaders(DefaultHeadersToRequire),
+		},
+	})
+	defer closer()
+	c, err := smtp.Dial(addr)
 	if err != nil {
-		typecasted, ok := err.(msmtpd.ErrorSMTP)
-		if !ok {
-			t.Errorf("error is not of kind msmtpd.ErrorSMTP")
-		}
-		if typecasted.Code != 521 {
-			t.Errorf("wrong status code %v", typecasted.Code)
-		}
-		if typecasted.Message != complain {
-			t.Errorf("wrong status message %s instead of %s", typecasted.Message, complain)
-		}
-		if typecasted.Error() != "521 "+complain {
-			t.Errorf("wrong error message %s instead of 521 %s", typecasted.Error(), complain)
-		}
-	} else {
-		t.Errorf("error not thrown while checking malformed message")
+		t.Errorf("Dial failed: %v", err)
 	}
+	if err = c.Hello("localhost"); err != nil {
+		t.Errorf("HELO failed: %v", err)
+	}
+	if err = c.Mail("scuba@vodolaz095.ru"); err != nil {
+		t.Errorf("Mail failed: %v", err)
+	}
+	if err = c.Rcpt("scuba@vodolaz095.ru"); err != nil {
+		t.Errorf("Rcpt failed: %v", err)
+	}
+	wc, err := c.Data()
+	if err != nil {
+		t.Errorf("Data failed: %v", err)
+	}
+	_, err = fmt.Fprintf(wc, malformedMessage)
+	if err != nil {
+		t.Errorf("Data body failed: %v", err)
+	}
+	err = wc.Close()
+	if err != nil {
+		if err.Error() == "521 Stop sending me this nonsense, please!" {
+			t.Logf("proper error is thrown")
+			return
+		} else {
+			t.Errorf("Data close failed with wrong error %v", err)
+		}
+	}
+	t.Errorf("error not thrown")
 }
 
 func TestBodyParseAndCheckHeadersMissingHeaders(t *testing.T) {
@@ -73,30 +103,41 @@ X-Mailer: swaks v20190914.0 jetmore.org/john/code/swaks/
 This is a test mailing
 `
 
-	transaction := msmtpd.Transaction{
-		ID:         "TestBodyParseAndCheckHeadersOK",
-		StartedAt:  time.Now(),
-		ServerName: "",
-		Body:       []byte(messageWithoutFrom),
-	}
-	handler := ParseBodyAndCheckHeaders(DefaultHeadersToRequire)
-
-	err := handler(&transaction)
+	addr, closer := msmtpd.RunTestServerWithoutTLS(t, &msmtpd.Server{
+		DataCheckers: []msmtpd.DataChecker{
+			ParseBodyAndCheckHeaders(DefaultHeadersToRequire),
+		},
+	})
+	defer closer()
+	c, err := smtp.Dial(addr)
 	if err != nil {
-		typecasted, ok := err.(msmtpd.ErrorSMTP)
-		if !ok {
-			t.Errorf("error is not of kind msmtpd.ErrorSMTP")
-		}
-		if typecasted.Code != 521 {
-			t.Errorf("wrong status code %v", typecasted.Code)
-		}
-		if typecasted.Message != complain {
-			t.Errorf("wrong status message %s instead of %s", typecasted.Message, complain)
-		}
-		if typecasted.Error() != "521 "+complain {
-			t.Errorf("wrong error message %s instead of 521 %s", typecasted.Error(), complain)
-		}
-	} else {
-		t.Errorf("error not thrown while checking malformed message")
+		t.Errorf("Dial failed: %v", err)
 	}
+	if err = c.Hello("localhost"); err != nil {
+		t.Errorf("HELO failed: %v", err)
+	}
+	if err = c.Mail("scuba@vodolaz095.ru"); err != nil {
+		t.Errorf("Mail failed: %v", err)
+	}
+	if err = c.Rcpt("scuba@vodolaz095.ru"); err != nil {
+		t.Errorf("Rcpt failed: %v", err)
+	}
+	wc, err := c.Data()
+	if err != nil {
+		t.Errorf("Data failed: %v", err)
+	}
+	_, err = fmt.Fprintf(wc, messageWithoutFrom)
+	if err != nil {
+		t.Errorf("Data body failed: %v", err)
+	}
+	err = wc.Close()
+	if err != nil {
+		if err.Error() == "521 I cannot parse your message. Do not send me this particular message in future, please, i will never accept it. Thanks in advance!" {
+			t.Logf("proper error is thrown")
+			return
+		} else {
+			t.Errorf("Data close failed with wrong error %v", err)
+		}
+	}
+	t.Errorf("error not thrown")
 }

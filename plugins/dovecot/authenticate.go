@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"msmtpd"
+	"github.com/vodolaz095/msmtpd"
 )
 
 // Authenticate performs authorization via AuthClientSocket of dovecot

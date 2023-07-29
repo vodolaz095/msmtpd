@@ -4,7 +4,7 @@ import (
 	"net/smtp"
 	"testing"
 
-	"msmtpd"
+	"github.com/vodolaz095/msmtpd"
 )
 
 func TestWhitelistFail(t *testing.T) {

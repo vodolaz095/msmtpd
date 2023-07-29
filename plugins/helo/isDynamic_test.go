@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"msmtpd"
+	"github.com/vodolaz095/msmtpd"
 )
 
 type isDtc struct {
@@ -50,7 +50,5 @@ func TestIsDynamic(t *testing.T) {
 			t.Logf("Test passed for case %v %s %s",
 				i, cases[i].IP.String(), cases[i].Helo)
 		}
-
 	}
-
 }

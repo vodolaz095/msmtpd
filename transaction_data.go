@@ -7,6 +7,8 @@ import (
 	"net/mail"
 	"net/textproto"
 	"time"
+
+	"go.opentelemetry.io/otel/attribute"
 )
 
 func (t *Transaction) handleDATA(cmd command) {
@@ -56,8 +58,10 @@ func (t *Transaction) handleDATA(cmd command) {
 			t.AddHeader("MSMTPD-Transaction-Id", t.ID)
 			t.AddReceivedLine() // will be added as first one
 			t.LogDebug("Parsing message body with size %v...", data.Len())
+			t.Span.SetAttributes(attribute.Int("size", data.Len()))
 			t.Parsed, checkErr = mail.ReadMessage(bytes.NewReader(t.Body))
 			if checkErr != nil {
+				t.Span.RecordError(err)
 				t.LogError(checkErr, "while parsing message body")
 				t.Hate(tooBigMessagePenalty)
 				t.error(ErrorSMTP{
@@ -72,6 +76,7 @@ func (t *Transaction) handleDATA(cmd command) {
 				checkErr = t.server.DataCheckers[j](t)
 				if checkErr != nil {
 					t.error(checkErr)
+					t.Span.RecordError(checkErr)
 					return
 				}
 			}
@@ -84,6 +89,7 @@ func (t *Transaction) handleDATA(cmd command) {
 				deliverErr = t.server.DataHandlers[k](t)
 				if deliverErr != nil {
 					t.error(deliverErr)
+					t.Span.RecordError(checkErr)
 					return
 				}
 			}
@@ -93,12 +99,14 @@ func (t *Transaction) handleDATA(cmd command) {
 			t.reset()
 			return
 		}
+		t.Span.RecordError(err)
 		t.LogError(err, "possible network error while reading message data")
 	}
 
 	// Discard the rest and report an error.
 	_, err = io.Copy(io.Discard, reader)
 	if err != nil {
+		t.Span.RecordError(err)
 		t.LogDebug("possible network error: %s", err)
 		return
 	}

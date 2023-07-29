@@ -3,7 +3,7 @@ package karma
 import (
 	"fmt"
 
-	"msmtpd"
+	"github.com/vodolaz095/msmtpd"
 )
 
 // DefaultLoveRequired are good karma points required for transaction to be considered ok

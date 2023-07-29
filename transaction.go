@@ -8,6 +8,9 @@ import (
 	"net/mail"
 	"sync"
 	"time"
+
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // Protocol represents the protocol used in the SMTP session
@@ -75,6 +78,8 @@ type Transaction struct {
 
 	ctx    context.Context
 	cancel context.CancelFunc
+	// Span is OpenTelemetry span being used in transaction
+	Span trace.Span
 
 	server  *Server
 	conn    net.Conn
@@ -101,6 +106,7 @@ func (t *Transaction) Context() context.Context {
 func (t *Transaction) SetFact(name, value string) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
+	t.Span.SetAttributes(attribute.String(name, value))
 	t.facts[name] = value
 }
 
@@ -119,10 +125,12 @@ func (t *Transaction) Incr(key string, delta float64) (newVal float64) {
 		newVal = old + delta
 		t.counters[key] = newVal
 		t.LogTrace("Incrementing %s by %v from %v to %v", key, delta, old, newVal)
+		t.Span.SetAttributes(attribute.Float64(key, newVal))
 		return newVal
 	}
 	t.counters[key] = delta
 	t.LogTrace("Setting counter %s to %v", key, delta)
+	t.Span.SetAttributes(attribute.Float64(key, delta))
 	return t.counters[key]
 }
 
@@ -136,6 +144,7 @@ func (t *Transaction) GetCounter(key string) (val float64, found bool) {
 func (t *Transaction) SetFlag(name string) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
+	t.Span.SetAttributes(attribute.Bool(name, true))
 	t.flags[name] = true
 }
 

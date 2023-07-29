@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"net/mail"
 
-	"msmtpd"
+	"github.com/vodolaz095/msmtpd"
 )
 
 // Good read - https://en.wikipedia.org/wiki/List_of_SMTP_server_return_codes

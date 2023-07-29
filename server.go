@@ -12,6 +12,10 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"go.opentelemetry.io/otel/attribute"
+	tracesdk "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // CheckerFunc are signature of functions used in checks for client issuing HELO/EHLO, MAIL FROM, RCPT TO commands
@@ -116,6 +120,7 @@ type Server struct {
 	// Logger is interface being used as protocol/plugin/errors logger
 	Logger Logger
 
+	Tracer trace.Tracer
 	// mu guards doneChan and makes closing it and listener atomic from
 	// perspective of Serve()
 	mu         sync.Mutex
@@ -130,28 +135,29 @@ type Server struct {
 func (srv *Server) startTransaction(c net.Conn) (t *Transaction) {
 	var err error
 	var ptrs []string
-	id, err := getRandomID()
-	if err != nil {
-		panic(err) // its extremely unlikely
-	}
 	mu := sync.Mutex{}
 	ctx, cancel := context.WithCancel(context.Background())
-	remoteAddr := c.RemoteAddr().(*net.TCPAddr).IP.String()
-
+	remoteAddr := c.RemoteAddr().(*net.TCPAddr)
+	ctxWithTracer, span := srv.Tracer.Start(ctx, "SMTP transaction")
+	span.SetAttributes(attribute.String("remote_addr", c.RemoteAddr().String()))
+	span.SetAttributes(attribute.String("remote_ip", remoteAddr.IP.String()))
+	span.SetAttributes(attribute.Int("remote_port", remoteAddr.Port))
 	t = &Transaction{
-		ID:        id,
+		ID:        span.SpanContext().TraceID().String(),
 		StartedAt: time.Now(),
 
 		server:     srv,
 		ServerName: srv.Hostname,
 		Logger:     srv.Logger,
 
+		Span: span,
+
 		conn:   c,
 		reader: bufio.NewReader(c),
 		writer: bufio.NewWriter(c),
 		Addr:   c.RemoteAddr(),
 		PTRs:   make([]string, 0),
-		ctx:    ctx,
+		ctx:    ctxWithTracer,
 		cancel: cancel,
 
 		Aliases:  nil,
@@ -160,7 +166,7 @@ func (srv *Server) startTransaction(c net.Conn) (t *Transaction) {
 		flags:    make(map[string]bool, 0),
 		mu:       &mu,
 	}
-
+	t.LogDebug("Starting transaction...")
 	// Check if the underlying connection is already TLS.
 	// This will happen if the Listener provided Serve()
 	// is from tls.Listen()
@@ -174,21 +180,26 @@ func (srv *Server) startTransaction(c net.Conn) (t *Transaction) {
 			t.LogDebug("%s : while performing handshake", err)
 			t.Secured = false
 			t.Hate(tlsHandshakeFailedHate)
+			span.RecordError(err)
+			span.SetAttributes(attribute.Bool("secured", false))
 		} else {
 			t.Secured = true
+			span.SetAttributes(attribute.Bool("secured", true))
 		}
 		state := tlsConn.ConnectionState()
 		t.TLS = &state
 	}
 	if !srv.SkipResolvingPTR {
-		ptrs, err = t.Resolver().LookupAddr(t.Context(), remoteAddr)
+		ptrs, err = t.Resolver().LookupAddr(t.Context(), remoteAddr.IP.String())
 		if err != nil {
 			t.LogError(err, "while resolving remote address PTR record")
+			span.RecordError(err)
 		} else {
 			t.LogDebug("PTR addresses resolved for %s : %v",
 				remoteAddr, ptrs,
 			)
 			t.PTRs = ptrs
+			span.SetAttributes(attribute.StringSlice("ptr", ptrs))
 		}
 	} else {
 		t.LogDebug("PTR resolution disabled")
@@ -198,6 +209,7 @@ func (srv *Server) startTransaction(c net.Conn) (t *Transaction) {
 		if err != nil {
 			t.error(err)
 			t.close()
+			span.RecordError(err)
 			break
 		}
 	}
@@ -226,6 +238,7 @@ func (srv *Server) runCloseHandlers(transaction *Transaction) {
 		closeError = srv.CloseHandlers[k](transaction)
 		if closeError != nil {
 			srv.Logger.Errorf(transaction, "%s : while calling close handler %v", closeError, k)
+			transaction.Span.RecordError(closeError)
 		} else {
 			srv.Logger.Debugf(transaction, "closing handler %v is called", k)
 		}
@@ -359,6 +372,9 @@ func (srv *Server) configureDefaults() {
 			Logger: log.Default(),
 			Level:  InfoLevel,
 		}
+	}
+	if srv.Tracer == nil {
+		srv.Tracer = tracesdk.NewTracerProvider().Tracer("msmptd")
 	}
 }
 

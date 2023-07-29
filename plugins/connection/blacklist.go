@@ -3,7 +3,7 @@ package connection
 import (
 	"strings"
 
-	"msmtpd"
+	"github.com/vodolaz095/msmtpd"
 )
 
 // Whitelist prevents connecting from remote addresses in not present in list

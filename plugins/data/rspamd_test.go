@@ -6,8 +6,8 @@ import (
 	"os"
 	"testing"
 
-	"msmtpd"
-	"msmtpd/internal"
+	"github.com/vodolaz095/msmtpd"
+	"github.com/vodolaz095/msmtpd/internal"
 )
 
 var testRspamdURL, testRspamdPassword string

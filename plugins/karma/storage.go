@@ -3,7 +3,7 @@ package karma
 import (
 	"context"
 
-	"msmtpd"
+	"github.com/vodolaz095/msmtpd"
 )
 
 // Storage is interface to abstract away saving\retrieving Result with remote IP address karma in it

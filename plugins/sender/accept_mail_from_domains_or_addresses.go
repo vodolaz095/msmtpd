@@ -5,7 +5,7 @@ import (
 	"net/mail"
 	"strings"
 
-	"msmtpd"
+	"github.com/vodolaz095/msmtpd"
 )
 
 // AcceptMailFromDomainsOrAddresses allows senders either from one of whilelisted domain, or from one of whitelisted addresses.

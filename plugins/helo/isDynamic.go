@@ -5,7 +5,7 @@ import (
 	"net"
 	"strings"
 
-	"msmtpd"
+	"github.com/vodolaz095/msmtpd"
 )
 
 // isDynamic returns true, if Transaction.Addr seems like dynamic IP address

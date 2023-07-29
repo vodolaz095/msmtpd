@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/mail"
 
-	"msmtpd"
+	"github.com/vodolaz095/msmtpd"
 )
 
 // AcceptMailFromAddresses is filter to accept emails only from predefined whilelist of addresses,

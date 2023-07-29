@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"msmtpd"
+	"github.com/vodolaz095/msmtpd"
 )
 
 func TestStorage(t *testing.T) {

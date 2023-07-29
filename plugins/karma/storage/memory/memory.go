@@ -5,7 +5,7 @@ import (
 	"net"
 	"sync"
 
-	"msmtpd"
+	"github.com/vodolaz095/msmtpd"
 )
 
 // Score used to pack IP address history in memory

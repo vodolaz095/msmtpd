@@ -6,7 +6,7 @@ import (
 	"net/smtp"
 	"testing"
 
-	"msmtpd"
+	"github.com/vodolaz095/msmtpd"
 )
 
 var errGeneralComplain = fmt.Errorf("521 %s", complain)

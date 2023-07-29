@@ -1,8 +1,6 @@
 package msmtpd
 
 import (
-	"crypto/rand"
-	"encoding/hex"
 	"strings"
 )
 
@@ -57,15 +55,4 @@ func parseLine(line string) (cmd command) {
 
 func mask(input string) string {
 	return string(input[0]) + "****"
-}
-
-// getRandomID gets random hex encoded id
-func getRandomID() (id string, err error) {
-	b := make([]byte, 10)
-	_, err = rand.Read(b)
-	if err != nil {
-		return
-	}
-	id = hex.EncodeToString(b)
-	return
 }

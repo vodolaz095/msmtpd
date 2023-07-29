@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"msmtpd/internal"
+	"github.com/vodolaz095/msmtpd/internal"
 )
 
 func TestLongLineInMailFrom(t *testing.T) {

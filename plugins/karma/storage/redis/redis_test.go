@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/redis/go-redis/v9"
-	"msmtpd"
+	"github.com/vodolaz095/msmtpd"
 )
 
 var testRedisUrl string

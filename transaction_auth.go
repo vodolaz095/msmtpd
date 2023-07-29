@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/base64"
 	"strings"
+
+	"go.opentelemetry.io/otel/attribute"
 )
 
 func (t *Transaction) handleAUTH(cmd command) {
@@ -94,9 +96,12 @@ func (t *Transaction) handleAUTH(cmd command) {
 	t.LogDebug("Trying to authorise %s with password %s using mechanism %s",
 		username, mask(password), mechanism,
 	)
+	t.Span.SetAttributes(attribute.String("username", username))
+	t.Span.SetAttributes(attribute.String("password", mask(password)))
 	err := t.server.Authenticator(t, username, password)
 	if err != nil {
 		t.error(err)
+		t.Span.RecordError(err)
 		return
 	}
 	t.Username = username

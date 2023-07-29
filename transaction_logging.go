@@ -1,6 +1,9 @@
 package msmtpd
 
-import "log"
+import (
+	"fmt"
+	"log"
+)
 
 func (t *Transaction) logEvent(level LoggerLevel, format string, args ...any) {
 	var backend Logger
@@ -17,6 +20,9 @@ func (t *Transaction) logEvent(level LoggerLevel, format string, args ...any) {
 				Level:  DebugLevel,
 			}
 		}
+	}
+	if t.Span != nil {
+		t.Span.AddEvent(level.String() + " " + fmt.Sprintf(format, args...))
 	}
 	switch level {
 	case TraceLevel:

@@ -5,7 +5,7 @@ import (
 	"net"
 	"net/smtp"
 
-	"msmtpd"
+	"github.com/vodolaz095/msmtpd"
 )
 
 // SMTPProxyOptions used to configure DeliverViaSMTPProxy

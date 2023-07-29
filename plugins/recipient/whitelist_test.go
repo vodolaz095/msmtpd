@@ -5,7 +5,7 @@ import (
 	"net/smtp"
 	"testing"
 
-	"msmtpd"
+	"github.com/vodolaz095/msmtpd"
 )
 
 var errRecipientNotWhitelisted = fmt.Errorf("521 I'm sorry, but recipient's email address is not in whitelist")

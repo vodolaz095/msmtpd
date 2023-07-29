@@ -5,7 +5,7 @@ import (
 	"net/netip"
 	"strings"
 
-	"msmtpd"
+	"github.com/vodolaz095/msmtpd"
 )
 
 // Options used to tune how we check HELO/EHLO

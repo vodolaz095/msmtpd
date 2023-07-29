@@ -3,7 +3,7 @@ package sender
 import (
 	"strings"
 
-	"msmtpd"
+	"github.com/vodolaz095/msmtpd"
 )
 
 // AcceptMailFromDomains allows all senders from domain list provided

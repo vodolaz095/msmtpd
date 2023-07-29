@@ -5,7 +5,7 @@ import (
 	"net/smtp"
 	"testing"
 
-	"msmtpd/internal"
+	"github.com/vodolaz095/msmtpd/internal"
 )
 
 func TestXCLIENTNotEnabled(t *testing.T) {

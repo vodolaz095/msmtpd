@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"msmtpd"
+	"github.com/vodolaz095/msmtpd"
 )
 
 // Data used to pack IP address history in file

@@ -1,6 +1,10 @@
 package msmtpd
 
-import "strings"
+import (
+	"strings"
+
+	"go.opentelemetry.io/otel/attribute"
+)
 
 func (t *Transaction) handleRCPT(cmd command) {
 	if len(cmd.params) != 2 || strings.ToUpper(cmd.params[0]) != "TO" {
@@ -40,6 +44,7 @@ func (t *Transaction) handleRCPT(cmd command) {
 	}
 	addr, err := parseAddress(cmd.params[1])
 	if err != nil {
+		t.Span.RecordError(err)
 		t.Hate(missingParameterPenalty)
 		t.reply(502, "Malformed e-mail address")
 		return
@@ -50,12 +55,35 @@ func (t *Transaction) handleRCPT(cmd command) {
 		err = t.server.RecipientCheckers[k](t, addr)
 		if err != nil {
 			t.Hate(unknownRecipientPenalty)
+			t.Span.RecordError(err)
 			t.error(err)
 			return
 		}
 	}
 	t.RcptTo = append(t.RcptTo, *addr)
-	t.LogInfo("Recipient %s will be %v one in transaction", addr, len(t.RcptTo))
+	switch len(t.RcptTo) {
+	case 1:
+		t.LogInfo("Recipient %s will be 1st one in transaction", addr)
+		break
+	case 2:
+		t.LogInfo("Recipient %s will be 2nd one in transaction", addr)
+		break
+	case 3:
+		t.LogInfo("Recipient %s will be 2nd one in transaction", addr)
+		break
+	default:
+		t.LogInfo("Recipient %s will be %dth one in transaction", addr, len(t.RcptTo))
+	}
+	recipientsAsStrings := make([]string, len(t.RcptTo))
+	for i := range t.RcptTo {
+		recipientsAsStrings[i] = t.RcptTo[i].String()
+	}
+	t.Span.SetAttributes(attribute.StringSlice("to", recipientsAsStrings))
+	aliasesAsStrings := make([]string, len(t.Aliases))
+	for i := range t.Aliases {
+		aliasesAsStrings[i] = t.Aliases[i].String()
+	}
+	t.Span.SetAttributes(attribute.StringSlice("aliases", aliasesAsStrings))
 	t.reply(250, "It seems i can handle delivery for this recipient, i'll do my best!")
 	if len(t.RcptTo) == 1 { // too many recipients should not give too many love for transaction
 		t.Love(commandExecutedProperly)

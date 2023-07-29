@@ -6,9 +6,9 @@ import (
 	"sync"
 	"testing"
 
-	"msmtpd"
-	"msmtpd/internal"
-	"msmtpd/plugins/karma/storage/memory"
+	"github.com/vodolaz095/msmtpd"
+	"github.com/vodolaz095/msmtpd/internal"
+	"github.com/vodolaz095/msmtpd/plugins/karma/storage/memory"
 )
 
 func TestKarmaPluginMemoryGood(t *testing.T) {

@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"msmtpd"
+	"github.com/vodolaz095/msmtpd"
 )
 
 // QuarantineFlag is name of flag used to mark transaction's message as being quarantined

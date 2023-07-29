@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"msmtpd/internal"
+	"github.com/vodolaz095/msmtpd/internal"
 )
 
 func TestMaxMessageSize(t *testing.T) {

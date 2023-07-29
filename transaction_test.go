@@ -7,7 +7,7 @@ import (
 	"sync"
 	"testing"
 
-	"msmtpd/internal"
+	"github.com/vodolaz095/msmtpd/internal"
 )
 
 func TestKarma(t *testing.T) {

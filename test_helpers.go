@@ -5,7 +5,7 @@ import (
 	"net"
 	"testing"
 
-	"msmtpd/internal"
+	"github.com/vodolaz095/msmtpd/internal"
 )
 
 // TestLogger is logger being used only in unit tests

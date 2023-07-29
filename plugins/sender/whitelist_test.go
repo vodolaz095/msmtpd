@@ -5,7 +5,7 @@ import (
 	"net/smtp"
 	"testing"
 
-	"msmtpd"
+	"github.com/vodolaz095/msmtpd"
 )
 
 func TestAcceptMailFromDomains(t *testing.T) {

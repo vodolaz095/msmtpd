@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"msmtpd/internal"
+	"github.com/vodolaz095/msmtpd/internal"
 )
 
 func TestProxyNotEnabled(t *testing.T) {

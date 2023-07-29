@@ -1,6 +1,10 @@
 package msmtpd
 
-import "fmt"
+import (
+	"fmt"
+
+	"go.opentelemetry.io/otel/attribute"
+)
 
 func (t *Transaction) handleHELO(cmd command) {
 	var err error
@@ -16,6 +20,8 @@ func (t *Transaction) handleHELO(cmd command) {
 	t.LogDebug("HELO <%s> is received...", cmd.fields[1])
 	t.HeloName = cmd.fields[1]
 	t.Protocol = SMTP
+	t.Span.SetAttributes(attribute.String("helo", t.HeloName))
+	t.Span.SetAttributes(attribute.String("protocol", "SMTP"))
 	for k := range t.server.HeloCheckers {
 		err = t.server.HeloCheckers[k](t)
 		if err != nil {
@@ -61,6 +67,8 @@ func (t *Transaction) handleEHLO(cmd command) {
 	t.LogDebug("EHLO <%s> is received...", cmd.fields[1])
 	t.HeloName = cmd.fields[1]
 	t.Protocol = ESMTP
+	t.Span.SetAttributes(attribute.String("ehlo", t.HeloName))
+	t.Span.SetAttributes(attribute.String("protocol", "ESMTP"))
 	for k := range t.server.HeloCheckers {
 		err = t.server.HeloCheckers[k](t)
 		if err != nil {

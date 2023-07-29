@@ -4,7 +4,7 @@ import (
 	"net"
 	"strings"
 
-	"msmtpd"
+	"github.com/vodolaz095/msmtpd"
 )
 
 // Good read - https://en.wikipedia.org/wiki/MX_record

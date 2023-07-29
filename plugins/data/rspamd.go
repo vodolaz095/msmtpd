@@ -14,7 +14,7 @@ import (
 	"net/http"
 	"regexp"
 
-	"msmtpd"
+	"github.com/vodolaz095/msmtpd"
 )
 
 var subjectRegex *regexp.Regexp
@@ -96,7 +96,9 @@ func CheckByRSPAMD(opts RspamdOpts) msmtpd.DataChecker {
 	if resp.StatusCode != http.StatusOK {
 		log.Fatalf("wrong status %s while trying to check rspamd server ping on %s", resp.Status, opts.URL)
 	}
-	defer resp.Body.Close()
+	if resp.Body != nil {
+		defer resp.Body.Close()
+	}
 	body, setupError := io.ReadAll(resp.Body)
 	if setupError != nil {
 		log.Fatalf("%s : while reading rspamd server ping response from %sping", setupError, opts.URL)

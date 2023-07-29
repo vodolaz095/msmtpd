@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"msmtpd/internal"
+	"github.com/vodolaz095/msmtpd/internal"
 )
 
 func TestSMTP(t *testing.T) {

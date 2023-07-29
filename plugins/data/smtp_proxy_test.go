@@ -7,8 +7,8 @@ import (
 	"os"
 	"testing"
 
-	"msmtpd"
-	"msmtpd/internal"
+	"github.com/vodolaz095/msmtpd"
+	"github.com/vodolaz095/msmtpd/internal"
 )
 
 var testProxyServer, testProxyUsername, testProxyPassword, testProxySender, testProxyRecipient string
@@ -58,7 +58,7 @@ func TestDeliverViaSMTPProxy(t *testing.T) {
 	if err = c.Mail(testProxySender); err != nil {
 		t.Errorf("Mail failed: %v", err)
 	}
-	if err = c.Rcpt(testProxySender); err != nil {
+	if err = c.Rcpt(testProxyRecipient); err != nil {
 		t.Errorf("Rcpt failed: %v", err)
 	}
 	wc, err := c.Data()

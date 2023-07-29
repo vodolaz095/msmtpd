@@ -5,7 +5,6 @@ import "fmt"
 func (t *Transaction) handle(line string) {
 	t.LogTrace("Command received: %s", line)
 	cmd := parseLine(line)
-
 	// Commands are dispatched to the appropriate handler functions.
 	// If a network error occurs during handling, the handler should
 	// just return and let the error be handled on the next read.

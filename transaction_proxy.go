@@ -3,6 +3,8 @@ package msmtpd
 import (
 	"net"
 	"strconv"
+
+	"go.opentelemetry.io/otel/attribute"
 )
 
 // Additional documentation:
@@ -60,5 +62,6 @@ func (t *Transaction) handlePROXY(cmd command) {
 		tcpAddr.IP, tcpAddr.Port,
 	)
 	t.Addr = tcpAddr
+	t.Span.SetAttributes(attribute.String("PROXY", cmd.line))
 	t.welcome()
 }

@@ -14,6 +14,7 @@ import (
 // AddHeader adds header, it should be called before AddReceivedLine, since it adds
 // header to the top
 func (t *Transaction) AddHeader(name, value string) {
+	t.LogDebug("Adding header `%s: %s`", name, value)
 	line := wrap([]byte(fmt.Sprintf("%s: %s\r\n", name, value)))
 	t.Body = append(t.Body, line...)
 	// Move the new newly added header line up front

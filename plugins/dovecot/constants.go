@@ -1,6 +1,6 @@
 package dovecot
 
-import "msmtpd"
+import "github.com/vodolaz095/msmtpd"
 
 // RecipientOverrideFact is name of fact to store username being used for dovecot
 const RecipientOverrideFact = "DovecotRecipientOverrideFact"

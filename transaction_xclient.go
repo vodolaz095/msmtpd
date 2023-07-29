@@ -4,6 +4,8 @@ import (
 	"net"
 	"strconv"
 	"strings"
+
+	"go.opentelemetry.io/otel/attribute"
 )
 
 func (t *Transaction) handleXCLIENT(cmd command) {
@@ -21,6 +23,7 @@ func (t *Transaction) handleXCLIENT(cmd command) {
 		newAddr                  net.IP
 		newTCPPort               uint64
 	)
+	t.Span.SetAttributes(attribute.String("XCLIENT", cmd.line))
 	for _, item := range cmd.fields[1:] {
 		parts := strings.Split(item, "=")
 		if len(parts) != 2 {

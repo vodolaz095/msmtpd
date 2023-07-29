@@ -3,7 +3,7 @@ package dovecot
 import (
 	"fmt"
 
-	"msmtpd"
+	"github.com/vodolaz095/msmtpd"
 )
 
 // https://en.wikipedia.org/wiki/Local_Mail_Transfer_Protocol

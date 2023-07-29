@@ -5,7 +5,7 @@ import (
 	"net/mail"
 	"strings"
 
-	"msmtpd"
+	"github.com/vodolaz095/msmtpd"
 )
 
 // CheckRecipient returns true if the user exists, false otherwise.

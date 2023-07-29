@@ -71,4 +71,5 @@ func (t *Transaction) close() {
 	time.Sleep(200 * time.Millisecond)
 	t.conn.Close()
 	t.cancel()
+	t.Span.End()
 }

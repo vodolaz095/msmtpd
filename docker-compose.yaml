@@ -1,0 +1,20 @@
+version: "3.8"
+
+
+services:
+# сборщик метрик для open-telemetry - WebUI - http://localhost:16686
+# Документация: https://opentelemetry.io/docs/instrumentation/go/getting-started/
+# Образ: https://hub.docker.com/r/jaegertracing/all-in-one
+# пример в Go - https://github.com/open-telemetry/opentelemetry-go/blob/v1.10.0/example/jaeger/main.go
+  jaeger:
+    container_name: jaeger
+    image: jaegertracing/all-in-one:1.47.0
+    ports:
+      - "16686:16686"    # тут слушает web-ui
+      - "6831:6831/udp"  # сюда приходят данные по UDP
+  # похоже не нужно
+  #      - "14268:14268" # сюда приходят данные по HTTP, похоже не используется
+  #      - "5775:5775/udp"
+  #      - 6832:6832/udp
+  #      - 5778:5778
+  #      - 14250:14250

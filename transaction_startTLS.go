@@ -8,8 +8,8 @@ import (
 
 func (t *Transaction) handleSTARTTLS(cmd command) {
 	if t.Encrypted {
-		t.reply(502, "Already running in TLS")
 		t.LogDebug("Connection is already encrypted!")
+		t.reply(502, "Already running in TLS")
 		return
 	}
 	if t.server.TLSConfig == nil {
@@ -20,6 +20,7 @@ func (t *Transaction) handleSTARTTLS(cmd command) {
 	tlsConn := tls.Server(t.conn, t.server.TLSConfig)
 	t.reply(220, "Connection is encrypted, we can talk freely now!")
 	if err := tlsConn.Handshake(); err != nil {
+		t.Span.RecordError(err)
 		t.LogError(err, "couldn't perform handshake")
 		t.reply(550, "TLS Handshake error")
 		return

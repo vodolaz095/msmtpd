@@ -5,7 +5,7 @@ import (
 	"net/smtp"
 	"testing"
 
-	"msmtpd/internal"
+	"github.com/vodolaz095/msmtpd/internal"
 )
 
 func TestAuthRejection(t *testing.T) {

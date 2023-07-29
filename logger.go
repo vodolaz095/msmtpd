@@ -45,6 +45,23 @@ const ErrorLevel LoggerLevel = 3
 // application to prevent data loss (or further data loss).
 const FatalLevel LoggerLevel = 2
 
+func (ll LoggerLevel) String() string {
+	switch ll {
+	case TraceLevel:
+		return "TRACE"
+	case DebugLevel:
+		return "DEBUG"
+	case InfoLevel:
+		return "INFO"
+	case WarnLevel:
+		return "WARN"
+	case ErrorLevel:
+		return "ERROR"
+	default:
+		return fmt.Sprintf("LEVEL%d", ll)
+	}
+}
+
 // DefaultLogger is logger by default using standard library logger as backend https://pkg.go.dev/log
 type DefaultLogger struct {
 	*log.Logger
