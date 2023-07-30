@@ -1,4 +1,4 @@
-package data
+package deliver
 
 import (
 	"crypto/tls"
@@ -25,7 +25,7 @@ func TestDeliverViaSMTPProxy(t *testing.T) {
 	validMessage := internal.MakeTestMessage("scuba@vodolaz095.ru", "scuba@vodolaz095.ru")
 	addr, closer := msmtpd.RunTestServerWithoutTLS(t, &msmtpd.Server{
 		DataHandlers: []msmtpd.DataHandler{
-			DeliverViaSMTPProxy(SMTPProxyOptions{
+			ViaSMTPProxy(SMTPProxyOptions{
 				Network: "tcp",
 				Address: testProxyServer + ":587",
 				HELO:    "localhost",

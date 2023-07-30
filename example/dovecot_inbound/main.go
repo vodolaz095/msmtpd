@@ -16,6 +16,8 @@ import (
 	"github.com/vodolaz095/msmtpd/plugins/data"
 	"github.com/vodolaz095/msmtpd/plugins/dovecot"
 	"github.com/vodolaz095/msmtpd/plugins/helo"
+	"github.com/vodolaz095/msmtpd/plugins/quarantine"
+	"github.com/vodolaz095/msmtpd/plugins/rspamd"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -45,8 +47,8 @@ func main() {
 		log.Fatalf("%s : while making TLS config for localhost", err)
 	}
 	// how to dial RSPAMD
-	rspamdOpts := data.RspamdOpts{
-		URL: data.RspamdDefaultAddress,
+	rspamdOpts := rspamd.Opts{
+		URL: rspamd.DefaultAddress,
 		// URL:      "http://holod.local:11334/",
 		Password: "who cares",
 	}
@@ -79,18 +81,16 @@ func main() {
 
 		// check HELO/EHLO with sane default values
 		HeloCheckers: []msmtpd.HelloChecker{
-			helo.CheckHELO(helo.Options{
-				// hostname should be full top list domain name like mx.mail.ru
-				TolerateInvalidHostname: true,
-				// you cannot send 127.0.0.1 as HELO/EHLO
-				TolerateBareIP: false,
-				// you cannot send HELO/EHLO that looks like dynamic addresses issued by ISP to residential internet clients
-				TolerateDynamic: true,
-				// if connection IP address PTR record differs from HELO/EHLO, connection is not allowed
-				TolerateRDNSMismatch: true,
-				// do not check PTR records for clients from local network
-				IgnoreHostnameForLocalAddresses: true,
-			}),
+			// do not check PTR records for clients from local network
+			helo.SkipHeloCheckForLocal,
+			// hostname should be full top list domain name like mx.mail.ru
+			helo.DenyMalformedDomain,
+			// you cannot send 127.0.0.1 as HELO/EHLO
+			helo.DenyBareIP,
+			// you cannot send HELO/EHLO that looks like dynamic addresses issued by ISP to residential internet clients
+			helo.DenyDynamicIP,
+			// if connection IP address PTR record differs from HELO/EHLO, connection is not allowed
+			helo.DenyReverseDNSMismatch,
 		},
 		RecipientCheckers: []msmtpd.RecipientChecker{
 			// check, if recipient is accepted by dovecot by
@@ -102,11 +102,11 @@ func main() {
 			data.CheckHeaders(data.DefaultHeadersToRequire),
 			// check message body by rspamd running localy
 			// Just point URL to Rspamd fancy webGUI with charts and provide password
-			data.CheckByRSPAMD(rspamdOpts),
+			rspamd.CheckByRSPAMD(rspamdOpts),
 		},
 		DataHandlers: []msmtpd.DataHandler{
-			// if rspamd dislikes message, we send not quarantine directory
-			data.Quarantine(filepath.Join(os.TempDir(), "spam")),
+			// if rspamd dislikes message, we send it to quarantine directory
+			quarantine.MoveToDirectory(filepath.Join(os.TempDir(), "spam")),
 			// if rspamd is ok with message, we deliver it to backend
 			backend.Deliver,
 		},

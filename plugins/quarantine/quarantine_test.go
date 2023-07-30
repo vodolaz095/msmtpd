@@ -1,4 +1,4 @@
-package data
+package quarantine
 
 import (
 	"fmt"
@@ -27,7 +27,7 @@ func TestQuarantine(t *testing.T) {
 			},
 		},
 		DataHandlers: []msmtpd.DataHandler{
-			Quarantine(dir),
+			MoveToDirectory(dir),
 		},
 	})
 	defer closer()

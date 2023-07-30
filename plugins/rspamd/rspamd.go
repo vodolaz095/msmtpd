@@ -1,4 +1,4 @@
-package data
+package rspamd
 
 // Good read
 // https://rspamd.com/doc/architecture/protocol.html
@@ -23,67 +23,67 @@ func init() {
 	subjectRegex = regexp.MustCompile(`^Subject:.*$`)
 }
 
-// RspamdDefaultAddress is HTTP address where funny RSPAMD GUI is listening
-const RspamdDefaultAddress = "http://localhost:11334/"
+// DefaultAddress is HTTP address where funny RSPAMD GUI is listening
+const DefaultAddress = "http://localhost:11334/"
 
-// RspamdDefaultEndpoint is endpoint being used for checks
-const RspamdDefaultEndpoint = "checkv2"
+// DefaultEndpoint is endpoint being used for checks
+const DefaultEndpoint = "checkv2"
 
-// RspamdOpts used to configure how we dial RSPAMD
-type RspamdOpts struct {
+// Opts used to configure how we dial RSPAMD
+type Opts struct {
 	URL        string
 	Password   string
 	HTTPClient *http.Client
 }
 
-// RspamdResponse used to parse JSON response of RSPAMD check
-type RspamdResponse struct {
-	IsSkipped     bool         `json:"is_skipped"`
-	Score         float64      `json:"score"`
-	RequiredScore float64      `json:"required_score"`
-	Action        string       `json:"action"`
-	Urls          []string     `json:"urls"`
-	Emails        []string     `json:"emails"`
-	MessageID     string       `json:"message-id"`
-	Subject       string       `json:"subject,omitempty"`
-	Milter        RspamdMilter `json:"milter"`
+// Response used to parse JSON response of RSPAMD check
+type Response struct {
+	IsSkipped     bool     `json:"is_skipped"`
+	Score         float64  `json:"score"`
+	RequiredScore float64  `json:"required_score"`
+	Action        string   `json:"action"`
+	Urls          []string `json:"urls"`
+	Emails        []string `json:"emails"`
+	MessageID     string   `json:"message-id"`
+	Subject       string   `json:"subject,omitempty"`
+	Milter        Milter   `json:"milter"`
 }
 
-// RspamdMilter is part of RspamdResponse used to manipulate headers
-type RspamdMilter struct {
-	AddHeaders map[string]RspamdAddHeader `json:"add_headers"`
+// Milter is part of Response used to manipulate headers
+type Milter struct {
+	AddHeaders map[string]AddHeader `json:"add_headers"`
 }
 
-// RspamdAddHeader is part of RspamdMilter in RspamdResponse used to add headers
-type RspamdAddHeader struct {
+// AddHeader is part of Milter in Response used to add headers
+type AddHeader struct {
 	Value string
 	Order string
 }
 
-// RspamdActionNoop is thing rspamd recomends to do with this message
-const RspamdActionNoop = "no action"
+// ActionNoop is thing rspamd recomends to do with this message
+const ActionNoop = "no action"
 
-// RspamdActionGreylist is thing rspamd recomends to do with this message
-const RspamdActionGreylist = "greylist"
+// ActionGreylist is thing rspamd recomends to do with this message
+const ActionGreylist = "greylist"
 
-// RspamdActionAddHeader is thing rspamd recomends to do with this message
-const RspamdActionAddHeader = "add header"
+// ActionAddHeader is thing rspamd recomends to do with this message
+const ActionAddHeader = "add header"
 
-// RspamdActionRewriteSubject is thing rspamd recomends to do with this message
-const RspamdActionRewriteSubject = "rewrite subject"
+// ActionRewriteSubject is thing rspamd recomends to do with this message
+const ActionRewriteSubject = "rewrite subject"
 
-// RspamdActionSoftReject is thing rspamd recomends to do with this message
-const RspamdActionSoftReject = "soft reject"
+// ActionSoftReject is thing rspamd recomends to do with this message
+const ActionSoftReject = "soft reject"
 
-// RspamdActionHardReject is thing rspamd recomends to do with this message
-const RspamdActionHardReject = "reject"
+// ActionHardReject is thing rspamd recomends to do with this message
+const ActionHardReject = "reject"
 
 const rspamdComplain = "Too many letters, i cannot read them all now. Please, resend your message later"
 
 // CheckByRSPAMD is msmtpd.DataHandler function that calls RSPAMD API to validate message against it
-func CheckByRSPAMD(opts RspamdOpts) msmtpd.DataChecker {
+func CheckByRSPAMD(opts Opts) msmtpd.DataChecker {
 	if opts.URL == "" {
-		opts.URL = RspamdDefaultAddress
+		opts.URL = DefaultAddress
 	}
 	if opts.HTTPClient == nil {
 		opts.HTTPClient = http.DefaultClient
@@ -109,7 +109,7 @@ func CheckByRSPAMD(opts RspamdOpts) msmtpd.DataChecker {
 	}
 	return func(transaction *msmtpd.Transaction) error {
 		payload := bytes.NewReader(transaction.Body)
-		req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s%s", opts.URL, RspamdDefaultEndpoint), payload)
+		req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s%s", opts.URL, DefaultEndpoint), payload)
 		if err != nil {
 			transaction.LogError(err, "error while making HTTP request to RSPAMD")
 			return msmtpd.ErrorSMTP{
@@ -160,7 +160,7 @@ func CheckByRSPAMD(opts RspamdOpts) msmtpd.DataChecker {
 			}
 		}
 		transaction.LogDebug("rspamd response is %s", string(checkResponseBody))
-		var rr RspamdResponse
+		var rr Response
 		err = json.Unmarshal(checkResponseBody, &rr)
 		if err != nil {
 			transaction.LogError(err, "while parsing rspamd response")
@@ -173,30 +173,30 @@ func CheckByRSPAMD(opts RspamdOpts) msmtpd.DataChecker {
 			rr.MessageID, rr.Score, rr.RequiredScore, rr.Action,
 		)
 		switch rr.Action {
-		case RspamdActionNoop:
+		case ActionNoop:
 			return nil
-		case RspamdActionGreylist:
+		case ActionGreylist:
 			return msmtpd.ErrorSMTP{
 				Code:    451,
 				Message: "Your message looks suspicious, try to deliver it one more time, maybe i'll change my mind and accept it",
 			}
-		case RspamdActionAddHeader:
+		case ActionAddHeader:
 			for k, v := range rr.Milter.AddHeaders {
 				transaction.LogDebug("Rspamd adds header %s : %s", k, v.Value)
 				transaction.AddHeader(k, v.Value)
 			}
 			return nil
-		case RspamdActionRewriteSubject:
+		case ActionRewriteSubject:
 			transaction.Body = subjectRegex.ReplaceAll(transaction.Body,
 				[]byte(fmt.Sprintf("Subject: %s", rr.Subject)),
 			)
 			return nil
-		case RspamdActionSoftReject:
+		case ActionSoftReject:
 			return msmtpd.ErrorSMTP{
 				Code:    421,
 				Message: rspamdComplain,
 			}
-		case RspamdActionHardReject:
+		case ActionHardReject:
 			return msmtpd.ErrorSMTP{
 				Code:    521,
 				Message: "Stop sending me this nonsense, please!",

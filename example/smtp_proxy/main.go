@@ -14,6 +14,7 @@ import (
 
 	"github.com/vodolaz095/msmtpd"
 	"github.com/vodolaz095/msmtpd/plugins/data"
+	"github.com/vodolaz095/msmtpd/plugins/deliver"
 	"github.com/vodolaz095/msmtpd/plugins/recipient"
 	"github.com/vodolaz095/msmtpd/plugins/sender"
 )
@@ -33,7 +34,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("%s : while setting certificate", err)
 	}
-	proxyOptions := data.SMTPProxyOptions{
+	proxyOptions := deliver.SMTPProxyOptions{
 		Network:  "tcp",
 		Address:  "smtp.example.org:25",
 		HELO:     "localhost",
@@ -97,7 +98,7 @@ func main() {
 		// DataHandlers are actual message delivery to persistent storage
 		DataHandlers: []msmtpd.DataHandler{
 			// we try to deliver via 3rd party proxy
-			data.DeliverViaSMTPProxy(proxyOptions),
+			deliver.ViaSMTPProxy(proxyOptions),
 		},
 		// CloseHandlers are called when client closes connection, they can be used
 		// to, for example, record connection data in database or save metrics

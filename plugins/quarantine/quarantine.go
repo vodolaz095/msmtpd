@@ -1,4 +1,4 @@
-package data
+package quarantine
 
 import (
 	"fmt"
@@ -12,15 +12,15 @@ import (
 // QuarantineFlag is name of flag used to mark transaction's message as being quarantined
 const QuarantineFlag = "quarantine"
 
-// Quarantine saves messages of flagged by QuarantineFlag transactions into directory using pattern directory/YYYY/MM/DD/{transactionID}.eml
-func Quarantine(directory string) msmtpd.DataHandler {
+// MoveToDirectory saves messages of flagged by QuarantineFlag transactions into directory using pattern directory/YYYY/MM/DD/{transactionID}.eml
+func MoveToDirectory(directory string) msmtpd.DataHandler {
 	err := os.MkdirAll(directory, 0755)
 	if err != nil {
-		log.Fatalf("%s : while making Quarantine directory at %s", err, directory)
+		log.Fatalf("%s : while making MoveToDirectory directory at %s", err, directory)
 	}
 	return func(tr *msmtpd.Transaction) error {
 		if !tr.IsFlagSet(QuarantineFlag) {
-			tr.LogDebug("Quarantine flag is not set")
+			tr.LogDebug("MoveToDirectory flag is not set")
 			return nil
 		}
 		dir := filepath.Join(directory,

@@ -66,7 +66,6 @@ func (t *Transaction) error(err error) {
 }
 
 func (t *Transaction) close() {
-	t.LogDebug("Closing transaction...")
 	t.writer.Flush()
 	time.Sleep(200 * time.Millisecond)
 	t.conn.Close()
