@@ -17,9 +17,7 @@ var DefaultHeadersToRequire = []string{
 	"Subject",
 }
 
-// CheckHeaders is Handler for processing message body to ensure is
-// 1. parsable as email message
-// 2. contains minimal headers required
+// CheckHeaders is Handler for processing message body to ensure it contains minimal headers required
 func CheckHeaders(headersRequired []string) func(transaction *msmtpd.Transaction) error {
 	return func(transaction *msmtpd.Transaction) error {
 		var val string

@@ -47,8 +47,8 @@ func main() {
 	// add random delays
 	worker := procrastinator.Default()
 
-	// setting up OpenTelemetry
-	exp, err := jaeger.New(jaeger.WithAgentEndpoint( // так будет использоваться протокол UDP
+	// setting up OpenTelemetry to report traces to jaeger via udp
+	exp, err := jaeger.New(jaeger.WithAgentEndpoint(
 		jaeger.WithAgentHost("127.0.0.1"),
 		jaeger.WithAgentPort("6831"),
 	))

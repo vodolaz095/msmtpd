@@ -36,17 +36,21 @@ type Transaction struct {
 	ServerName string
 	// Addr depicts network address of remote client
 	Addr net.Addr
-	// TLS Connection details, if encryption is enabled
-	// Ptrs are DNS pointer record which provides the domain name associated with an IP address.
-	// A DNS PTR record is exactly the opposite of the 'A' record, which provides the IP address associated with a
+	// PTRs are  DNS PTR record is exactly the opposite of the 'A' record, which provides the IP address associated with a
 	// domain name.
 	PTRs []string
 
+	// TLS Connection details, if encryption is enabled
+	// Ptrs are DNS pointer record which provides the domain name associated with an IP address.
 	TLS *tls.ConnectionState
 	// Encrypted means connection is encrypted by TLS
 	Encrypted bool
 	// Secured means TLS handshake succeeded
 	Secured bool
+
+	// Logger is logging system inherited from server
+	Logger Logger
+
 	// HeloName is how client introduced himself via HELO/EHLO command
 	HeloName string
 	// Protocol used, SMTP or ESMTP
@@ -62,32 +66,34 @@ type Transaction struct {
 
 	// Body stores unparsed message body
 	Body []byte
-
 	// Parsed stores parsed message body
 	Parsed *mail.Message
-	// Logger is logging system inherited from server
-	Logger Logger
+
+	// mu is mutex used to protect writing facts, counters and flags
+	mu *sync.Mutex
 	// facts are map of string data related to transaction
 	facts map[string]string
 	// counters are map of float data related to transaction
 	counters map[string]float64
 	// flags are map of bool data related to transaction
 	flags map[string]bool
+
 	// Aliases are actual users addresses used by delivery plugins
 	Aliases []mail.Address
 
-	ctx    context.Context
+	// ctx is main transaction context
+	ctx context.Context
+	// cancel cancels ctx context
 	cancel context.CancelFunc
 	// Span is OpenTelemetry span being used in transaction
 	Span trace.Span
 
-	server  *Server
+	server *Server
+
 	conn    net.Conn
 	reader  *bufio.Reader
 	writer  *bufio.Writer
 	scanner *bufio.Scanner
-
-	mu *sync.Mutex
 }
 
 // Context returns transaction context, which is canceled when transaction is closed

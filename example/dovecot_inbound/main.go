@@ -18,6 +18,7 @@ import (
 	"github.com/vodolaz095/msmtpd/plugins/helo"
 	"github.com/vodolaz095/msmtpd/plugins/quarantine"
 	"github.com/vodolaz095/msmtpd/plugins/rspamd"
+	"github.com/vodolaz095/msmtpd/plugins/sender"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -47,13 +48,14 @@ func main() {
 		log.Fatalf("%s : while making TLS config for localhost", err)
 	}
 	// how to dial RSPAMD
+	// Just point URL to Rspamd fancy webGUI with charts and provide password
 	rspamdOpts := rspamd.Opts{
 		URL: rspamd.DefaultAddress,
 		// URL:      "http://holod.local:11334/",
 		Password: "who cares",
 	}
-	// setting up OpenTelemetry
-	exp, err := jaeger.New(jaeger.WithAgentEndpoint( // так будет использоваться протокол UDP
+	// setting up OpenTelemetry to report traces to jaeger via udp
+	exp, err := jaeger.New(jaeger.WithAgentEndpoint(
 		jaeger.WithAgentHost("127.0.0.1"),
 		jaeger.WithAgentPort("6831"),
 	))
@@ -78,6 +80,10 @@ func main() {
 	server := msmtpd.Server{
 		Hostname:         "mx.example.org",
 		SkipResolvingPTR: false, // important
+		TLSConfig:        tlsConfig,
+		ForceTLS:         true,
+		Logger:           &logger,
+		Tracer:           tp.Tracer("msmtpd4dovecot"),
 
 		// check HELO/EHLO with sane default values
 		HeloCheckers: []msmtpd.HelloChecker{
@@ -92,6 +98,15 @@ func main() {
 			// if connection IP address PTR record differs from HELO/EHLO, connection is not allowed
 			helo.DenyReverseDNSMismatch,
 		},
+		SenderCheckers: []msmtpd.SenderChecker{
+			// at least require that senders email address belongs to domain we can theoretically
+			// deliver messages too. Sane default values restrict 50%+ botnet spam coming
+			// from infected routers and smart refrigerators.
+			sender.IsResolvable(sender.IsResolvableOptions{
+				FallbackToAddressRecord: false,
+				AllowLocalAddresses:     false,
+			}),
+		},
 		RecipientCheckers: []msmtpd.RecipientChecker{
 			// check, if recipient is accepted by dovecot by
 			// dialing unix:///var/run/dovecot/auth-client
@@ -100,20 +115,15 @@ func main() {
 		DataCheckers: []msmtpd.DataChecker{
 			// ensure message has minimal headers in place
 			data.CheckHeaders(data.DefaultHeadersToRequire),
-			// check message body by rspamd running localy
-			// Just point URL to Rspamd fancy webGUI with charts and provide password
-			rspamd.CheckByRSPAMD(rspamdOpts),
+			// check message body by rspamd running locally
+			rspamd.DataChecker(rspamdOpts),
 		},
 		DataHandlers: []msmtpd.DataHandler{
 			// if rspamd dislikes message, we send it to quarantine directory
 			quarantine.MoveToDirectory(filepath.Join(os.TempDir(), "spam")),
-			// if rspamd is ok with message, we deliver it to backend
+			// if rspamd is ok with message, we deliver it to dovecot LMTP socket
 			backend.Deliver,
 		},
-		TLSConfig: tlsConfig,
-		ForceTLS:  true,
-		Logger:    &logger,
-		Tracer:    tp.Tracer("msmtpd4dovecot"),
 	}
 	err = server.ListenAndServe(":1025")
 	if err != nil {

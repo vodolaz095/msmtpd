@@ -16,11 +16,12 @@ func main() {
 
 	server := msmtpd.Server{
 		Hostname:         "localhost",
-		WelcomeMessage:   "",
+		WelcomeMessage:   "Do you believe in our God?",
 		MaxConnections:   5,
 		MaxMessageSize:   5 * 1024 * 1024, // 5mb
 		MaxRecipients:    5,
 		SkipResolvingPTR: false, // can make things faster, but various HELO/EHLO checks will not work
+		Logger:           &logger,
 
 		// ConnectionCheckers are called when client performed TCP connection
 		ConnectionCheckers: []msmtpd.ConnectionChecker{
@@ -38,6 +39,8 @@ func main() {
 			func(tr *msmtpd.Transaction) error {
 				if tr.HeloName != "localhost" {
 					tr.Hate(1) // i do not like being irritated
+				} else {
+					tr.SetFlag("localhost")
 				}
 				return nil
 			},
@@ -72,6 +75,9 @@ func main() {
 						Code:    535,
 						Message: "Please, provide subject for your message!",
 					}
+				} else {
+					// set string fact about transaction
+					tr.SetFact("subject", subject)
 				}
 				return nil
 			},
@@ -80,6 +86,8 @@ func main() {
 		DataHandlers: []msmtpd.DataHandler{
 			func(tr *msmtpd.Transaction) error {
 				tr.LogInfo("We pretend we deliver %v bytes of message somehow", len(tr.Body))
+				// set float64 fact abount transaction
+				tr.Incr("size", float64(len(tr.Body)))
 				return msmtpd.ErrServiceNotAvailable
 			},
 		},
@@ -88,10 +96,23 @@ func main() {
 		CloseHandlers: []msmtpd.CloseHandler{
 			func(tr *msmtpd.Transaction) error {
 				tr.LogInfo("Closing connection. Karma is %d", tr.Karma())
+				// reading string fact
+				subject, found := tr.GetFact("subject")
+				if found {
+					tr.LogInfo("Subject %s", subject)
+				}
+				// reading float64 counter
+				size, found := tr.GetCounter("size")
+				if found {
+					tr.LogInfo("Body size is %v", size)
+				}
+				// reading boolean flag present
+				if tr.IsFlagSet("localhost") {
+					tr.LogInfo("Transaction is send from localhost")
+				}
 				return nil // error means nothing here, to be honest
 			},
 		},
-		Logger: &logger,
 	}
 
 	err := server.ListenAndServe(":1025")

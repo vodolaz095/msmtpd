@@ -70,6 +70,13 @@ func (t *Transaction) handleDATA(cmd command) {
 				})
 				return
 			}
+
+			subject := t.Parsed.Header.Get("Subject")
+			if subject != "" {
+				t.LogInfo("Subject: %s", subject)
+				t.Span.SetAttributes(attribute.String("subject", subject))
+			}
+
 			t.LogDebug("Message body of %v bytes is parsed, calling %v DataCheckers on it",
 				data.Len(), len(t.server.DataCheckers))
 			for j := range t.server.DataCheckers {
