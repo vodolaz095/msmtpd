@@ -13,8 +13,20 @@ func SkipHeloCheckForLocal(transaction *msmtpd.Transaction) error {
 		transaction.LogError(err, "while parsing remote address "+transaction.Addr.String())
 		return complain
 	}
+	if addrPort.Addr().IsLoopback() {
+		transaction.LogInfo("Skipping HELO/EHLO checks for loopback address %s and HELO %s",
+			transaction.Addr.String(), transaction.HeloName,
+		)
+		transaction.SetFlag(IsLocalAddressFlagName)
+	}
+	if addrPort.Addr().IsLinkLocalUnicast() {
+		transaction.LogInfo("Skipping HELO/EHLO checks for local unicast address %s and HELO %s",
+			transaction.Addr.String(), transaction.HeloName,
+		)
+		transaction.SetFlag(IsLocalAddressFlagName)
+	}
 	if addrPort.Addr().IsPrivate() {
-		transaction.LogInfo("Skipping HELO/EHLO checks for local address %s and HELO %s",
+		transaction.LogInfo("Skipping HELO/EHLO checks for private network address %s and HELO %s",
 			transaction.Addr.String(), transaction.HeloName,
 		)
 		transaction.SetFlag(IsLocalAddressFlagName)
