@@ -39,6 +39,7 @@ func (t *Transaction) reject() {
 
 func (t *Transaction) reset() {
 	t.Body = nil
+	t.Parsed = nil
 }
 
 func (t *Transaction) welcome() {
