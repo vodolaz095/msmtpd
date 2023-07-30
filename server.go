@@ -210,8 +210,8 @@ func (srv *Server) startTransaction(c net.Conn) (t *Transaction) {
 		err = t.server.ConnectionCheckers[k](t)
 		if err != nil {
 			t.error(err)
-			t.close()
 			span.RecordError(err)
+			t.close()
 			break
 		}
 	}
