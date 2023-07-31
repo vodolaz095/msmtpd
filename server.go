@@ -209,10 +209,13 @@ func (srv *Server) startTransaction(c net.Conn) (t *Transaction) {
 	for k := range srv.ConnectionCheckers {
 		err = t.server.ConnectionCheckers[k](t)
 		if err != nil {
+			t.LogError(err, "while calling connection checker")
 			t.error(err)
-			t.close()
 			span.RecordError(err)
-			break
+			srv.runCloseHandlers(t)
+			t.close()
+			t.cancel()
+			return
 		}
 	}
 	t.scanner = bufio.NewScanner(t.reader)
@@ -233,6 +236,12 @@ func (srv *Server) ListenAndServe(addr string) error {
 }
 
 func (srv *Server) runCloseHandlers(transaction *Transaction) {
+	transaction.mu.Lock()
+	defer transaction.mu.Unlock()
+	if transaction.closeHandlersCalled {
+		transaction.LogWarn("close handlers already called")
+		return
+	}
 	var closeError error
 	srv.Logger.Debugf(transaction, "Starting %v close handlers...", len(srv.CloseHandlers))
 	for k := range srv.CloseHandlers {
@@ -245,6 +254,7 @@ func (srv *Server) runCloseHandlers(transaction *Transaction) {
 			srv.Logger.Debugf(transaction, "closing handler %v is called", k)
 		}
 	}
+	transaction.closeHandlersCalled = true
 }
 
 // Serve starts the SMTP server and listens on the Listener provided
@@ -290,6 +300,7 @@ func (srv *Server) Serve(l net.Listener) error {
 					transaction.reject()
 					srv.runCloseHandlers(transaction)
 					srv.Logger.Debugf(transaction, "Transaction is rejected, server is busy")
+					transaction.close()
 				}
 			} else {
 				transaction.serve()

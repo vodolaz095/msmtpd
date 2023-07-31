@@ -98,6 +98,7 @@ func TestListenAndServe(t *testing.T) {
 
 func TestMaxConnections(t *testing.T) {
 	addr, closer := RunTestServerWithoutTLS(t, &Server{
+		Logger:         &TestLogger{Suite: t},
 		MaxConnections: 1,
 	})
 	defer closer()
@@ -114,6 +115,7 @@ func TestMaxConnections(t *testing.T) {
 
 func TestNoMaxConnections(t *testing.T) {
 	addr, closer := RunTestServerWithoutTLS(t, &Server{
+		Logger:         &TestLogger{Suite: t},
 		MaxConnections: -1,
 	})
 	defer closer()
@@ -126,6 +128,7 @@ func TestNoMaxConnections(t *testing.T) {
 
 func TestTimeoutClose(t *testing.T) {
 	addr, closer := RunTestServerWithoutTLS(t, &Server{
+		Logger:         &TestLogger{Suite: t},
 		MaxConnections: 1,
 		ReadTimeout:    time.Second,
 		WriteTimeout:   time.Second,
@@ -154,6 +157,7 @@ func TestTimeoutClose(t *testing.T) {
 
 func TestTLSTimeout(t *testing.T) {
 	addr, closer := RunTestServerWithTLS(t, &Server{
+		Logger:       &TestLogger{Suite: t},
 		ReadTimeout:  time.Second * 2,
 		WriteTimeout: time.Second * 2,
 	})
@@ -188,6 +192,7 @@ func TestCloseHandlers(t *testing.T) {
 	var closeHandler1Called bool
 	var closeHandler2Called bool
 	addr, closer := RunTestServerWithoutTLS(t, &Server{
+		Logger: &TestLogger{Suite: t},
 		ConnectionCheckers: []ConnectionChecker{
 			func(transaction *Transaction) error {
 				t.Logf("Giving 2 wg to transaction %s", transaction.ID)
@@ -241,6 +246,7 @@ func TestTLSListener(t *testing.T) {
 	defer ln.Close()
 	addr := ln.Addr().String()
 	server := &Server{
+		Logger: &TestLogger{Suite: t},
 		Authenticator: func(tr *Transaction, username, password string) error {
 			if tr.TLS == nil {
 				t.Error("didn't correctly set connection state on TLS connection")
@@ -275,7 +281,9 @@ func TestTLSListener(t *testing.T) {
 
 func TestShutdown(t *testing.T) {
 	t.Logf("Starting shutdown test")
-	server := &Server{}
+	server := &Server{
+		Logger: &TestLogger{Suite: t},
+	}
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		t.Errorf("Listen failed: %v", err)
@@ -352,7 +360,9 @@ func TestShutdown(t *testing.T) {
 }
 
 func TestServeFailsIfShutdown(t *testing.T) {
-	server := &Server{}
+	server := &Server{
+		Logger: &TestLogger{Suite: t},
+	}
 	err := server.Shutdown(true)
 	if err != nil {
 		t.Errorf("Shutdown() failed: %v", err)
@@ -364,7 +374,9 @@ func TestServeFailsIfShutdown(t *testing.T) {
 }
 
 func TestWaitFailsIfNotShutdown(t *testing.T) {
-	server := &Server{}
+	server := &Server{
+		Logger: &TestLogger{Suite: t},
+	}
 	err := server.Wait()
 	if err == nil {
 		t.Errorf("Wait() did not fail as expected")

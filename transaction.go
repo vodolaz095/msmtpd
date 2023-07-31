@@ -94,6 +94,8 @@ type Transaction struct {
 	reader  *bufio.Reader
 	writer  *bufio.Writer
 	scanner *bufio.Scanner
+
+	closeHandlersCalled bool
 }
 
 // Context returns transaction context, which is canceled when transaction is closed

@@ -8,7 +8,11 @@ import (
 )
 
 func (t *Transaction) serve() {
-	defer t.close()
+	defer func() {
+		t.server.runCloseHandlers(t)
+		t.close()
+		t.cancel()
+	}()
 	if !t.server.EnableProxyProtocol {
 		t.welcome()
 	}
@@ -71,5 +75,4 @@ func (t *Transaction) close() {
 	time.Sleep(200 * time.Millisecond)
 	t.conn.Close()
 	t.Span.End()
-	t.cancel()
 }
