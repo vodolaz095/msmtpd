@@ -38,20 +38,29 @@ type Opts struct {
 
 // Response used to parse JSON response of RSPAMD check
 type Response struct {
-	IsSkipped     bool     `json:"is_skipped"`
-	Score         float64  `json:"score"`
-	RequiredScore float64  `json:"required_score"`
-	Action        string   `json:"action"`
-	Urls          []string `json:"urls"`
-	Emails        []string `json:"emails"`
-	MessageID     string   `json:"message-id"`
-	Subject       string   `json:"subject,omitempty"`
-	Milter        Milter   `json:"milter"`
+	IsSkipped     bool              `json:"is_skipped"`
+	Score         float64           `json:"score"`
+	RequiredScore float64           `json:"required_score"`
+	Action        string            `json:"action"`
+	Urls          []string          `json:"urls"`
+	Emails        []string          `json:"emails"`
+	MessageID     string            `json:"message-id"`
+	Subject       string            `json:"subject,omitempty"`
+	Milter        Milter            `json:"milter"`
+	Symbols       map[string]Symbol `json:"symbols"`
 }
 
 // Milter is part of Response used to manipulate headers
 type Milter struct {
 	AddHeaders map[string]AddHeader `json:"add_headers"`
+}
+
+// Symbol is part of Response used to show rules and result of their executions
+type Symbol struct {
+	Name        string  `json:"name"`
+	Score       float64 `json:"score"`
+	MetricScore float64 `json:"metric_score"`
+	Description string  `json:"description"`
 }
 
 // AddHeader is part of Milter in Response used to add headers
@@ -123,11 +132,9 @@ func DataChecker(opts Opts) msmtpd.DataChecker {
 		if opts.Password != "" {
 			req.Header.Add("Password", opts.Password)
 		}
-
 		for i := range transaction.RcptTo { // Defines SMTP recipient (there may be several Rcpt headers)
 			req.Header.Add("Rcpt", transaction.RcptTo[i].String())
 		}
-
 		if transaction.Username != "" {
 			req.Header.Add("User", transaction.Username)
 		}
@@ -159,7 +166,7 @@ func DataChecker(opts Opts) msmtpd.DataChecker {
 				Message: rspamdComplain,
 			}
 		}
-		transaction.LogDebug("rspamd response is %s", string(checkResponseBody))
+		transaction.LogTrace("rspamd response is %s", string(checkResponseBody))
 		var rr Response
 		err = json.Unmarshal(checkResponseBody, &rr)
 		if err != nil {
@@ -169,6 +176,12 @@ func DataChecker(opts Opts) msmtpd.DataChecker {
 				Message: rspamdComplain,
 			}
 		}
+		for k := range rr.Symbols {
+			transaction.LogDebug("Rule %s (%s) gives score=%.2f metric_score=%.2f",
+				k, rr.Symbols[k].Description, rr.Symbols[k].Score, rr.Symbols[k].MetricScore,
+			)
+		}
+
 		transaction.LogInfo("Rspamd check result: message `%s` has score %.2f of %.2f required and action is %s",
 			rr.MessageID, rr.Score, rr.RequiredScore, rr.Action,
 		)
