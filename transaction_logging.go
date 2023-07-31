@@ -70,6 +70,10 @@ func (t *Transaction) LogWarn(format string, args ...any) {
 
 // LogError is used to send error level message to server logger
 func (t *Transaction) LogError(err error, desc string) {
+	if t.Span != nil {
+		t.Span.RecordError(err)
+		t.Span.AddEvent(desc)
+	}
 	t.logEvent(ErrorLevel, "%s %s", err, desc)
 }
 
