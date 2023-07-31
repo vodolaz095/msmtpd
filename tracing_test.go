@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/mail"
 	"net/smtp"
+	"sync"
 	"testing"
 	"time"
 
@@ -19,11 +20,12 @@ import (
 )
 
 const testJaegerHost = "127.0.0.1"
+const testJaegerPort = "6831"
 
 func TestTracingSuccess(t *testing.T) {
 	exp, err := jaeger.New(jaeger.WithAgentEndpoint( // так будет использоваться протокол UDP
-		jaeger.WithAgentHost("127.0.0.1"),
-		jaeger.WithAgentPort("6831"),
+		jaeger.WithAgentHost(testJaegerHost),
+		jaeger.WithAgentPort(testJaegerPort),
 	))
 	if err != nil {
 		t.Errorf("%s : while dialing jaeger", err)
@@ -116,8 +118,8 @@ func TestTracingSuccess(t *testing.T) {
 
 func TestTracingError(t *testing.T) {
 	exp, err := jaeger.New(jaeger.WithAgentEndpoint( // так будет использоваться протокол UDP
-		jaeger.WithAgentHost("127.0.0.1"),
-		jaeger.WithAgentPort("6831"),
+		jaeger.WithAgentHost(testJaegerHost),
+		jaeger.WithAgentPort(testJaegerPort),
 	))
 	if err != nil {
 		t.Errorf("%s : while dialing jaeger", err)
@@ -207,6 +209,80 @@ func TestTracingError(t *testing.T) {
 	}
 	if err = c.Quit(); err != nil {
 		t.Errorf("Quit failed: %v", err)
+	}
+	time.Sleep(time.Second)
+	err = tp.Shutdown(context.TODO())
+	if err != nil {
+		t.Errorf("%s : while flusing traces", err)
+	}
+}
+
+func TestTracingConnectionCheckerAndCloseHandlers(t *testing.T) {
+	var connectionHandlerCalled, closeHandlerCalled bool
+	wg := sync.WaitGroup{}
+	wg.Add(2)
+	exp, err := jaeger.New(jaeger.WithAgentEndpoint( // так будет использоваться протокол UDP
+		jaeger.WithAgentHost(testJaegerHost),
+		jaeger.WithAgentPort(testJaegerPort),
+	))
+	if err != nil {
+		t.Errorf("%s : while dialing jaeger", err)
+		return
+	}
+	tp := tracesdk.NewTracerProvider(
+		// Always be sure to batch in production.
+		tracesdk.WithBatcher(exp),
+		// Record information about this application in a Resource.
+		tracesdk.WithResource(resource.NewWithAttributes(
+			semconv.SchemaURL,
+			semconv.ServiceNameKey.String("msmtpd unit test runner"),
+			attribute.String("environment", "unit test"),
+		)),
+	)
+	// Register our TracerProvider as the global so any imported
+	// instrumentation in the future will default to using it.
+	otel.SetTracerProvider(tp)
+
+	tracer := tp.Tracer("unit-test-connection-closer")
+	addr, closer := RunTestServerWithoutTLS(t, &Server{
+		Tracer: tracer,
+		ConnectionCheckers: []ConnectionChecker{
+			func(tr *Transaction) error {
+				connectionHandlerCalled = true
+				wg.Done()
+				return ErrorSMTP{Code: 521, Message: "i do not like you"}
+			},
+		},
+		CloseHandlers: []CloseHandler{
+			func(tr *Transaction) error {
+				t.Logf("close handler is called")
+				closeHandlerCalled = true
+				wg.Done()
+				return nil
+			},
+			func(tr *Transaction) error {
+				t.Logf("You can see transaction details on http://%s:16686/trace/%s",
+					testJaegerHost, tr.ID,
+				)
+				return nil
+			},
+		},
+	})
+	defer closer()
+	_, err = smtp.Dial(addr)
+	if err != nil {
+		if err.Error() != "521 i do not like you" {
+			t.Errorf("%s : wrong error", err)
+		}
+	} else {
+		t.Errorf("Connection not blocked!")
+	}
+	wg.Wait()
+	if !connectionHandlerCalled {
+		t.Error("connection handler not called")
+	}
+	if !closeHandlerCalled {
+		t.Error("close handler not called")
 	}
 	time.Sleep(time.Second)
 	err = tp.Shutdown(context.TODO())

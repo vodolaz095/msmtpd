@@ -43,7 +43,6 @@ func (t *Transaction) handleMAIL(cmd command) {
 	if cmd.params[1] != "<>" {
 		addr, err = parseAddress(cmd.params[1])
 		if err != nil {
-			t.Span.RecordError(err)
 			t.reply(502, "Malformed e-mail address")
 			return
 		}
@@ -58,7 +57,6 @@ func (t *Transaction) handleMAIL(cmd command) {
 	for k := range t.server.SenderCheckers {
 		err = t.server.SenderCheckers[k](t)
 		if err != nil {
-			t.Span.RecordError(err)
 			t.error(err)
 			return
 		}

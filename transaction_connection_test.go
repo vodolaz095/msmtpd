@@ -67,5 +67,4 @@ func TestConnectionCheckerRejectingAndCloseHandler(t *testing.T) {
 	if !closeHandlerCalled {
 		t.Error("close handler not called")
 	}
-
 }

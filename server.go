@@ -179,10 +179,9 @@ func (srv *Server) startTransaction(c net.Conn) (t *Transaction) {
 		// read/write and connection state will be invalid
 		err = tlsConn.Handshake()
 		if err != nil {
-			t.LogDebug("%s : while performing handshake", err)
+			t.LogError(err, "while performing handshake")
 			t.Secured = false
 			t.Hate(tlsHandshakeFailedHate)
-			span.RecordError(err)
 			span.SetAttributes(attribute.Bool("secured", false))
 		} else {
 			t.Secured = true
@@ -195,7 +194,6 @@ func (srv *Server) startTransaction(c net.Conn) (t *Transaction) {
 		ptrs, err = t.Resolver().LookupAddr(t.Context(), remoteAddr.IP.String())
 		if err != nil {
 			t.LogError(err, "while resolving remote address PTR record")
-			span.RecordError(err)
 		} else {
 			t.LogDebug("PTR addresses resolved for %s : %v",
 				remoteAddr, ptrs,
@@ -205,18 +203,6 @@ func (srv *Server) startTransaction(c net.Conn) (t *Transaction) {
 		}
 	} else {
 		t.LogDebug("PTR resolution disabled")
-	}
-	for k := range srv.ConnectionCheckers {
-		err = t.server.ConnectionCheckers[k](t)
-		if err != nil {
-			t.LogError(err, "while calling connection checker")
-			t.error(err)
-			span.RecordError(err)
-			srv.runCloseHandlers(t)
-			t.close()
-			t.cancel()
-			return
-		}
 	}
 	t.scanner = bufio.NewScanner(t.reader)
 	return
@@ -248,10 +234,9 @@ func (srv *Server) runCloseHandlers(transaction *Transaction) {
 		srv.Logger.Debugf(transaction, "Starting close handler %v...", k)
 		closeError = srv.CloseHandlers[k](transaction)
 		if closeError != nil {
-			srv.Logger.Errorf(transaction, "%s : while calling close handler %v", closeError, k)
-			transaction.Span.RecordError(closeError)
+			transaction.LogError(closeError, "while calling close handler")
 		} else {
-			srv.Logger.Debugf(transaction, "closing handler %v is called", k)
+			transaction.LogDebug("closing handler %v is called", k)
 		}
 	}
 	transaction.closeHandlersCalled = true
@@ -259,6 +244,8 @@ func (srv *Server) runCloseHandlers(transaction *Transaction) {
 
 // Serve starts the SMTP server and listens on the Listener provided
 func (srv *Server) Serve(l net.Listener) error {
+	var err error
+	var broken bool
 	if srv.inShutdown.Load() {
 		return ErrServerClosed
 	}
@@ -286,6 +273,21 @@ func (srv *Server) Serve(l net.Listener) error {
 			return e
 		}
 		transaction := srv.startTransaction(conn)
+		for k := range srv.ConnectionCheckers {
+			err = srv.ConnectionCheckers[k](transaction)
+			if err != nil {
+				srv.runCloseHandlers(transaction)
+				transaction.error(err)
+				transaction.close()
+				broken = true
+				break
+			}
+		}
+		if broken {
+			transaction.LogInfo("Connection checkers failed - closing transaction...")
+			transaction.cancel()
+			continue
+		}
 		srv.waitgrp.Add(1)
 		go func() {
 			defer srv.waitgrp.Done()

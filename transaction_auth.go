@@ -101,7 +101,6 @@ func (t *Transaction) handleAUTH(cmd command) {
 	err := t.server.Authenticator(t, username, password)
 	if err != nil {
 		t.error(err)
-		t.Span.RecordError(err)
 		return
 	}
 	t.Username = username
