@@ -28,6 +28,10 @@ func TestRecipientCheck(t *testing.T) {
 	if err = c.Rcpt("recipient@example.net"); err == nil {
 		t.Error("Unexpected RCPT success")
 	}
+	err = c.Close()
+	if err != nil {
+		t.Errorf("%s : while closing transaction", err)
+	}
 }
 
 func TestMaxRecipients(t *testing.T) {

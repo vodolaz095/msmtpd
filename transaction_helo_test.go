@@ -27,6 +27,10 @@ func TestHELOCheck(t *testing.T) {
 	if err = c.Hello("foobar.local"); err == nil {
 		t.Error("Unexpected HELO success")
 	}
+	err = c.Close()
+	if err != nil {
+		t.Errorf("%s : while closing transaction", err)
+	}
 }
 
 func TestHELO(t *testing.T) {
@@ -62,5 +66,9 @@ func TestInvalidHelo(t *testing.T) {
 	}
 	if err = c.Hello(""); err == nil {
 		t.Error("Unexpected HELO success")
+	}
+	err = c.Close()
+	if err != nil {
+		t.Errorf("%s : while closing transaction", err)
 	}
 }

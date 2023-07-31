@@ -49,6 +49,14 @@ func TestAuthNotSupported(t *testing.T) {
 	if err = c.Auth(smtp.PlainAuth("foo", "foo", "bar", "127.0.0.1")); err == nil {
 		t.Error("Auth worked despite no authenticator")
 	}
+	err = c.Close()
+	if err != nil {
+		if err.Error() != "use of closed network connection" {
+			t.Errorf("%s : while closing transaction", err)
+		}
+	} else {
+		t.Errorf("error `use of closed network connection` is not thrown - connection not closed!")
+	}
 }
 
 func TestAuthBypass(t *testing.T) {

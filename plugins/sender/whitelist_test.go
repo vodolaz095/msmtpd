@@ -86,6 +86,7 @@ func TestAcceptMailFromAddresses(t *testing.T) {
 				continue
 			}
 			t.Errorf("unexpected error checking %s - %s", k, err)
+			continue
 		}
 		err = c.Quit()
 		if err != nil {

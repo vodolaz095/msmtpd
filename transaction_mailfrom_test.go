@@ -52,6 +52,10 @@ func TestInvalidSender(t *testing.T) {
 	if err = c.Mail("invalid@@example.org"); err == nil {
 		t.Error("Unexpected MAIL success")
 	}
+	err = c.Close()
+	if err != nil {
+		t.Errorf("%s : while closing transaction", err)
+	}
 }
 
 func TestNullSender(t *testing.T) {

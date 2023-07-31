@@ -59,6 +59,7 @@ func TestAcceptMailFromDomainsOrAddresses(t *testing.T) {
 				continue
 			}
 			t.Errorf("unexpected error checking %s - %s", k, err)
+			continue
 		} else {
 			if v != nil {
 				t.Errorf("error not thrown while checking %s - %s", k, v)
@@ -116,6 +117,7 @@ func TestAcceptMailFromDomains(t *testing.T) {
 				continue
 			}
 			t.Errorf("unexpected error checking %s - %s", k, err)
+			continue
 		} else {
 			if v != nil {
 				t.Errorf("error not thrown while checking %s - %s", k, v)
@@ -173,6 +175,7 @@ func TestAcceptMailFromAddresses(t *testing.T) {
 				continue
 			}
 			t.Errorf("unexpected error checking %s - %s", k, err)
+			continue
 		} else {
 			if v != nil {
 				t.Errorf("error not thrown while checking %s - %s", k, v)
