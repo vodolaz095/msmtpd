@@ -239,7 +239,7 @@ func (srv *Server) runCloseHandlers(transaction *Transaction) {
 	transaction.mu.Lock()
 	defer transaction.mu.Unlock()
 	if transaction.closeHandlersCalled {
-		transaction.LogWarn("close handlers already called")
+		transaction.LogDebug("close handlers already called")
 		return
 	}
 	var closeError error

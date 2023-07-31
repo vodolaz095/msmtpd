@@ -11,6 +11,9 @@ func (t *Transaction) serve() {
 	defer func() {
 		t.server.runCloseHandlers(t)
 		t.close()
+		if t.Span != nil {
+			t.Span.End()
+		}
 		t.cancel()
 	}()
 	if !t.server.EnableProxyProtocol {
@@ -74,5 +77,4 @@ func (t *Transaction) close() {
 	t.writer.Flush()
 	time.Sleep(200 * time.Millisecond)
 	t.conn.Close()
-	t.Span.End()
 }

@@ -3,6 +3,8 @@ package msmtpd
 import (
 	"fmt"
 	"log"
+
+	"go.opentelemetry.io/otel/codes"
 )
 
 func (t *Transaction) logEvent(level LoggerLevel, format string, args ...any) {
@@ -72,7 +74,7 @@ func (t *Transaction) LogWarn(format string, args ...any) {
 func (t *Transaction) LogError(err error, desc string) {
 	if t.Span != nil {
 		t.Span.RecordError(err)
-		t.Span.AddEvent(desc)
+		t.Span.SetStatus(codes.Error, desc) // marks trace as having errors
 	}
 	t.logEvent(ErrorLevel, "%s %s", err, desc)
 }
