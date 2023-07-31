@@ -70,11 +70,12 @@ func (t *Transaction) LogWarn(format string, args ...any) {
 	t.logEvent(WarnLevel, format, args...)
 }
 
-// LogError is used to send error level message to server logger
+// LogError is used to send error level message to server logger. This function marks
+// OpenTelemetry Transaction's span as erroneous one
 func (t *Transaction) LogError(err error, desc string) {
 	if t.Span != nil {
 		t.Span.RecordError(err)
-		t.Span.SetStatus(codes.Error, desc) // marks trace as having errors
+		t.Span.SetStatus(codes.Error, desc) // marks span as having errors
 	}
 	t.logEvent(ErrorLevel, "%s %s", err, desc)
 }
