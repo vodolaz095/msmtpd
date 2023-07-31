@@ -100,7 +100,11 @@ func (t *Transaction) handleDATA(cmd command) {
 					return
 				}
 			}
-			t.LogInfo("Message delivered by %v DataHandlers...", len(t.server.DataHandlers))
+			if len(t.server.DataHandlers) > 0 {
+				t.LogInfo("Message delivered by %v DataHandlers...", len(t.server.DataHandlers))
+			} else {
+				t.LogWarn("Message silently discarded - no DataHandlers set...", len(t.server.DataHandlers))
+			}
 			t.reply(250, "Thank you.")
 			t.Love(commandExecutedProperly)
 			t.reset()
