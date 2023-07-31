@@ -2,6 +2,7 @@ package karma
 
 import (
 	"context"
+	"net"
 	"net/smtp"
 	"sync"
 	"testing"
@@ -12,13 +13,17 @@ import (
 )
 
 func TestKarmaPluginRedisBad(t *testing.T) {
+	var err error
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 	client := redis.NewClient(&redis.Options{
 		Network: "tcp",
 		Addr:    "127.0.0.1:6379",
 	})
-
+	err = client.Del(context.TODO(), "karma|8.8.8.8").Err()
+	if err != nil {
+		t.Errorf("%s : while deleting test key", err)
+	}
 	rs := redisStorage.Storage{Client: client}
 	kh := Handler{
 		HateLimit: 5,
@@ -27,6 +32,13 @@ func TestKarmaPluginRedisBad(t *testing.T) {
 
 	addr, closer := msmtpd.RunTestServerWithoutTLS(t, &msmtpd.Server{
 		ConnectionCheckers: []msmtpd.ConnectionChecker{
+			func(tr *msmtpd.Transaction) error {
+				tr.Addr = &net.TCPAddr{
+					IP:   net.ParseIP("8.8.8.8"),
+					Port: 60123,
+				}
+				return nil
+			},
 			kh.ConnectionChecker,
 		},
 		CloseHandlers: []msmtpd.CloseHandler{
@@ -38,7 +50,7 @@ func TestKarmaPluginRedisBad(t *testing.T) {
 		},
 	})
 	defer closer()
-	_, err := smtp.Dial(addr)
+	_, err = smtp.Dial(addr)
 	if err != nil {
 		if err.Error() != "521 FUCK OFF!" {
 			t.Errorf("%s : wrong error while performing dial", err)
@@ -47,7 +59,7 @@ func TestKarmaPluginRedisBad(t *testing.T) {
 
 	wg.Wait()
 	var score redisStorage.Score
-	err = client.HMGet(context.TODO(), "karma|127.0.0.1", "connections", "good", "bad").Scan(&score)
+	err = client.HMGet(context.TODO(), "karma|8.8.8.8", "connections", "good", "bad").Scan(&score)
 	if err != nil {
 		t.Errorf("%s : while getting karma", err)
 	}
@@ -61,10 +73,6 @@ func TestKarmaPluginRedisBad(t *testing.T) {
 	if score.Bad != 1 {
 		t.Errorf("wrong bad connecetions %v isntead of 1", score.Bad)
 	}
-	err = client.Del(context.TODO(), "karma|127.0.0.1").Err()
-	if err != nil {
-		t.Errorf("%s : while deleting test key", err)
-	}
 	err = rs.Close()
 	if err != nil {
 		t.Errorf("%s : while closing redis connection", err)
@@ -72,13 +80,17 @@ func TestKarmaPluginRedisBad(t *testing.T) {
 }
 
 func TestKarmaPluginRedisGood(t *testing.T) {
+	var err error
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 	client := redis.NewClient(&redis.Options{
 		Network: "tcp",
 		Addr:    "127.0.0.1:6379",
 	})
-
+	err = client.Del(context.TODO(), "karma|1.1.1.1").Err()
+	if err != nil {
+		t.Errorf("%s : while deleting test key", err)
+	}
 	rs := redisStorage.Storage{Client: client}
 	kh := Handler{
 		HateLimit: -2,
@@ -87,6 +99,13 @@ func TestKarmaPluginRedisGood(t *testing.T) {
 
 	addr, closer := msmtpd.RunTestServerWithoutTLS(t, &msmtpd.Server{
 		ConnectionCheckers: []msmtpd.ConnectionChecker{
+			func(tr *msmtpd.Transaction) error {
+				tr.Addr = &net.TCPAddr{
+					IP:   net.ParseIP("1.1.1.1"),
+					Port: 60123,
+				}
+				return nil
+			},
 			kh.ConnectionChecker,
 		},
 		CloseHandlers: []msmtpd.CloseHandler{
@@ -118,7 +137,7 @@ func TestKarmaPluginRedisGood(t *testing.T) {
 	}
 	wg.Wait()
 	var score redisStorage.Score
-	err = client.HMGet(context.TODO(), "karma|127.0.0.1", "connections", "good", "bad").Scan(&score)
+	err = client.HMGet(context.TODO(), "karma|1.1.1.1", "connections", "good", "bad").Scan(&score)
 	if err != nil {
 		t.Errorf("%s : while getting karma", err)
 	}
@@ -131,10 +150,6 @@ func TestKarmaPluginRedisGood(t *testing.T) {
 	}
 	if score.Bad != 0 {
 		t.Errorf("wrong bad connecetions %v isntead of 0", score.Bad)
-	}
-	err = client.Del(context.TODO(), "karma|127.0.0.1").Err()
-	if err != nil {
-		t.Errorf("%s : while deleting test key", err)
 	}
 	err = rs.Close()
 	if err != nil {
