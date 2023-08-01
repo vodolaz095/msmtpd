@@ -145,12 +145,14 @@ func TestTracingError(t *testing.T) {
 		Tracer: tracer,
 		RecipientCheckers: []RecipientChecker{
 			func(tr *Transaction, recipient *mail.Address) error {
-				tr.LogError(fmt.Errorf("test error"), "it is expected")
+				tr.LogError(fmt.Errorf("test error in RCPT TO"), "it is expected")
 				return nil
 			},
 		},
 		CloseHandlers: []CloseHandler{
 			func(tr *Transaction) error {
+				tr.LogError(fmt.Errorf("test error in close handler"), "it is expected")
+
 				t.Logf("You can see transaction details on http://%s:16686/trace/%s",
 					testJaegerHost, tr.ID,
 				)
