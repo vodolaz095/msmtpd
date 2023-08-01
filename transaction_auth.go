@@ -96,8 +96,6 @@ func (t *Transaction) handleAUTH(cmd command) {
 	t.LogDebug("Trying to authorise %s with password %s using mechanism %s",
 		username, mask(password), mechanism,
 	)
-	t.Span.SetAttributes(attribute.String("username", username))
-	t.Span.SetAttributes(attribute.String("password", mask(password)))
 	err := t.server.Authenticator(t, username, password)
 	if err != nil {
 		t.error(err)
@@ -105,6 +103,11 @@ func (t *Transaction) handleAUTH(cmd command) {
 	}
 	t.Username = username
 	t.Password = password
+	// i know saving password here is security risk, but we can implement something like
+	// Haraka plugin to prevent credential leaks
+	// https://haraka.github.io/plugins/prevent_credential_leaks
+	t.Span.SetAttributes(attribute.String("username", username))
+	t.Span.SetAttributes(attribute.String("password", mask(password)))
 	t.reply(235, "OK, you are now authenticated")
 	return
 }
