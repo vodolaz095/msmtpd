@@ -22,7 +22,7 @@ func TestProxyEnv(t *testing.T) {
 }
 
 func TestDeliverViaSMTPProxy(t *testing.T) {
-	validMessage := internal.MakeTestMessage("scuba@vodolaz095.ru", "scuba@vodolaz095.ru")
+	validMessage := internal.MakeTestMessage(testProxySender, testProxyRecipient)
 	addr, closer := msmtpd.RunTestServerWithoutTLS(t, &msmtpd.Server{
 		DataHandlers: []msmtpd.DataHandler{
 			ViaSMTPProxy(SMTPProxyOptions{
