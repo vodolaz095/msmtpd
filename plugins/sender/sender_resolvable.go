@@ -16,13 +16,19 @@ type IsResolvableOptions struct {
 	// See https://en.wikipedia.org/wiki/MX_record#Fallback_to_the_address_record
 	FallbackToAddressRecord bool
 
-	// AllowLocalAddresses means we accept email from local IP addresses
-	// according to https://rfc-editor.org/rfc/rfc1918.html (IPv4 addresses) and
+	// AllowLocalAddresses means we accept email from domains, which MX records are resolved
+	// into local IP addresses according to https://rfc-editor.org/rfc/rfc1918.html (IPv4 addresses) and
 	// https://rfc-editor.org/rfc/rfc4193.html (IPv6 addresses).
+	// For example, MX for something.example.org are `mx.something.example.org 10`, and
+	// A record for mx.something.example.org is 192.168.1.3 - it is unusual case for
+	// internet, but common for local networks.
 	AllowLocalAddresses bool
+
+	// AllowMxRecordToBeIP allows MX records to contain bare IP addresses, its unsafe, but still used
+	AllowMxRecordToBeIP bool
 }
 
-// IsNotResolvableComplain is human readable thing we say to client with imaginary email address
+// IsNotResolvableComplain is human-readable thing we say to client with imaginary email address
 const IsNotResolvableComplain = "Seems like i cannot find your sender address mail servers using DNS, please, try again later"
 
 // IsResolvable is msmtpd.SenderChecker checker that performs DNS validations to proof we can send answer back to sender's email address
@@ -30,6 +36,7 @@ func IsResolvable(opts IsResolvableOptions) msmtpd.SenderChecker {
 	return func(transaction *msmtpd.Transaction) error {
 		possibleMxServers := make([]string, 0)
 		usableMxServers := make([]net.IP, 0)
+		extraMxIPs := make([]net.IP, 0)
 		resolver := transaction.Resolver()
 		ctx := transaction.Context()
 		domain := strings.Split(transaction.MailFrom.Address, "@")[1]
@@ -43,7 +50,16 @@ func IsResolvable(opts IsResolvableOptions) msmtpd.SenderChecker {
 			for _, record := range mxRecords {
 				transaction.LogDebug("For domain %s MX record %s %v is found",
 					domain, record.Host, record.Pref)
-				possibleMxServers = append(possibleMxServers, record.Host)
+				mxRecordAsIP := net.ParseIP(record.Host)
+
+				if mxRecordAsIP == nil {
+					possibleMxServers = append(possibleMxServers, record.Host)
+				} else {
+					if opts.AllowMxRecordToBeIP {
+						extraMxIPs = append(extraMxIPs, mxRecordAsIP)
+					}
+				}
+
 			}
 		} else {
 			if opts.FallbackToAddressRecord {
@@ -75,6 +91,7 @@ func IsResolvable(opts IsResolvableOptions) msmtpd.SenderChecker {
 					errLookUp, record, domain, transaction.MailFrom.String())
 				continue
 			}
+			ips = append(ips, extraMxIPs...)
 			for _, ip := range ips {
 				transaction.LogDebug("Checking mx server %s ip %s of domain %s...",
 					record, ip.String(), domain)
