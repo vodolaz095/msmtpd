@@ -93,8 +93,8 @@ func CheckHeaders(headersRequired []string) msmtpd.DataChecker {
 		}
 		timestamp, err := transaction.Parsed.Header.Date()
 		if err != nil {
-			transaction.LogWarn("Malformed date header with value %s",
-				transaction.Parsed.Header.Get("Date"))
+			transaction.LogWarn("%s : while parsing malformed date header with value %s",
+				err, transaction.Parsed.Header.Get("Date"))
 			return msmtpd.ErrorSMTP{
 				Code:    521,
 				Message: complain,
