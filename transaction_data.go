@@ -11,9 +11,31 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 )
 
+// All messages MUST have a 'Date' and 'From' header and a message may not
+// contain more than one 'Date', 'From', 'Sender', 'Reply-To', 'To', 'Cc', 'Bcc',
+// 'Message-Id', 'In-Reply-To', 'References' or 'Subject' header.
+// (c) RFC 5322
+
+// uniqueHeaders are headers that should not have duplicates according to RFC 5322
+var uniqueHeaders = []string{
+	"Date",
+	"From",
+	"Sender",
+	"Reply-To",
+	"To",
+	"Cc",
+	"Bcc",
+	"Message-Id",
+	"In-Reply-To",
+	"References",
+	"Subject",
+}
+
 func (t *Transaction) handleDATA(cmd command) {
 	var checkErr error
 	var deliverErr error
+	var createdAt time.Time
+	var from []*mail.Address
 
 	if t.HeloName == "" {
 		t.LogDebug("DATA called without HELO/EHLO!")
@@ -61,13 +83,66 @@ func (t *Transaction) handleDATA(cmd command) {
 			t.Span.SetAttributes(attribute.Int("size", data.Len()))
 			t.Parsed, checkErr = mail.ReadMessage(bytes.NewReader(t.Body))
 			if checkErr != nil {
-				t.LogError(checkErr, "while parsing message body")
+				t.LogWarn("%s : while parsing message body", checkErr)
 				t.Hate(tooBigMessagePenalty)
 				t.error(ErrorSMTP{
 					Code:    521,
 					Message: "Stop sending me this nonsense, please!",
 				})
 				return
+			}
+			// date header is mandatory according to RFC 5322
+			createdAt, checkErr = t.Parsed.Header.Date()
+			if checkErr != nil {
+				t.LogWarn("%s : while parsing message date", checkErr)
+				t.Hate(malformedMessagePenalty)
+				t.error(ErrorSMTP{
+					Code:    521,
+					Message: "Stop sending me this nonsense, please!",
+				})
+				return
+			}
+			t.LogInfo("Message created on %s - %s ago",
+				createdAt.Format(timeFormatForHeaders),
+				time.Since(createdAt).String(),
+			)
+			// from header is mandatory according to RFC 5322
+			from, checkErr = t.Parsed.Header.AddressList("From")
+			if checkErr != nil {
+				t.LogWarn("%s : while parsing message from header %s",
+					checkErr, t.Parsed.Header.Get("From"),
+				)
+				t.Hate(malformedMessagePenalty)
+				t.error(ErrorSMTP{
+					Code:    521,
+					Message: "Stop sending me this nonsense, please!",
+				})
+				return
+			}
+			if len(from) != 1 {
+				t.LogWarn("From should contain 1 address")
+				t.Hate(malformedMessagePenalty)
+				t.error(ErrorSMTP{
+					Code:    521,
+					Message: "Stop sending me this nonsense, please!",
+				})
+				return
+			}
+
+			// check for duplicate headers
+			for _, header := range uniqueHeaders {
+				parts, found := t.Parsed.Header[header]
+				if found {
+					if len(parts) > 1 {
+						t.LogWarn("Duplicate header %s %v is found",
+							header, parts,
+						)
+						t.error(ErrorSMTP{
+							Code:    521,
+							Message: "Stop sending me this nonsense, please!",
+						})
+					}
+				}
 			}
 
 			subject := t.Parsed.Header.Get("Subject")
@@ -85,7 +160,7 @@ func (t *Transaction) handleDATA(cmd command) {
 					return
 				}
 			}
-			t.LogInfo("Body (%v bytes) checked by %v DataCheckers successfully",
+			t.LogInfo("Body (%v bytes) checked by %v DataCheckers successfully!",
 				data.Len(), len(t.server.DataCheckers))
 			t.Love(commandExecutedProperly)
 

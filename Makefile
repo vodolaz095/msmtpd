@@ -16,6 +16,16 @@ check: lint
 clean:
 	go clean
 
+start_minimal:
+	go run example/minimal/main.go
+
+check_minimal:
+	swaks --to recipient1@example.org,recipient2@example.org,recipient3@example.org,recipient4@example.org \
+          --from sender@example.org \
+          --server localhost --port 1025 \
+          --timeout 600
+
+
 start_simple:
 	go run example/simple/main.go
 

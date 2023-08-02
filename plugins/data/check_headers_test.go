@@ -131,7 +131,7 @@ func TestBodyParseAndCheckHeadersMissingMandatoryHeaderFrom(t *testing.T) {
 	}
 	err = wc.Close()
 	if err != nil {
-		if err.Error() == "521 I cannot parse your message. Do not send me this particular message in future, please, i will never accept it. Thanks in advance!" {
+		if err.Error() == "521 Stop sending me this nonsense, please!" {
 			t.Logf("proper error is thrown")
 			return
 		} else {
@@ -179,7 +179,7 @@ func TestBodyParseAndCheckHeadersMissingMandatoryHeaderDate(t *testing.T) {
 	}
 	err = wc.Close()
 	if err != nil {
-		if err.Error() == "521 I cannot parse your message. Do not send me this particular message in future, please, i will never accept it. Thanks in advance!" {
+		if err.Error() == "521 Stop sending me this nonsense, please!" {
 			t.Logf("proper error is thrown")
 			return
 		} else {
@@ -276,7 +276,7 @@ func TestBodyParseAndCheckHeadersDuplicate(t *testing.T) {
 	}
 	err = wc.Close()
 	if err != nil {
-		if err.Error() == "521 I cannot parse your message. Do not send me this particular message in future, please, i will never accept it. Thanks in advance!" {
+		if err.Error() == "521 Stop sending me this nonsense, please!" {
 			t.Logf("proper error is thrown")
 			return
 		} else {
@@ -420,7 +420,7 @@ func TestBodyParseAndCheckHeadersDateMalformed(t *testing.T) {
 	}
 	err = wc.Close()
 	if err != nil {
-		if err.Error() == "521 I cannot parse your message. Do not send me this particular message in future, please, i will never accept it. Thanks in advance!" {
+		if err.Error() == "521 Stop sending me this nonsense, please!" {
 			t.Logf("proper error is thrown")
 			return
 		} else {

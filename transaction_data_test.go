@@ -8,6 +8,7 @@ import (
 	"net/smtp"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/vodolaz095/msmtpd/internal"
 )
@@ -204,9 +205,13 @@ func TestWrongOrderForData(t *testing.T) {
 	if err != nil {
 		t.Errorf("%s : while sending RCPT TO", err)
 	}
-	_, err = c.Data()
+	wc, err := c.Data()
 	if err != nil {
-		t.Errorf("%s : while sending RCPT TO", err)
+		t.Errorf("%s : while sending Data", err)
+	}
+	_, err = fmt.Fprintf(wc, internal.MakeTestMessage("somebody@example.org", "bill.gates@microsoft.com"))
+	if err != nil {
+		t.Errorf("%s : while sending message body", err)
 	}
 	err = c.Reset()
 	if err != nil {
@@ -310,7 +315,7 @@ func TestEnvelopeReceived(t *testing.T) {
 	}
 }
 
-func TestExtraHeader(t *testing.T) {
+func TestAddExtraHeader(t *testing.T) {
 	addr, closer := RunTestServerWithTLS(t, &Server{
 		Hostname: "foobar.example.net",
 		DataHandlers: []DataHandler{
@@ -448,6 +453,183 @@ func TestMalformedMessageBody(t *testing.T) {
 	if err = c.Quit(); err != nil {
 		t.Errorf("QUIT failed: %v", err)
 	}
+}
+
+func TestBodyParseAndCheckHeadersMissingMandatoryHeaderFrom(t *testing.T) {
+	buf := bytes.NewBufferString("")
+	fmt.Fprintf(buf, "Date: %s\n", time.Now().Format(time.RFC1123Z))
+	buf.WriteString("To: scuba@vodolaz095.ru\n")
+	// buf.WriteString("From: scuba@vodolaz095.ru\n") // IMPORTANT
+	buf.WriteString("Subject: from not present\n")
+	buf.WriteString("Message-Id: <20230611194929.017435@localhost>\n")
+	buf.WriteString("\n\nThis is a test mailing without FROM header")
+
+	addr, closer := RunTestServerWithoutTLS(t, &Server{})
+	defer closer()
+	c, err := smtp.Dial(addr)
+	if err != nil {
+		t.Errorf("Dial failed: %v", err)
+	}
+	if err = c.Hello("localhost"); err != nil {
+		t.Errorf("HELO failed: %v", err)
+	}
+	if err = c.Mail("scuba@vodolaz095.ru"); err != nil {
+		t.Errorf("Mail failed: %v", err)
+	}
+	if err = c.Rcpt("scuba@vodolaz095.ru"); err != nil {
+		t.Errorf("Rcpt failed: %v", err)
+	}
+	wc, err := c.Data()
+	if err != nil {
+		t.Errorf("Data failed: %v", err)
+	}
+	_, err = fmt.Fprintf(wc, buf.String())
+	if err != nil {
+		t.Errorf("Data body failed: %v", err)
+	}
+	err = wc.Close()
+	if err != nil {
+		if err.Error() == "521 Stop sending me this nonsense, please!" {
+			t.Logf("proper error is thrown")
+			return
+		} else {
+			t.Errorf("Data close failed with wrong error %v", err)
+		}
+	}
+	t.Errorf("error not thrown")
+}
+
+func TestBodyParseAndCheckHeadersMissingMandatoryHeaderDate(t *testing.T) {
+	buf := bytes.NewBufferString("")
+	//	fmt.Fprintf(buf, "Date: %s\n", time.Now().Format(time.RFC1123Z)) // IMPORTANT
+	buf.WriteString("To: scuba@vodolaz095.ru\n")
+	buf.WriteString("From: scuba@vodolaz095.ru\n")
+	buf.WriteString("Subject: date is missing\n")
+	buf.WriteString("Message-Id: <20230611194929.017435@localhost>\n")
+	buf.WriteString("\n\nThis is a test mailing without DATE header")
+
+	addr, closer := RunTestServerWithoutTLS(t, &Server{})
+	defer closer()
+	c, err := smtp.Dial(addr)
+	if err != nil {
+		t.Errorf("Dial failed: %v", err)
+	}
+	if err = c.Hello("localhost"); err != nil {
+		t.Errorf("HELO failed: %v", err)
+	}
+	if err = c.Mail("scuba@vodolaz095.ru"); err != nil {
+		t.Errorf("Mail failed: %v", err)
+	}
+	if err = c.Rcpt("scuba@vodolaz095.ru"); err != nil {
+		t.Errorf("Rcpt failed: %v", err)
+	}
+	wc, err := c.Data()
+	if err != nil {
+		t.Errorf("Data failed: %v", err)
+	}
+	_, err = fmt.Fprintf(wc, buf.String())
+	if err != nil {
+		t.Errorf("Data body failed: %v", err)
+	}
+	err = wc.Close()
+	if err != nil {
+		if err.Error() == "521 Stop sending me this nonsense, please!" {
+			t.Logf("proper error is thrown")
+			return
+		} else {
+			t.Errorf("Data close failed with wrong error %v", err)
+		}
+	}
+	t.Errorf("error not thrown")
+}
+
+func TestBodyParseAndCheckHeadersDuplicate(t *testing.T) {
+	buf := bytes.NewBufferString("")
+	fmt.Fprintf(buf, "Date: %s\n", time.Now().Format(time.RFC1123Z))
+	buf.WriteString("To: scuba@vodolaz095.ru\n")
+	buf.WriteString("From: scuba@vodolaz095.ru\n")
+	buf.WriteString("Subject: test with duplicate headers\n")
+	buf.WriteString("Subject: duplicate subject\n")
+	buf.WriteString("Message-Id: <20230611194929.017435@localhost>\n")
+	buf.WriteString("\n\nThis is a test mailing with duplicate subject")
+
+	addr, closer := RunTestServerWithoutTLS(t, &Server{})
+	defer closer()
+	c, err := smtp.Dial(addr)
+	if err != nil {
+		t.Errorf("Dial failed: %v", err)
+	}
+	if err = c.Hello("localhost"); err != nil {
+		t.Errorf("HELO failed: %v", err)
+	}
+	if err = c.Mail("scuba@vodolaz095.ru"); err != nil {
+		t.Errorf("Mail failed: %v", err)
+	}
+	if err = c.Rcpt("scuba@vodolaz095.ru"); err != nil {
+		t.Errorf("Rcpt failed: %v", err)
+	}
+	wc, err := c.Data()
+	if err != nil {
+		t.Errorf("Data failed: %v", err)
+	}
+	_, err = fmt.Fprintf(wc, buf.String())
+	if err != nil {
+		t.Errorf("Data body failed: %v", err)
+	}
+	err = wc.Close()
+	if err != nil {
+		if err.Error() == "521 Stop sending me this nonsense, please!" {
+			t.Logf("proper error is thrown")
+			return
+		} else {
+			t.Errorf("Data close failed with wrong error %v", err)
+		}
+	}
+	t.Errorf("error not thrown")
+}
+
+func TestBodyParseAndCheckHeadersDateMalformed(t *testing.T) {
+	buf := bytes.NewBufferString("")
+	buf.WriteString("Date: сегодня, после обеда\n") // yes
+	buf.WriteString("To: scuba@vodolaz095.ru\n")
+	buf.WriteString("From: scuba@vodolaz095.ru\n")
+	buf.WriteString("Subject: test with strange date\n")
+	buf.WriteString("Message-Id: <20230611194929.017435@localhost>\n")
+	buf.WriteString("\n\nThis is a test mailing with strange date")
+
+	addr, closer := RunTestServerWithoutTLS(t, &Server{})
+	defer closer()
+	c, err := smtp.Dial(addr)
+	if err != nil {
+		t.Errorf("Dial failed: %v", err)
+	}
+	if err = c.Hello("localhost"); err != nil {
+		t.Errorf("HELO failed: %v", err)
+	}
+	if err = c.Mail("scuba@vodolaz095.ru"); err != nil {
+		t.Errorf("Mail failed: %v", err)
+	}
+	if err = c.Rcpt("scuba@vodolaz095.ru"); err != nil {
+		t.Errorf("Rcpt failed: %v", err)
+	}
+	wc, err := c.Data()
+	if err != nil {
+		t.Errorf("Data failed: %v", err)
+	}
+	_, err = fmt.Fprintf(wc, buf.String())
+	if err != nil {
+		t.Errorf("Data body failed: %v", err)
+	}
+	err = wc.Close()
+	if err != nil {
+		if err.Error() == "521 Stop sending me this nonsense, please!" {
+			t.Logf("proper error is thrown")
+			return
+		} else {
+			t.Errorf("Data close failed with wrong error %v", err)
+		}
+	}
+	t.Errorf("error not thrown")
 }
 
 func TestInterruptedDATA(t *testing.T) {

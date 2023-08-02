@@ -240,6 +240,7 @@ func (srv *Server) runCloseHandlers(transaction *Transaction) {
 		}
 	}
 	transaction.closeHandlersCalled = true
+	srv.Logger.Infof(transaction, "Closing transaction.")
 }
 
 // Serve starts the SMTP server and listens on the Listener provided
@@ -288,6 +289,8 @@ func (srv *Server) Serve(l net.Listener) error {
 			transaction.cancel()
 			continue
 		}
+		transaction.LogInfo("Accepting connection from %s...", transaction.Addr)
+
 		srv.waitgrp.Add(1)
 		go func() {
 			defer srv.waitgrp.Done()

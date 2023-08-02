@@ -61,16 +61,16 @@ func (t *Transaction) handleRCPT(cmd command) {
 	t.RcptTo = append(t.RcptTo, *addr)
 	switch len(t.RcptTo) {
 	case 1:
-		t.LogInfo("Recipient %s will be 1st one in transaction", addr)
+		t.LogInfo("Recipient %s will be 1st one in transaction!", addr)
 		break
 	case 2:
-		t.LogInfo("Recipient %s will be 2nd one in transaction", addr)
+		t.LogInfo("Recipient %s will be 2nd one in transaction!", addr)
 		break
 	case 3:
-		t.LogInfo("Recipient %s will be 2nd one in transaction", addr)
+		t.LogInfo("Recipient %s will be 2nd one in transaction!", addr)
 		break
 	default:
-		t.LogInfo("Recipient %s will be %dth one in transaction", addr, len(t.RcptTo))
+		t.LogInfo("Recipient %s will be %dth one in transaction!", addr, len(t.RcptTo))
 	}
 	recipientsAsStrings := make([]string, len(t.RcptTo))
 	for i := range t.RcptTo {

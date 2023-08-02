@@ -29,7 +29,7 @@ func (t *Transaction) handleHELO(cmd command) {
 			return
 		}
 	}
-	t.LogInfo("HELO <%s> is checked!", cmd.fields[1])
+	t.LogInfo("HELO <%s> is accepted!", cmd.fields[1])
 	t.reply(250, "Go on, i'm listening...")
 	t.Love(commandExecutedProperly)
 	return
@@ -76,7 +76,7 @@ func (t *Transaction) handleEHLO(cmd command) {
 			return
 		}
 	}
-	t.LogInfo("EHLO <%s> is checked!", cmd.fields[1])
+	t.LogInfo("EHLO <%s> is accepted!", cmd.fields[1])
 	fmt.Fprintf(t.writer, "250-%s\r\n", t.server.Hostname)
 	extensions := t.extensions()
 	if len(extensions) > 1 {

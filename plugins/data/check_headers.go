@@ -25,27 +25,6 @@ var DefaultHeadersToRequire = []string{
 	"Subject",
 }
 
-// mandatoryHeaders are headers should always be present in email message according to RFC 5322
-var mandatoryHeaders = []string{
-	"Date",
-	"From",
-}
-
-// uniqueHeaders are headers that should not have duplicates according to RFC 5322
-var uniqueHeaders = []string{
-	"Date",
-	"From",
-	"Sender",
-	"Reply-To",
-	"To",
-	"Cc",
-	"Bcc",
-	"Message-Id",
-	"In-Reply-To",
-	"References",
-	"Subject",
-}
-
 const tooOld = 15 * 24 * time.Hour
 const tooFarInFuture = 2 * 24 * time.Hour
 
@@ -55,17 +34,6 @@ const tooFarInFuture = 2 * 24 * time.Hour
 func CheckHeaders(headersRequired []string) msmtpd.DataChecker {
 	return func(transaction *msmtpd.Transaction) error {
 		var val string
-		for _, header := range mandatoryHeaders {
-			val = transaction.Parsed.Header.Get(header)
-			if val == "" {
-				transaction.LogWarn("mandatory header %s is missing", header)
-				return msmtpd.ErrorSMTP{
-					Code:    521,
-					Message: complain,
-				}
-			}
-			transaction.LogDebug("Header %s is %s", header, val)
-		}
 		for _, header := range headersRequired {
 			val = transaction.Parsed.Header.Get(header)
 			if val == "" {
@@ -77,21 +45,7 @@ func CheckHeaders(headersRequired []string) msmtpd.DataChecker {
 			}
 			transaction.LogDebug("Header %s is %s", header, val)
 		}
-		for _, header := range uniqueHeaders {
-			parts, found := transaction.Parsed.Header[header]
-			if found {
-				if len(parts) > 1 {
-					transaction.LogWarn("Duplicate header %s %v is found",
-						header, parts,
-					)
-					return msmtpd.ErrorSMTP{
-						Code:    521,
-						Message: complain,
-					}
-				}
-			}
-		}
-		timestamp, err := transaction.Parsed.Header.Date()
+		timestamp, err := transaction.Parsed.Header.Date() // it is already parsed in `transaction_data.go`
 		if err != nil {
 			transaction.LogWarn("%s : while parsing malformed date header with value %s",
 				err, transaction.Parsed.Header.Get("Date"))
