@@ -295,16 +295,13 @@ func (srv *Server) Serve(l net.Listener) error {
 				select {
 				case limiter <- struct{}{}:
 					transaction.serve()
-					srv.Logger.Debugf(transaction, "Transaction serving (limited) is finished")
 					<-limiter
 				default:
 					srv.runCloseHandlers(transaction)
-					srv.Logger.Debugf(transaction, "Transaction is rejected, server is busy")
 					transaction.reject()
 				}
 			} else {
 				transaction.serve()
-				srv.Logger.Debugf(transaction, "Transaction serving (unlimited) is finished")
 			}
 		}()
 	}

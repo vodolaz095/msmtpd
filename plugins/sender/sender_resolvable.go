@@ -34,9 +34,9 @@ const IsNotResolvableComplain = "Seems like i cannot find your sender address ma
 // IsResolvable is msmtpd.SenderChecker checker that performs DNS validations to proof we can send answer back to sender's email address
 func IsResolvable(opts IsResolvableOptions) msmtpd.SenderChecker {
 	return func(transaction *msmtpd.Transaction) error {
-		possibleMxServers := make([]string, 0)
-		usableMxServers := make([]net.IP, 0)
-		extraMxIPs := make([]net.IP, 0)
+		possibleMxServers := make([]string, 0)     // A / AAAA records of possible MX servers
+		availableMxServersIPs := make([]net.IP, 0) // IP addresses of possible MX servers
+		usableMxServersIPs := make([]net.IP, 0)    // IP addresses of possible MX servers
 		resolver := transaction.Resolver()
 		ctx := transaction.Context()
 		domain := strings.Split(transaction.MailFrom.Address, "@")[1]
@@ -50,16 +50,17 @@ func IsResolvable(opts IsResolvableOptions) msmtpd.SenderChecker {
 			for _, record := range mxRecords {
 				transaction.LogDebug("For domain %s MX record %s %v is found",
 					domain, record.Host, record.Pref)
-				mxRecordAsIP := net.ParseIP(record.Host)
 
-				if mxRecordAsIP == nil {
+				mxRecordAsIP := net.ParseIP(record.Host)
+				if mxRecordAsIP == nil { // MX record is domain name
 					possibleMxServers = append(possibleMxServers, record.Host)
 				} else {
+					// if MX record is raw IP address, and we allow it by config,
+					// we add it to array for future checks
 					if opts.AllowMxRecordToBeIP {
-						extraMxIPs = append(extraMxIPs, mxRecordAsIP)
+						availableMxServersIPs = append(availableMxServersIPs, mxRecordAsIP)
 					}
 				}
-
 			}
 		} else {
 			if opts.FallbackToAddressRecord {
@@ -84,68 +85,84 @@ func IsResolvable(opts IsResolvableOptions) msmtpd.SenderChecker {
 			domain, len(possibleMxServers))
 
 		for _, record := range possibleMxServers {
-			transaction.LogDebug("Checking mx server %s of domain %s", record, domain)
+			transaction.LogDebug("Resolving IP of mx server %s of domain %s", record, domain)
 			ips, errLookUp := resolver.LookupIP(ctx, "ip", record)
 			if errLookUp != nil {
 				transaction.LogWarn("%s : while resolving IP address for mailserver %s of domain of %s for %s",
 					errLookUp, record, domain, transaction.MailFrom.String())
 				continue
 			}
-			ips = append(ips, extraMxIPs...)
-			for _, ip := range ips {
-				transaction.LogDebug("Checking mx server %s ip %s of domain %s...",
-					record, ip.String(), domain)
-				if ip.IsPrivate() {
-					if opts.AllowLocalAddresses {
-						transaction.LogDebug("IP address %s of DNS server %s of domain %s seems legit, even if it is local",
-							ip.String(), record, domain,
-						)
-						usableMxServers = append(usableMxServers, ip)
-						continue
-					}
-				}
-				if ip.IsLoopback() {
-					transaction.LogDebug("MX server %s ip %s of domain %s is loopback!",
-						record, ip.String(), domain)
-					continue
-				}
-				if ip.IsUnspecified() {
-					transaction.LogDebug("MX server %s ip %s of domain %s is unspecified!",
-						record, ip.String(), domain)
-					continue
-				}
-				if ip.IsMulticast() {
-					transaction.LogDebug("MX server %s ip %s of domain %s is Multicast!",
-						record, ip.String(), domain)
-					continue
-				}
-				if ip.IsGlobalUnicast() {
-					transaction.LogDebug("MX server %s ip %s of domain %s is Global Unicast!",
-						record, ip.String(), domain)
-					usableMxServers = append(usableMxServers, ip)
-					continue
-				}
-				if ip.IsLinkLocalUnicast() {
-					transaction.LogDebug("MX server %s ip %s of domain %s is Link Local Unicast!",
-						record, ip.String(), domain)
-					continue
-				}
-				if ip.IsInterfaceLocalMulticast() {
-					transaction.LogDebug("MX server %s ip %s of domain %s is Interface Local Multicast!",
-						record, ip.String(), domain)
-					continue
-				}
-				transaction.LogDebug("IP address %s of DNS server %s of domain %s seems legit",
-					ip.String(), record, domain,
-				)
-				usableMxServers = append(usableMxServers, ip)
-			}
+			transaction.LogDebug("Checking mx server %s of domain %s having this IPs... %v",
+				record, domain, ips)
+			availableMxServersIPs = append(availableMxServersIPs, ips...)
 		}
-		if len(usableMxServers) > 0 {
-			transaction.LogDebug("We found %v usable MX servers for domain %s",
-				len(usableMxServers), domain)
+
+		transaction.LogDebug("For domain %s possible email exchanges %v were resolved into IP addresses: %v",
+			domain, possibleMxServers, availableMxServersIPs)
+
+		for _, ip := range availableMxServersIPs {
+			if ip.IsPrivate() {
+				if opts.AllowLocalAddresses {
+					transaction.LogDebug("%s of MX of %s is local, but settings allows it",
+						ip.String(), domain,
+					)
+					usableMxServersIPs = append(usableMxServersIPs, ip)
+				} else {
+					transaction.LogDebug("%s of MX of %s is local - unusual",
+						ip.String(), domain,
+					)
+				}
+				continue
+			}
+			if ip.IsLoopback() {
+				transaction.LogDebug("%s of MX of %s is loopback - thanks for trolling :-)",
+					ip.String(), domain,
+				)
+				continue
+			}
+			if ip.IsUnspecified() {
+				transaction.LogDebug("%s of MX of %s is unspecified - useless",
+					ip.String(), domain,
+				)
+				continue
+			}
+			if ip.IsMulticast() {
+				transaction.LogDebug("%s of MX of %s is multicast - useless",
+					ip.String(), domain,
+				)
+				continue
+			}
+			if ip.IsGlobalUnicast() {
+				transaction.LogDebug("%s of MX of %s is global unicast - we can dial it",
+					ip.String(), domain,
+				)
+				usableMxServersIPs = append(usableMxServersIPs, ip)
+				continue
+			}
+			if ip.IsLinkLocalUnicast() {
+				transaction.LogDebug("%s of MX of %s is link local unicast - wierd",
+					ip.String(), domain,
+				)
+				continue
+			}
+			if ip.IsInterfaceLocalMulticast() {
+				transaction.LogDebug("%s of MX of %s is link local multicast - useless",
+					ip.String(), domain,
+				)
+				continue
+			}
+			transaction.LogDebug("%s of MX of %s seems legit",
+				ip.String(), domain,
+			)
+			usableMxServersIPs = append(usableMxServersIPs, ip)
+		}
+
+		if len(usableMxServersIPs) > 0 {
+			transaction.LogInfo("We found %v usable MX servers for domain %s: %v",
+				len(usableMxServersIPs), domain, usableMxServersIPs)
 			return nil
 		}
+		transaction.LogInfo("No usable MX servers for domain %s", domain)
 		return msmtpd.ErrorSMTP{
 			Code:    421,
 			Message: IsNotResolvableComplain,
