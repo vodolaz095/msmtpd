@@ -29,7 +29,6 @@ func (d *Dovecot) CheckRecipient(tr *msmtpd.Transaction, recipient *mail.Address
 	if err != nil {
 		tr.LogError(err, "while getting dialing socket of dovecot's userdb")
 		return temporaryError
-
 	}
 	defer conn.Close()
 	tr.LogDebug("Dovecot connection established to socket %s", d.PathToAuthUserDBSocket)

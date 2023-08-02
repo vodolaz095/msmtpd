@@ -19,29 +19,36 @@ import (
 )
 
 // CheckerFunc are signature of functions used in checks for client issuing HELO/EHLO, MAIL FROM, RCPT TO commands
-// First argument is current Transaction, 2nd one - is argument of clients commands.
 // Note that we can store counters and Facts in Transaction, in order to extract and reuse it in the future.
 type CheckerFunc func(transaction *Transaction) error
 
-// ConnectionChecker are called when tcp connection are established, if they return non-null error, connection is terminated
+// ConnectionChecker are called when tcp connection are established, if they return non-null error,
+// connection is terminated
 type ConnectionChecker CheckerFunc
 
-// HelloChecker is called after client provided HELO/EHLO greeting, if they return non-null error, connection is closed
+// HelloChecker is called after client provided HELO/EHLO greeting, returned errors are send
+// to client as ErrorSMTP responses
 type HelloChecker CheckerFunc
 
-// SenderChecker is called after client provided MAIL FROM, if they return non-null error, connection is closed
+// SenderChecker is called after client provided MAIL FROM, returned errors are send
+// // to client as ErrorSMTP responses
 type SenderChecker CheckerFunc
 
-// RecipientChecker is called for each RCPT TO client provided, if they return null error, recipient is added to Transaction.RcptTo
+// RecipientChecker is called for each RCPT TO client provided, if they return null error,
+// recipient is added to Transaction.RcptTo, else returned errors are send
+// to client as ErrorSMTP responses
 type RecipientChecker func(transaction *Transaction, recipient *mail.Address) error
 
-// DataChecker is called when client provided message body, and we need to ensure it is sane. It is good place to use RSPAMD and other message body validators here
+// DataChecker is called when client provided message body, and we need to ensure it is sane.
+// It is good place to use RSPAMD and other message body validators here
 type DataChecker CheckerFunc
 
-// DataHandler is called when client provided message body, they can be used to either check message by rspamd and header validator, or even actually deliver message to LMTP or 3rd party SMTP server
+// DataHandler is called when client provided message body, it was checked by all DataChecker functions,
+// and we need to deliver message to LMTP or 3rd party SMTP server.
 type DataHandler CheckerFunc
 
-// CloseHandler is called when server terminates SMTP session, it can be used for, for example, storing Karma or reporting statistics
+// CloseHandler is called when server terminates SMTP session, it can be used for,
+// for example, storing Karma or reporting statistics
 type CloseHandler CheckerFunc
 
 // AuthenticatorFunc is signature of function used to handle authentication
@@ -62,9 +69,10 @@ type Server struct {
 
 	// MaxConnections sets maximum number of concurrent connections, use -1 to disable. (default: 100)
 	MaxConnections int
-	// MaxMessageSize, default is
-	MaxMessageSize int // Max message size in bytes. (default: 10240000)
-	MaxRecipients  int // Max RCPT TO calls for each envelope. (default: 100)
+	// MaxMessageSize, default is 10240000 bytes
+	MaxMessageSize int
+	// MaxRecipients are limit for RCPT TO calls for each envelope. (default: 100)
+	MaxRecipients int
 
 	// Resolver is net.Resolver used by server and plugins to resolve remote resources against DNS servers
 	Resolver *net.Resolver
@@ -80,32 +88,49 @@ type Server struct {
 	// Use the ErrorSMTP struct for access to error codes.
 	// Checks are called synchronously, in usual order
 
-	// ConnectionCheckers are called when TCP connection is started
+	// ConnectionCheckers are called when TCP connection is started, if any of connection
+	// checkers returns error, connection is closed, which is reported as ErrorSMTP being send to
+	// client before connection is terminated
 	ConnectionCheckers []ConnectionChecker
-	// HeloCheckers are called after client send HELO/EHLO commands,
-	// 1st argument is Transaction, 2nd one - HELO/EHLO payload
+
+	// HeloCheckers are called after client send HELO/EHLO commands
+	// If any of HeloCheckers returns error, it will be reported as HELO/EHLO command response,
+	// and HELO command will be considered erroneous.
 	HeloCheckers []HelloChecker
-	// SenderCheckers are called when client issues MAIL FROM command,
-	// 1st argument is Transaction, 2nd one - MAIL FROM payload
+
+	// SenderCheckers are called when client issues MAIL FROM command
+	// If any of SenderCheckers returns error, it will be reported as MAIL FROM command response,
+	// and command will be considered erroneous.
 	SenderCheckers []SenderChecker
-	// RecipientCheckers are called when client issues RCPT TO command,
+
+	// RecipientCheckers are called every time client issues RCPT TO command
 	// 1st argument is Transaction, 2nd one - RCPT TO payload
+	// If any of RecipientCheckers returns error, it will be reported as RCPT TO command response
+	// and command will be considered erroneous.
 	RecipientCheckers []RecipientChecker
 
-	// Authenticator, while beign not nill, enables PLAIN/LOGIN authentication,
+	// Authenticator, while being not nil, enables PLAIN/LOGIN authentication,
 	// only available after STARTTLS. Variable can be left empty for no authentication support.
+	// If Authenticator returns error, authentication will be considered erroneous.
 	Authenticator func(transaction *Transaction, username, password string) error
 
 	// DataCheckers are functions called to check message body before passing it
-	// to DataHandlers for delivery.
+	// to DataHandlers for delivery. If left empty, body is not checked. It is worth
+	// mentioning that message body is parsed according to RFC 5322 to ensure mandatory
+	// headers From and Date are present, and important ones do not have duplicates.
+	// If any of data checkers returns error, it will be reported as DATA
+	// command response and command will be considered erroneous.
 	DataCheckers []DataChecker
 
 	// DataHandlers are functions to process message body after DATA command.
 	// Can be left empty for a NOOP server.
-	// If an error is returned, it will be reported in the SMTP session.
+	// If any of DataHandlers returns error, it will be reported as DATA
+	// command response and command will be considered erroneous.
 	DataHandlers []DataHandler
 
-	// CloseHandlers are called after connection is closed
+	// CloseHandlers are called after connection is closed. They can be used to, for example,
+	// update counters, save connection metadata into persistent storage like Karma plugin does,
+	// or it can even issue shell command to blacklist remote IP by firewall
 	CloseHandlers []CloseHandler
 
 	// EnableXCLIENT enables XClient command support (disabled by default, since it is security risk)
@@ -119,7 +144,7 @@ type Server struct {
 	ForceTLS bool
 	// Logger is interface being used as protocol/plugin/errors logger
 	Logger Logger
-
+	// Tracer is OpenTelemetry tracer which starts spans for every Transaction
 	Tracer trace.Tracer
 	// mu guards doneChan and makes closing it and listener atomic from
 	// perspective of Serve()
@@ -138,7 +163,7 @@ func (srv *Server) startTransaction(c net.Conn) (t *Transaction) {
 	mu := sync.Mutex{}
 	ctx, cancel := context.WithCancel(context.Background())
 	remoteAddr := c.RemoteAddr().(*net.TCPAddr)
-	ctxWithTracer, span := srv.Tracer.Start(ctx, "SMTP transaction",
+	ctxWithTracer, span := srv.Tracer.Start(ctx, "transaction",
 		trace.WithSpanKind(trace.SpanKindServer), // важно
 		trace.WithAttributes(attribute.String("remote_addr", c.RemoteAddr().String())),
 		trace.WithAttributes(attribute.String("remote_ip", remoteAddr.IP.String())),
@@ -386,7 +411,7 @@ func (srv *Server) configureDefaults() {
 		}
 	}
 	if srv.Tracer == nil {
-		srv.Tracer = tracesdk.NewTracerProvider().Tracer("msmptd")
+		srv.Tracer = tracesdk.NewTracerProvider().Tracer("msmtpd")
 	}
 }
 

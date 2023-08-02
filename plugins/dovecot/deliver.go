@@ -19,7 +19,7 @@ func (d *Dovecot) Deliver(tr *msmtpd.Transaction) (err error) {
 	}
 	err = expect(pr, "220")
 	if err != nil {
-		tr.LogError(err, "wrong lmtp greeting")
+		tr.LogError(err, "wrong LMTP greeting")
 		return temporaryError
 	}
 
