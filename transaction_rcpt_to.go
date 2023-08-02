@@ -67,7 +67,7 @@ func (t *Transaction) handleRCPT(cmd command) {
 		t.LogInfo("Recipient %s will be 2nd one in transaction!", addr)
 		break
 	case 3:
-		t.LogInfo("Recipient %s will be 2nd one in transaction!", addr)
+		t.LogInfo("Recipient %s will be 3rd one in transaction!", addr)
 		break
 	default:
 		t.LogInfo("Recipient %s will be %dth one in transaction!", addr, len(t.RcptTo))

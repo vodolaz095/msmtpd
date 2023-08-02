@@ -1,5 +1,7 @@
 version: "3.8"
 
+volumes:
+  redis-data:
 
 services:
 # сборщик метрик для open-telemetry - WebUI - http://localhost:16686
@@ -18,3 +20,10 @@ services:
   #      - 6832:6832/udp
   #      - 5778:5778
   #      - 14250:14250
+
+  redis:
+    image: "redis:7-alpine"
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/var/lib/redis
