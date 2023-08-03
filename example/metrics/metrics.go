@@ -2,10 +2,18 @@ package main
 
 import (
 	"log"
+	_ "net/http/pprof"
 
 	"github.com/vodolaz095/msmtpd"
 )
 
+// Example with metrics and profiling.
+
+// Profiling info will be published on http://localhost:3000/debug/pprof/
+// Metrics will be published on http://localhost:3000/metrics
+
+// Good read:
+// https://pkg.go.dev/net/http/pprof
 // https://www.influxdata.com/products/data-collection/scrapers/
 // https://prometheus.io/docs/instrumenting/exposition_formats/
 
