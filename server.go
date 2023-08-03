@@ -153,6 +153,12 @@ type Server struct {
 	listener   *net.Listener
 	waitgrp    sync.WaitGroup
 	inShutdown atomic.Bool
+
+	// counters
+	bytesRead          uint64
+	bytesWritten       uint64
+	transactionsAll    uint64
+	transactionsActive int32
 }
 
 // startTransaction takes network connection and wraps it into Transaction object to handle all remote
@@ -161,6 +167,8 @@ func (srv *Server) startTransaction(c net.Conn) (t *Transaction) {
 	var err error
 	var ptrs []string
 	mu := sync.Mutex{}
+	atomic.AddUint64(&srv.transactionsAll, 1)
+	atomic.AddInt32(&srv.transactionsActive, 1)
 	ctx, cancel := context.WithCancel(context.Background())
 	remoteAddr := c.RemoteAddr().(*net.TCPAddr)
 	ctxWithTracer, span := srv.Tracer.Start(ctx, "transaction",
@@ -180,8 +188,8 @@ func (srv *Server) startTransaction(c net.Conn) (t *Transaction) {
 		Span: span,
 
 		conn:   c,
-		reader: bufio.NewReader(c),
-		writer: bufio.NewWriter(c),
+		reader: bufio.NewReader(srv.wrapWithCounters(c)),
+		writer: bufio.NewWriter(srv.wrapWithCounters(c)),
 		Addr:   c.RemoteAddr(),
 		PTRs:   make([]string, 0),
 		ctx:    ctxWithTracer,
@@ -266,6 +274,7 @@ func (srv *Server) runCloseHandlers(transaction *Transaction) {
 	}
 	transaction.closeHandlersCalled = true
 	srv.Logger.Infof(transaction, "Closing transaction.")
+	atomic.AddInt32(&srv.transactionsActive, -1)
 }
 
 // Serve starts the SMTP server and listens on the Listener provided
