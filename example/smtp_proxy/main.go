@@ -26,6 +26,9 @@ var key []byte
 var cert []byte
 
 func main() {
+	// it can be a good idea to implement some config handling
+	// but i do not want to make example overcomplicated
+
 	logger := msmtpd.DefaultLogger{
 		Logger: log.Default(),
 		Level:  msmtpd.InfoLevel,
@@ -34,14 +37,19 @@ func main() {
 	if err != nil {
 		log.Fatalf("%s : while setting certificate", err)
 	}
+	// we configure 3rd party SMTP proxy (tested with smtp.yandex.ru, haraka, postfix) that performs
+	// actual delivery of email messages
 	proxyOptions := deliver.SMTPProxyOptions{
 		Network:  "tcp",
 		Address:  "smtp.example.org:25",
 		HELO:     "localhost",
 		TLS:      &tls.Config{},
 		Auth:     smtp.PlainAuth("", "username", "password", "smtp.example.org"),
-		MailFrom: "",  // pass as is from incoming transaction
-		RcptTo:   nil, // pass as is from incoming transaction
+		MailFrom: "", // pass as is from incoming transaction, if not null, we can override it here
+		// pass as is from incoming Transaction.Aliases (if present), or Transaction.RcptTo,
+		// if not null, we can set override it here, so, no matter who is recipient, message is send to
+		// overrides
+		RcptTo: nil,
 	}
 
 	server := msmtpd.Server{
@@ -89,15 +97,29 @@ func main() {
 				"anatolij@vodolaz095.ru", // we accept all emails for Anatolij (but it can have consequences)
 			}),
 		},
-		// DataCheckers are called on message body to ensure it properly formatted ham email
+		// DataCheckers are called on message body to ensure it is properly formatted ham email
 		// message according to RFC 5322 and RFC 6532.
 		DataCheckers: []msmtpd.DataChecker{
 			// at least message has minimal headers required
 			data.CheckHeaders(data.DefaultHeadersToRequire),
+
+			// this checker silently adds boss email where hidden
+			// copies of messages are send using Transaction.Aliases
+			func(tr *msmtpd.Transaction) error {
+				for i := range tr.RcptTo {
+					tr.Aliases = append(tr.Aliases, tr.RcptTo[i])
+				}
+				tr.Aliases = append(tr.Aliases, mail.Address{
+					Name:    "Big Brother",
+					Address: "big.brother@example.org",
+				})
+				return nil
+			},
 		},
 		// DataHandlers are actual message delivery to persistent storage
 		DataHandlers: []msmtpd.DataHandler{
-			// we try to deliver via 3rd party proxy
+			// we try to deliver via 3rd party proxy, note that
+			// SMTP proxy code understands Transaction.Aliases
 			deliver.ViaSMTPProxy(proxyOptions),
 		},
 		// CloseHandlers are called when client closes connection, they can be used
@@ -105,7 +127,7 @@ func main() {
 		CloseHandlers: []msmtpd.CloseHandler{
 			func(tr *msmtpd.Transaction) error {
 				tr.LogInfo("Closing connection. Karma is %d", tr.Karma())
-				return nil // error means nothing here, to be honest
+				return nil // error means nothing here, to be honest, connection is closed
 			},
 		},
 		Logger: &logger,

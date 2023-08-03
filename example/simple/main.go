@@ -79,6 +79,8 @@ func main() {
 					// set string fact about transaction
 					tr.SetFact("subject", subject)
 				}
+				// Add header to message
+				tr.AddHeader("Something", "interesting")
 				return nil
 			},
 		},

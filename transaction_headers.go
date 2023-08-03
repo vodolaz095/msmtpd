@@ -11,8 +11,8 @@ import (
  * Header manipulation
  */
 
-// AddHeader adds header, it should be called before AddReceivedLine, since it adds
-// header to the top
+// AddHeader adds header to the Transaction.Parsed, and to the Transaction.Body, so,
+// it should be called before AddReceivedLine, since it adds header to the top
 func (t *Transaction) AddHeader(name, value string) {
 	t.LogDebug("Adding header `%s: %s`", name, value)
 	line := wrap([]byte(fmt.Sprintf("%s: %s\r\n", name, value)))
@@ -20,9 +20,19 @@ func (t *Transaction) AddHeader(name, value string) {
 	// Move the new newly added header line up front
 	copy(t.Body[len(line):], t.Body[0:len(t.Body)-len(line)])
 	copy(t.Body, line)
+
+	if t.Parsed != nil {
+		// add header to parsed body
+		_, found := t.Parsed.Header[name]
+		if found {
+			t.Parsed.Header[name] = append(t.Parsed.Header[name], value)
+		} else {
+			t.Parsed.Header[name] = []string{value}
+		}
+	}
 }
 
-// AddReceivedLine prepends a Received header to the Data
+// AddReceivedLine prepends a Received header to the Transaction.Body
 func (t *Transaction) AddReceivedLine() {
 	tlsDetails := ""
 	if t.TLS != nil {

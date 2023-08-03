@@ -324,6 +324,19 @@ func TestAddExtraHeader(t *testing.T) {
 				if !bytes.HasPrefix(tr.Body, []byte("Something: interesting")) {
 					t.Error("Wrong extra header line.")
 				}
+				val, found := tr.Parsed.Header["Something"]
+				if !found {
+					t.Errorf("header not added to parsed body object")
+				}
+				if len(val) != 1 {
+					t.Errorf("wrong number of headers added to parsed body object")
+				}
+				if val[0] != "interesting" {
+					t.Errorf("wrong header added to parsed body object")
+				}
+				if tr.Parsed.Header.Get("Something") != "interesting" {
+					t.Errorf("wrong header added to parsed body object")
+				}
 				return nil
 			},
 		},
