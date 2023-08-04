@@ -9,17 +9,17 @@ import (
 	"github.com/vodolaz095/msmtpd"
 )
 
-// QuarantineFlag is name of flag used to mark transaction's message as being quarantined
-const QuarantineFlag = "quarantine"
+// FlagName is name of flag used to mark transaction's message as being quarantined
+const FlagName = "quarantine"
 
-// MoveToDirectory saves messages of flagged by QuarantineFlag transactions into directory using pattern directory/YYYY/MM/DD/{transactionID}.eml
+// MoveToDirectory saves messages of flagged by FlagName transactions into directory using pattern directory/YYYY/MM/DD/{transactionID}.eml
 func MoveToDirectory(directory string) msmtpd.DataHandler {
 	err := os.MkdirAll(directory, 0755)
 	if err != nil {
 		log.Fatalf("%s : while making MoveToDirectory directory at %s", err, directory)
 	}
 	return func(tr *msmtpd.Transaction) error {
-		if !tr.IsFlagSet(QuarantineFlag) {
+		if !tr.IsFlagSet(FlagName) {
 			tr.LogDebug("MoveToDirectory flag is not set")
 			return nil
 		}

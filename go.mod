@@ -3,6 +3,7 @@ module github.com/vodolaz095/msmtpd
 go 1.19
 
 require (
+	github.com/jarcoal/httpmock v1.3.0
 	github.com/redis/go-redis/v9 v9.0.5
 	go.opentelemetry.io/otel v1.16.0
 	go.opentelemetry.io/otel/exporters/jaeger v1.16.0

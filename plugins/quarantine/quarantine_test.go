@@ -20,7 +20,7 @@ func TestQuarantine(t *testing.T) {
 	addr, closer := msmtpd.RunTestServerWithoutTLS(t, &msmtpd.Server{
 		DataCheckers: []msmtpd.DataChecker{
 			func(tr *msmtpd.Transaction) error {
-				tr.SetFlag(QuarantineFlag)
+				tr.SetFlag(FlagName)
 				tID = tr.ID
 				createdAt = tr.StartedAt
 				return nil

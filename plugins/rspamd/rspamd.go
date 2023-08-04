@@ -66,7 +66,7 @@ type Symbol struct {
 // AddHeader is part of Milter in Response used to add headers
 type AddHeader struct {
 	Value string
-	Order string
+	Order int
 }
 
 // ActionNoop is thing rspamd recomends to do with this message
@@ -118,7 +118,8 @@ func DataChecker(opts Opts) msmtpd.DataChecker {
 	}
 	return func(transaction *msmtpd.Transaction) error {
 		payload := bytes.NewReader(transaction.Body)
-		req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s%s", opts.URL, DefaultEndpoint), payload)
+		req, err := http.NewRequestWithContext(transaction.Context(), http.MethodPost,
+			fmt.Sprintf("%s%s", opts.URL, DefaultEndpoint), payload)
 		if err != nil {
 			transaction.LogError(err, "error while making HTTP request to RSPAMD")
 			return msmtpd.ErrorSMTP{
@@ -145,7 +146,6 @@ func DataChecker(opts Opts) msmtpd.DataChecker {
 			}
 			req.Header.Add("TLS-Cipher", tls.CipherSuiteName(transaction.TLS.CipherSuite))
 		}
-		req = req.WithContext(transaction.Context())
 		res, err := opts.HTTPClient.Do(req)
 		if err != nil {
 			transaction.LogError(err, "error while doing HTTP request to RSPAMD")
@@ -203,6 +203,7 @@ func DataChecker(opts Opts) msmtpd.DataChecker {
 			transaction.Body = subjectRegex.ReplaceAll(transaction.Body,
 				[]byte(fmt.Sprintf("Subject: %s", rr.Subject)),
 			)
+			transaction.Parsed.Header["Subject"] = []string{rr.Subject}
 			return nil
 		case ActionSoftReject:
 			return msmtpd.ErrorSMTP{
