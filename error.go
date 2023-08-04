@@ -26,7 +26,7 @@ var ErrServerClosed = errors.New("smtp: Server closed")
 // ErrServiceNotAvailable means server cannot perform this SMTP transaction and it should be retried later
 var ErrServiceNotAvailable = ErrorSMTP{
 	Code:    421,
-	Message: "Service not available, closing transmission channel. Try again later, please.",
+	Message: "Service not available. Try again later, please.",
 }
 
 // ErrServiceDoesNotAcceptEmail means server will not perform this SMTP transaction, even if your try to retry it
