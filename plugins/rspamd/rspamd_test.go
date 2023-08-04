@@ -86,6 +86,79 @@ func TestCheckPyRealRSPAMD(t *testing.T) {
 	}
 }
 
+func TestCheckPyMockRSPAMDFail(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+	httpmock.RegisterResponder(http.MethodGet, DefaultAddress+"ping",
+		httpmock.NewStringResponder(200, "pong\r\n"))
+	// no re
+	validMessage := internal.MakeTestMessage("sender@example.org", "recipient@example.net", "recipient2@example.net")
+	addr, closer := msmtpd.RunTestServerWithoutTLS(t, &msmtpd.Server{
+		DataCheckers: []msmtpd.DataChecker{
+			DataChecker(Opts{
+				URL:      DefaultAddress,
+				Password: testRspamdPassword,
+				HTTPClient: &http.Client{
+					Transport:     httpmock.DefaultTransport,
+					CheckRedirect: nil,
+					Jar:           nil,
+					Timeout:       time.Second,
+				},
+			}),
+		},
+		DataHandlers: []msmtpd.DataHandler{
+			func(transaction *msmtpd.Transaction) error {
+				for k, v := range transaction.Parsed.Header {
+					t.Logf("%s : %v", k, v)
+				}
+				return nil
+			},
+		},
+	})
+	defer closer()
+	c, err := smtp.Dial(addr)
+	if err != nil {
+		t.Errorf("Dial failed: %v", err)
+	}
+	if err = c.Hello("localhost"); err != nil {
+		t.Errorf("HELO failed: %v", err)
+	}
+	if supported, _ := c.Extension("AUTH"); supported {
+		t.Error("AUTH supported before TLS")
+	}
+	if supported, _ := c.Extension("8BITMIME"); !supported {
+		t.Error("8BITMIME not supported")
+	}
+	if supported, _ := c.Extension("STARTTLS"); supported {
+		t.Error("STARTTLS supported")
+	}
+	if err = c.Mail("sender@example.org"); err != nil {
+		t.Errorf("Mail failed: %v", err)
+	}
+	if err = c.Rcpt("recipient@example.net"); err != nil {
+		t.Errorf("Rcpt failed: %v", err)
+	}
+	if err = c.Rcpt("recipient2@example.net"); err != nil {
+		t.Errorf("Rcpt2 failed: %v", err)
+	}
+	wc, err := c.Data()
+	if err != nil {
+		t.Errorf("Data failed: %v", err)
+	}
+	_, err = fmt.Fprintf(wc, validMessage)
+	if err != nil {
+		t.Errorf("Data body failed: %v", err)
+	}
+	err = wc.Close()
+	if err != nil {
+		if err.Error() != "421 Too many letters, i cannot read them all now. Please, resend your message later" {
+			t.Errorf("%s : wrong status", err)
+		}
+	} else {
+		t.Errorf("greylist not works")
+	}
+}
+
 func TestCheckPyMockRSPAMDActionNoop(t *testing.T) {
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()

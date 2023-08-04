@@ -158,6 +158,15 @@ func DataChecker(opts Opts) msmtpd.DataChecker {
 		if res.Body != nil {
 			defer res.Body.Close()
 		}
+		if res.StatusCode != http.StatusOK {
+			transaction.LogError(fmt.Errorf("wrong status code %s", res.Status),
+				"error while doing HTTP request to RSPAMD")
+			return msmtpd.ErrorSMTP{
+				Code:    421,
+				Message: rspamdComplain,
+			}
+		}
+
 		checkResponseBody, err := io.ReadAll(res.Body)
 		if err != nil {
 			transaction.LogError(err, "error reading Rspamd response")
