@@ -335,6 +335,13 @@ func (srv *Server) Serve(l net.Listener) error {
 			transaction.cancel()
 			continue
 		}
+		if transaction.Encrypted {
+			if !transaction.Secured {
+				transaction.LogInfo("Connection TLS handshake failed - closing transaction...")
+				transaction.cancel()
+				continue
+			}
+		}
 		transaction.LogInfo("Accepting connection from %s...", transaction.Addr)
 
 		srv.waitgrp.Add(1)
