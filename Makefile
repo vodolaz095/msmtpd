@@ -5,6 +5,12 @@ deps:
 
 test: check
 
+# https://go.dev/blog/govulncheck
+# install it by go install golang.org/x/vuln/cmd/govulncheck@latest
+vuln:
+	which govulncheck
+	govulncheck ./...
+
 lint:
 	gofmt  -w=true -s=true -l=true ./
 	golint ./...
