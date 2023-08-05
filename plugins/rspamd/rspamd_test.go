@@ -357,6 +357,9 @@ func TestCheckPyMockRSPAMDActionAddHeader(t *testing.T) {
 				for k, v := range transaction.Parsed.Header {
 					t.Logf("%s : %v", k, v)
 				}
+				if transaction.Parsed.Header.Get("Something") != "interesting" {
+					t.Errorf("header not added")
+				}
 				return nil
 			},
 		},
@@ -596,6 +599,9 @@ func TestCheckPyMockRSPAMDActionRewriteSubject(t *testing.T) {
 			func(transaction *msmtpd.Transaction) error {
 				for k, v := range transaction.Parsed.Header {
 					t.Logf("%s : %v", k, v)
+				}
+				if transaction.Parsed.Header.Get("Subject") != "new subject rewritten" {
+					t.Errorf("header not added")
 				}
 				return nil
 			},
