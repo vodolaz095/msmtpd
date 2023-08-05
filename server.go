@@ -201,7 +201,7 @@ func (srv *Server) startTransaction(c net.Conn) (t *Transaction) {
 		flags:    make(map[string]bool, 0),
 		mu:       &mu,
 	}
-	t.LogInfo("Starting transaction for %s", t.Addr.String())
+	t.LogInfo("Starting transaction %s for %s.", t.ID, t.Addr.String())
 	// Check if the underlying connection is already TLS.
 	// This will happen if the Listener provided Serve()
 	// is from tls.Listen()
@@ -332,7 +332,7 @@ func (srv *Server) Serve(l net.Listener) error {
 			}
 		}
 		if broken {
-			transaction.LogInfo("Connection checkers failed - closing transaction...")
+			transaction.LogInfo("Connection checkers failed - closing broken transaction...")
 			transaction.cancel()
 			continue
 		}
