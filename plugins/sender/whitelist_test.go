@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/smtp"
 	"testing"
+	"time"
 
 	"github.com/vodolaz095/msmtpd"
 )
@@ -25,7 +26,6 @@ func TestAcceptMailFromDomains(t *testing.T) {
 			}),
 		},
 	})
-	defer closer()
 	for k, v := range cases {
 		c, err := smtp.Dial(addr)
 		if err != nil {
@@ -49,6 +49,8 @@ func TestAcceptMailFromDomains(t *testing.T) {
 			t.Errorf("%s : while closing connection", err)
 		}
 	}
+	time.Sleep(time.Second)
+	closer()
 }
 
 func TestAcceptMailFromAddresses(t *testing.T) {
@@ -68,7 +70,6 @@ func TestAcceptMailFromAddresses(t *testing.T) {
 			}),
 		},
 	})
-	defer closer()
 	for k, v := range cases {
 		c, err := smtp.Dial(addr)
 		if err != nil {
@@ -93,6 +94,8 @@ func TestAcceptMailFromAddresses(t *testing.T) {
 			t.Errorf("%s : while closing connection", err)
 		}
 	}
+	time.Sleep(time.Second)
+	closer()
 }
 
 func TestAcceptMailFromDomainsOrAddresses(t *testing.T) {
@@ -123,7 +126,6 @@ func TestAcceptMailFromDomainsOrAddresses(t *testing.T) {
 				}),
 		},
 	})
-	defer closer()
 	for k, v := range cases {
 		c, err := smtp.Dial(addr)
 		if err != nil {
@@ -147,4 +149,6 @@ func TestAcceptMailFromDomainsOrAddresses(t *testing.T) {
 			t.Errorf("%s : while closing connection", err)
 		}
 	}
+	time.Sleep(time.Second)
+	closer()
 }
