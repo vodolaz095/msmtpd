@@ -16,6 +16,8 @@ func TestCheckSenderScore(t *testing.T) {
 		{IP: []byte{54, 211, 7, 12}, Port: 25},
 		{IP: []byte{54, 145, 43, 133}, Port: 25},
 		{IP: []byte{193, 176, 233, 203}, Port: 25},
+		{IP: []byte{94, 156, 102, 151}, Port: 25},
+		{IP: []byte{94, 156, 102, 151}},
 	}
 
 	for i := range cases {
