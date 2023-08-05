@@ -201,13 +201,14 @@ func (srv *Server) startTransaction(c net.Conn) (t *Transaction) {
 		flags:    make(map[string]bool, 0),
 		mu:       &mu,
 	}
-	t.LogDebug("Starting transaction...")
+	t.LogInfo("Starting transaction for %s", t.Addr.String())
 	// Check if the underlying connection is already TLS.
 	// This will happen if the Listener provided Serve()
 	// is from tls.Listen()
 	var tlsConn *tls.Conn
 	tlsConn, t.Encrypted = c.(*tls.Conn)
 	if t.Encrypted {
+		span.SetAttributes(attribute.Bool("encrypted", true))
 		// run handshake otherwise it's done when we first
 		// read/write and connection state will be invalid
 		err = tlsConn.Handshake()
@@ -219,6 +220,16 @@ func (srv *Server) startTransaction(c net.Conn) (t *Transaction) {
 		} else {
 			t.Secured = true
 			span.SetAttributes(attribute.Bool("secured", true))
+			version, found := TLSVersions[tlsConn.ConnectionState().Version]
+			if found {
+				t.LogInfo("Connection with %s is already encrypted for server `%s` with %s",
+					t.Addr.String(), tlsConn.ConnectionState().ServerName, version,
+				)
+			} else {
+				t.LogWarn("Connection with %s is already encrypted for server `%s` with unknown protocol version %v",
+					t.Addr.String(), tlsConn.ConnectionState().ServerName, tlsConn.ConnectionState().Version,
+				)
+			}
 		}
 		state := tlsConn.ConnectionState()
 		t.TLS = &state
@@ -227,6 +238,7 @@ func (srv *Server) startTransaction(c net.Conn) (t *Transaction) {
 		ptrs, err = t.Resolver().LookupAddr(t.Context(), remoteAddr.IP.String())
 		if err != nil {
 			t.LogError(err, "while resolving remote address PTR record")
+			t.PTRs = make([]string, 0)
 		} else {
 			t.LogDebug("PTR addresses resolved for %s : %v",
 				remoteAddr, ptrs,

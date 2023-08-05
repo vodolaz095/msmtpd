@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"crypto/tls"
 	"time"
+
+	"go.opentelemetry.io/otel/attribute"
 )
 
 func (t *Transaction) handleSTARTTLS(cmd command) {
@@ -24,7 +26,8 @@ func (t *Transaction) handleSTARTTLS(cmd command) {
 		t.reply(550, "TLS Handshake error")
 		return
 	}
-	t.LogDebug("Connection is encrypted!")
+	t.LogInfo("Connection is encrypted via StartTLS!")
+	t.Span.SetAttributes(attribute.Bool("encrypted", true))
 	// Reset envelope as a new EHLO/HELO is required after STARTTLS
 	t.reset()
 	// Reset deadlines on the underlying connection before I replace it

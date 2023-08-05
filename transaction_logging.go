@@ -77,7 +77,7 @@ func (t *Transaction) LogError(err error, desc string) {
 		t.Span.RecordError(err)
 		t.Span.SetStatus(codes.Error, desc) // marks span as having errors
 	}
-	t.logEvent(ErrorLevel, "%s %s", err, desc)
+	t.logEvent(ErrorLevel, "%s : %s", err, desc)
 }
 
 // LogFatal is used to send error level message to server logger

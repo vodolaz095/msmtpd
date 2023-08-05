@@ -97,6 +97,7 @@ func MakeTLSForLocalhost() (cfg *tls.Config, err error) {
 		return
 	}
 	return &tls.Config{
+		ServerName:   "localhost",
 		Certificates: []tls.Certificate{cert},
 	}, nil
 }
