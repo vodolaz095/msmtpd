@@ -324,6 +324,7 @@ func (srv *Server) Serve(l net.Listener) error {
 			err = srv.ConnectionCheckers[k](transaction)
 			if err != nil {
 				srv.runCloseHandlers(transaction)
+				transaction.LogWarn("%s : after connection checker %v executed", err, k)
 				transaction.error(err)
 				transaction.close()
 				broken = true
