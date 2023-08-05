@@ -25,6 +25,7 @@ func reverse(ip net.IP) (reversed string, err error) {
 	return
 }
 
+// SenderscoreCounter is name for senderscore counter
 const SenderscoreCounter = "senderscore"
 
 // RequireSenderScore is connection checker which breaks connection if remote IP senderscore is too low.
@@ -78,7 +79,7 @@ func RequireSenderScore(minimalSenderScore uint) msmtpd.ConnectionChecker {
 			if parsingErr != nil {
 				tr.LogError(
 					fmt.Errorf("%s : while parsing %s as senderscore", parsingErr, names[0]),
-					fmt.Sprintf("while reversing transaction address %s", tr.Addr.String()))
+					fmt.Sprintf("while resolving senderscore for address %s", tr.Addr.String()))
 				return msmtpd.ErrServiceNotAvailable
 			}
 			tr.LogDebug("SenderScore is %v", senderScore64)
@@ -93,7 +94,7 @@ func RequireSenderScore(minimalSenderScore uint) msmtpd.ConnectionChecker {
 		}
 		tr.LogError(
 			fmt.Errorf("strange senderscore response %s", names[0]),
-			fmt.Sprintf("while reversing transaction address %s", tr.Addr.String()))
+			fmt.Sprintf("while resolving senderscore for address %s", tr.Addr.String()))
 		return msmtpd.ErrServiceNotAvailable
 	}
 }
