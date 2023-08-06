@@ -21,8 +21,10 @@ func TestKarmaPluginMemoryGood(t *testing.T) {
 		Connections: 5,
 	}
 	kh := Handler{
-		HateLimit: 4,
-		Storage:   &memStorage,
+		InitialHate: 0,
+		HateLimit:   4,
+		KarmaLimit:  4, // > 5-0
+		Storage:     &memStorage,
 	}
 
 	addr, closer := msmtpd.RunTestServerWithoutTLS(t, &msmtpd.Server{
@@ -93,8 +95,10 @@ func TestKarmaPluginMemoryBad(t *testing.T) {
 		Connections: 5,
 	}
 	kh := Handler{
-		HateLimit: 5,
-		Storage:   &memStorage,
+		InitialHate: 0,
+		HateLimit:   5,
+		KarmaLimit:  -4,
+		Storage:     &memStorage,
 	}
 
 	addr, closer := msmtpd.RunTestServerWithoutTLS(t, &msmtpd.Server{
@@ -117,6 +121,7 @@ func TestKarmaPluginMemoryBad(t *testing.T) {
 		}
 	} else {
 		t.Errorf("we are not banned???")
+		wg.Done()
 	}
 	wg.Wait()
 	score, found := memStorage.Data["127.0.0.1"]

@@ -44,5 +44,7 @@ func (t *Transaction) handleSTARTTLS(cmd command) {
 	t.TLS = &state
 	// Flush the connection to set new timeout deadlines
 	t.flush()
+
+	t.Love(commandExecutedProperly)
 	return
 }
