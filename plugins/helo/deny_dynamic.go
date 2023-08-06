@@ -8,6 +8,8 @@ import (
 	"github.com/vodolaz095/msmtpd"
 )
 
+// DenyDynamicIP ensures helo/ehlo does not contain parts if connection IP address like ISP
+// usually do with residential and dynamic IP addresses
 func DenyDynamicIP(transaction *msmtpd.Transaction) error {
 	if transaction.IsFlagSet(IsLocalAddressFlagName) {
 		transaction.LogDebug("Connecting from local address %s, DenyBareIP check disabled",
