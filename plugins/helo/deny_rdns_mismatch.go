@@ -10,8 +10,8 @@ func DenyReverseDNSMismatch(transaction *msmtpd.Transaction) (err error) {
 		return nil
 	}
 	if len(transaction.PTRs) == 0 {
-		transaction.LogWarn("Warning - SkipResolvingPTR is enabled for server, it gives extra perfomance, but some plugins will not work")
-		return nil
+		transaction.LogWarn("Address %s has no PTR records - dns mismatch detected", transaction.Addr.String())
+		return complain
 	}
 	for i := range transaction.PTRs {
 		if transaction.PTRs[i] == transaction.HeloName {
