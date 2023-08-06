@@ -14,7 +14,7 @@ func DenyReverseDNSMismatch(transaction *msmtpd.Transaction) (err error) {
 		return nil
 	}
 	for i := range transaction.PTRs {
-		if transaction.HeloName == transaction.PTRs[i] {
+		if transaction.PTRs[i] == transaction.HeloName {
 			transaction.LogInfo("HELO/EHLO %s is matching RDNS record %s",
 				transaction.HeloName, transaction.PTRs[i])
 			found = true
