@@ -285,7 +285,7 @@ func (srv *Server) runCloseHandlers(transaction *Transaction) {
 		}
 	}
 	transaction.closeHandlersCalled = true
-	srv.Logger.Infof(transaction, "Closing transaction.")
+	srv.Logger.Infof(transaction, "Closing transaction %s.", transaction.ID)
 	atomic.AddInt32(&srv.transactionsActive, -1)
 }
 
