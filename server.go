@@ -154,11 +154,12 @@ type Server struct {
 	waitgrp    sync.WaitGroup
 	inShutdown atomic.Bool
 
-	// counters
-	bytesRead          uint64
-	bytesWritten       uint64
-	transactionsAll    uint64
-	transactionsActive int32
+	// counters for Server.StartPrometheusScrapperEndpoint
+	bytesRead                uint64
+	bytesWritten             uint64
+	transactionsAll          uint64
+	transactionsActive       int32
+	lastTransactionStartedAt time.Time
 }
 
 // startTransaction takes network connection and wraps it into Transaction object to handle all remote
@@ -166,9 +167,11 @@ type Server struct {
 func (srv *Server) startTransaction(c net.Conn) (t *Transaction) {
 	var err error
 	var ptrs []string
+	now := time.Now()
 	mu := sync.Mutex{}
 	atomic.AddUint64(&srv.transactionsAll, 1)
 	atomic.AddInt32(&srv.transactionsActive, 1)
+	srv.lastTransactionStartedAt = now
 	ctx, cancel := context.WithCancel(context.Background())
 	remoteAddr := c.RemoteAddr().(*net.TCPAddr)
 	ctxWithTracer, span := srv.Tracer.Start(ctx, "transaction",
@@ -179,7 +182,7 @@ func (srv *Server) startTransaction(c net.Conn) (t *Transaction) {
 	)
 	t = &Transaction{
 		ID:        span.SpanContext().TraceID().String(),
-		StartedAt: time.Now(),
+		StartedAt: now,
 
 		server:     srv,
 		ServerName: srv.Hostname,

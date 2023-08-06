@@ -65,14 +65,14 @@ func (srv *Server) StartPrometheusScrapperEndpoint(address, path string) (err er
 	http.HandleFunc(path, func(res http.ResponseWriter, req *http.Request) {
 		res.Header().Add("Content-Type", "text/plain; version=0.0.4")
 		res.WriteHeader(http.StatusOK)
-		fmt.Fprintf(res, "bytes_read{hostname=\"%s\"} %v\n",
-			srv.Hostname, srv.GetBytesRead())
-		fmt.Fprintf(res, "bytes_written{hostname=\"%s\"} %v\n",
-			srv.Hostname, srv.GetBytesWritten())
-		fmt.Fprintf(res, "active_transactions_count{hostname=\"%s\"} %v\n",
-			srv.Hostname, srv.GetActiveTransactionsCount())
-		fmt.Fprintf(res, "all_transactions_count{hostname=\"%s\"} %v\n",
-			srv.Hostname, srv.GetTransactionsCount())
+		fmt.Fprintf(res, "bytes_read{hostname=\"%s\"} %v %v\n",
+			srv.Hostname, srv.GetBytesRead(), srv.lastTransactionStartedAt.UnixMilli())
+		fmt.Fprintf(res, "bytes_written{hostname=\"%s\"} %v %v\n",
+			srv.Hostname, srv.GetBytesWritten(), srv.lastTransactionStartedAt.UnixMilli())
+		fmt.Fprintf(res, "active_transactions_count{hostname=\"%s\"} %v %v\n",
+			srv.Hostname, srv.GetActiveTransactionsCount(), srv.lastTransactionStartedAt.UnixMilli())
+		fmt.Fprintf(res, "all_transactions_count{hostname=\"%s\"} %v %v\n",
+			srv.Hostname, srv.GetTransactionsCount(), srv.lastTransactionStartedAt.UnixMilli())
 	})
 	return http.ListenAndServe(address, http.DefaultServeMux)
 }

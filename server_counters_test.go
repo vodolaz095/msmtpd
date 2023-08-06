@@ -7,6 +7,7 @@ import (
 	"net/smtp"
 	"sync"
 	"testing"
+	"time"
 )
 
 func TestCounters(t *testing.T) {
@@ -69,6 +70,12 @@ func TestCounters(t *testing.T) {
 	t.Logf("Transactions count - %v", srv.GetTransactionsCount())
 	if srv.GetTransactionsCount() != 0 {
 		t.Errorf("transaction counter is not reset")
+	}
+	if srv.lastTransactionStartedAt.IsZero() {
+		t.Errorf("transaction time is not set")
+	}
+	if time.Now().Sub(srv.lastTransactionStartedAt) > 3*time.Second {
+		t.Errorf("last transaction time is too old")
 	}
 }
 
