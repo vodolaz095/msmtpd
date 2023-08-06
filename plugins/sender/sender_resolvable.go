@@ -26,6 +26,12 @@ type IsResolvableOptions struct {
 
 	// AllowMxRecordToBeIP allows MX records to contain bare IP addresses, its unsafe, but still used
 	AllowMxRecordToBeIP bool
+
+	// DomainsToTrust is whitelist of domains you consider resolvable - for example, this is
+	// local domain of your company with MX server having local IP in local network, and
+	// on the same time, they are reachable from external network by white IPs.
+	// So, IsResolvable should allow senders from this domains to be used for MAIL FROM
+	DomainsToTrust []string
 }
 
 // IsNotResolvableComplain is human-readable thing we say to client with imaginary email address
@@ -34,12 +40,27 @@ const IsNotResolvableComplain = "Seems like i cannot find your sender address ma
 // IsResolvable is msmtpd.SenderChecker checker that performs DNS validations to proof we can send answer back to sender's email address
 func IsResolvable(opts IsResolvableOptions) msmtpd.SenderChecker {
 	return func(transaction *msmtpd.Transaction) error {
+		domain := strings.Split(transaction.MailFrom.Address, "@")[1]
+
+		var trustedDomain bool
+		for i := range opts.DomainsToTrust {
+			if domain == opts.DomainsToTrust[i] {
+				trustedDomain = true
+				break
+			}
+		}
+		if trustedDomain {
+			transaction.LogInfo("Sender %s is resolvable because he has trusted domain",
+				transaction.MailFrom.Address,
+			)
+			return nil
+		}
+
 		possibleMxServers := make([]string, 0)     // A / AAAA records of possible MX servers
 		availableMxServersIPs := make([]net.IP, 0) // IP addresses of possible MX servers
 		usableMxServersIPs := make([]net.IP, 0)    // IP addresses of possible MX servers
 		resolver := transaction.Resolver()
 		ctx := transaction.Context()
-		domain := strings.Split(transaction.MailFrom.Address, "@")[1]
 		mxRecords, err := resolver.LookupMX(ctx, domain)
 		if err != nil {
 			transaction.LogWarn("%s : while resolving MX records for domain %s of %s",
@@ -75,7 +96,7 @@ func IsResolvable(opts IsResolvableOptions) msmtpd.SenderChecker {
 			}
 		}
 		if len(possibleMxServers) == 0 {
-			transaction.LogDebug("For domain %s there are no possible email exchanges", domain)
+			transaction.LogInfo("For domain %s there are no possible email exchanges", domain)
 			return msmtpd.ErrorSMTP{
 				Code:    421,
 				Message: IsNotResolvableComplain,

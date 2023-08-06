@@ -213,3 +213,59 @@ func TestSenderIsResolvableFallbackAndLocal(t *testing.T) {
 		}
 	}
 }
+
+func TestSenderIsResolvableDefaultWithTrustedDomain(t *testing.T) {
+	testCases := make(map[string]error, 0)
+
+	testCases["info@yandex.ru"] = nil
+	testCases["info@mx.yandex.ru"] = fmt.Errorf("421 %s", IsNotResolvableComplain)
+	testCases["info@yandex.ru"] = nil
+	testCases["info@example.org"] = fmt.Errorf("421 %s", IsNotResolvableComplain)
+	testCases["info@localhost"] = nil // trusted domain
+
+	// it should fail, becase A/AAAA Fallback delivery is disabled from the box
+	testCases["info@mx.yandex.ru"] = fmt.Errorf("421 %s", IsNotResolvableComplain)
+
+	// dramatic misuse of cloudflare :-)
+	// feedback.vodolaz095.ru.	33	IN	MX	10 ivory.vodolaz095.ru.
+	// ivory.vodolaz095.ru.	4	IN	A	192.168.1.2
+	// it should fail, because 192.168.1.2 is local IP
+	testCases["somebody@feedback.vodolaz095.ru"] = fmt.Errorf("421 %s", IsNotResolvableComplain)
+	testCases["somebody@ivory.vodolaz095.ru"] = nil // trusted domain
+
+	addr, closer := msmtpd.RunTestServerWithoutTLS(t, &msmtpd.Server{
+		SenderCheckers: []msmtpd.SenderChecker{
+			IsResolvable(IsResolvableOptions{
+				DomainsToTrust: []string{
+					"localhost",
+					"ivory.vodolaz095.ru",
+				},
+			}),
+		},
+	})
+	defer closer()
+
+	for k, v := range testCases {
+		c, err := smtp.Dial(addr)
+		if err != nil {
+			t.Errorf("Dial failed: %v", err)
+		}
+		if err = c.Hello("localhost"); err != nil {
+			t.Errorf("HELO failed: %v", err)
+		}
+		err = c.Mail(k)
+		if err != nil {
+			if v != nil {
+				if err.Error() != v.Error() {
+					t.Errorf("wrong error checking %s. Expected: %s. Received: %s", k, v, err)
+				}
+				continue
+			}
+			t.Errorf("unexpected error checking %s - %s", k, err)
+		}
+		err = c.Quit()
+		if err != nil {
+			t.Errorf("%s : while closing connection", err)
+		}
+	}
+}

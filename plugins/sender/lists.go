@@ -32,17 +32,29 @@ func AcceptMailFromDomainsOrAddresses(whitelistedDomains, whitelistedAddresses [
 		domain := strings.Split(transaction.MailFrom.Address, "@")[1]
 		_, found := goodDomains[domain]
 		if found {
-			transaction.LogDebug("Sender's %s domain is whitelisted", transaction.MailFrom.String())
+			transaction.LogInfo("Sender's %s domain is whitelisted", transaction.MailFrom.String())
 			return nil
 		}
 		_, found = goodMailFroms[transaction.MailFrom]
 		if found {
-			transaction.LogDebug("Sender %s is whitelisted", transaction.MailFrom.String())
+			transaction.LogInfo("Sender %s is whitelisted", transaction.MailFrom.String())
 			return nil
 		}
+		transaction.LogInfo("Sender %s is not whitelisted", transaction.MailFrom.String())
 		return msmtpd.ErrorSMTP{
 			Code:    521,
 			Message: "I'm sorry, but your email address is not in whitelist",
 		}
 	}
+}
+
+// AcceptMailFromDomains allows all senders from domain list provided
+func AcceptMailFromDomains(whitelist []string) msmtpd.SenderChecker {
+	return AcceptMailFromDomainsOrAddresses(whitelist, nil)
+}
+
+// AcceptMailFromAddresses is filter to accept emails only from predefined whilelist of addresses,
+// it is more strict version of AcceptMailFromDomains which can accept email from every mailbox of domain
+func AcceptMailFromAddresses(whitelist []string) msmtpd.SenderChecker {
+	return AcceptMailFromDomainsOrAddresses(nil, whitelist)
 }
