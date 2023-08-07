@@ -322,6 +322,7 @@ func (srv *Server) Serve(l net.Listener) error {
 			}
 			return e
 		}
+		broken = false
 		transaction := srv.startTransaction(conn)
 		for k := range srv.ConnectionCheckers {
 			err = srv.ConnectionCheckers[k](transaction)
