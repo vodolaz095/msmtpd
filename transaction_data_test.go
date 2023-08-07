@@ -66,6 +66,15 @@ func TestDataHandler(t *testing.T) {
 		if !strings.Contains(string(tr.Body), "This is test message send from sender@example.org to recipient@example.net on") {
 			t.Errorf("Wrong message body: %v", string(tr.Body))
 		}
+		subject, found := tr.GetFact(SubjectFact)
+		if !found {
+			t.Errorf("subject fact is not set")
+			return nil
+		}
+		t.Logf("Subject `%s`", subject)
+		if !strings.HasPrefix(subject, "Test email send on") {
+			t.Errorf("wrong subject")
+		}
 		return nil
 	})
 	addr, closer := RunTestServerWithoutTLS(t, &Server{
@@ -601,11 +610,112 @@ func TestBodyParseAndCheckHeadersDuplicate(t *testing.T) {
 	t.Errorf("error not thrown")
 }
 
+func TestBodyParseAndCheckHeadersSubjectBase64Encoded(t *testing.T) {
+	buf := bytes.NewBufferString("")
+	fmt.Fprintf(buf, "Date: %s\n", time.Now().Format(time.RFC1123Z))
+	buf.WriteString("To: scuba@vodolaz095.ru\n")
+	buf.WriteString("From: scuba@vodolaz095.ru\n")
+	buf.WriteString("Subject: =?UTF-8?B?0YHQvtC9INCh0LLQtdGC0LvQsNC90Ys=?=\n")
+	buf.WriteString("Message-Id: <20230611194929.017435@localhost>\n")
+	buf.WriteString("\n\nThis is a test mailing with duplicate subject")
+
+	addr, closer := RunTestServerWithoutTLS(t, &Server{
+		DataHandlers: []DataHandler{
+			func(tr *Transaction) error {
+				subject, found := tr.GetFact(SubjectFact)
+				if !found {
+					t.Errorf("subject fact is not set")
+					return nil
+				}
+				t.Logf("Subject `%s`", subject)
+				if subject != "сон Светланы" {
+					t.Errorf("wrong subject")
+				}
+				return nil
+			},
+		},
+	})
+	defer closer()
+	c, err := smtp.Dial(addr)
+	if err != nil {
+		t.Errorf("Dial failed: %v", err)
+	}
+	if err = c.Hello("localhost"); err != nil {
+		t.Errorf("HELO failed: %v", err)
+	}
+	if err = c.Mail("scuba@vodolaz095.ru"); err != nil {
+		t.Errorf("Mail failed: %v", err)
+	}
+	if err = c.Rcpt("scuba@vodolaz095.ru"); err != nil {
+		t.Errorf("Rcpt failed: %v", err)
+	}
+	wc, err := c.Data()
+	if err != nil {
+		t.Errorf("Data failed: %v", err)
+	}
+	_, err = fmt.Fprintf(wc, buf.String())
+	if err != nil {
+		t.Errorf("Data body failed: %v", err)
+	}
+	err = wc.Close()
+	if err != nil {
+		t.Errorf("Data close failed with wrong error %v", err)
+	}
+	err = c.Quit()
+	if err != nil {
+		t.Errorf("%s : while quiting", err)
+	}
+}
+
 func TestBodyParseAndCheckHeadersDateMalformed(t *testing.T) {
 	buf := bytes.NewBufferString("")
 	buf.WriteString("Date: сегодня, после обеда\n") // yes
 	buf.WriteString("To: scuba@vodolaz095.ru\n")
 	buf.WriteString("From: scuba@vodolaz095.ru\n")
+	buf.WriteString("Subject: test with strange date\n")
+	buf.WriteString("Message-Id: <20230611194929.017435@localhost>\n")
+	buf.WriteString("\n\nThis is a test mailing with strange date")
+
+	addr, closer := RunTestServerWithoutTLS(t, &Server{})
+	defer closer()
+	c, err := smtp.Dial(addr)
+	if err != nil {
+		t.Errorf("Dial failed: %v", err)
+	}
+	if err = c.Hello("localhost"); err != nil {
+		t.Errorf("HELO failed: %v", err)
+	}
+	if err = c.Mail("scuba@vodolaz095.ru"); err != nil {
+		t.Errorf("Mail failed: %v", err)
+	}
+	if err = c.Rcpt("scuba@vodolaz095.ru"); err != nil {
+		t.Errorf("Rcpt failed: %v", err)
+	}
+	wc, err := c.Data()
+	if err != nil {
+		t.Errorf("Data failed: %v", err)
+	}
+	_, err = fmt.Fprintf(wc, buf.String())
+	if err != nil {
+		t.Errorf("Data body failed: %v", err)
+	}
+	err = wc.Close()
+	if err != nil {
+		if err.Error() == "521 Stop sending me this nonsense, please!" {
+			t.Logf("proper error is thrown")
+			return
+		} else {
+			t.Errorf("Data close failed with wrong error %v", err)
+		}
+	}
+	t.Errorf("error not thrown")
+}
+
+func TestBodyParseTwoFromSenders(t *testing.T) {
+	buf := bytes.NewBufferString("")
+	fmt.Fprintf(buf, "Date: %s\n", time.Now().Format(time.RFC1123Z))
+	buf.WriteString("To: scuba@vodolaz095.ru\n")
+	buf.WriteString("From: scuba@vodolaz095.ru, not_scuba@vodolaz095.ru\n")
 	buf.WriteString("Subject: test with strange date\n")
 	buf.WriteString("Message-Id: <20230611194929.017435@localhost>\n")
 	buf.WriteString("\n\nThis is a test mailing with strange date")

@@ -2,10 +2,12 @@ package msmtpd
 
 import (
 	"bytes"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"net/mail"
 	"net/textproto"
+	"strings"
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
@@ -147,8 +149,21 @@ func (t *Transaction) handleDATA(cmd command) {
 
 			subject := t.Parsed.Header.Get("Subject")
 			if subject != "" {
+				// =?UTF-8?B?0YHQvtC9INCh0LLQtdGC0LvQsNC90Ys=?=
+				if strings.HasPrefix(subject, "=?UTF-8?B?") && strings.HasSuffix(subject, "?=") {
+					subject = strings.TrimPrefix(subject, "=?UTF-8?B?")
+					subject = strings.TrimSuffix(subject, "?=")
+					raw, decodeError := base64.StdEncoding.DecodeString(subject)
+					if decodeError != nil {
+						t.LogError(decodeError, "while decoding base64 encoded header")
+						subject = "MALFORMED"
+					} else {
+						subject = string(raw)
+					}
+				}
 				t.LogInfo("Subject: %s", subject)
 				t.Span.SetAttributes(attribute.String("subject", subject))
+				t.SetFact(SubjectFact, subject)
 			}
 
 			t.LogDebug("Message body of %v bytes is parsed, calling %v DataCheckers on it",

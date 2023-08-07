@@ -24,3 +24,6 @@ var TLSVersions = map[uint16]string{
 	tls.VersionTLS12: "TLS1.2",
 	tls.VersionTLS13: "TLS1.3",
 }
+
+// SubjectFact is default name for fact key to store message Subject as string
+const SubjectFact = "subject"
