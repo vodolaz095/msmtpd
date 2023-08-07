@@ -326,22 +326,26 @@ func (srv *Server) Serve(l net.Listener) error {
 		for k := range srv.ConnectionCheckers {
 			err = srv.ConnectionCheckers[k](transaction)
 			if err != nil {
-				srv.runCloseHandlers(transaction)
 				transaction.LogWarn("%s : after connection checker %v executed", err, k)
 				transaction.error(err)
-				transaction.close()
 				broken = true
 				break
 			}
 		}
 		if broken {
-			transaction.LogInfo("Connection checkers failed - closing broken transaction...")
+			transaction.LogDebug("Connection checkers failed - closing broken transaction...")
+			transaction.close()
+			srv.runCloseHandlers(transaction)
+			transaction.LogInfo("Connection checkers failed - broken transaction is closed")
 			transaction.cancel()
 			continue
 		}
 		if transaction.Encrypted {
 			if !transaction.Secured {
-				transaction.LogInfo("Connection TLS handshake failed - closing transaction...")
+				transaction.LogDebug("Connection TLS handshake failed - closing transaction...")
+				transaction.close()
+				srv.runCloseHandlers(transaction)
+				transaction.LogInfo("Connection TLS handshake failed -  transaction is closed")
 				transaction.cancel()
 				continue
 			}
