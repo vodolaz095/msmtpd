@@ -39,6 +39,12 @@ func TestDenyDynamicIP(t *testing.T) {
 			Helo:     "a4-12.smtp-out.eu-west-1.amazonses.com.",
 			ErrorMsg: "",
 		},
+		{
+			IP:       net.TCPAddr{IP: []byte{122, 160, 68, 26}, Port: 25},
+			PTRs:     []string{"abts-north-static-026.68.160.122.airtelbroadband.in."},
+			Helo:     "abts-north-static-026.68.160.122.airtelbroadband.in",
+			ErrorMsg: testErrorMessage,
+		},
 	}
 	heloTestRunner(t, cases, []msmtpd.HelloChecker{DenyDynamicIP})
 }

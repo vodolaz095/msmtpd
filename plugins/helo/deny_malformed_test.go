@@ -34,6 +34,14 @@ func TestDenyMalformed(t *testing.T) {
 			Helo:     "mail.ru",
 			ErrorMsg: "",
 		},
+		{
+			Helo:     "noot1.localdomain",
+			ErrorMsg: testErrorMessage,
+		},
+		{
+			Helo:     "abts-north-static-026.68.160.122.airtelbroadband.in",
+			ErrorMsg: "",
+		},
 	}
 	heloTestRunner(t, cases, []msmtpd.HelloChecker{DenyMalformedDomain})
 }
