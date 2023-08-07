@@ -161,6 +161,19 @@ func (t *Transaction) handleDATA(cmd command) {
 						subject = string(raw)
 					}
 				}
+				// =?utf-8?b?RXh0ZXJuYWwgYW5zaWJsZSByZXBvcnQgLSDQstGB0ZEg0YDQsNCx0L7RgtCw0LXRgg==?=
+				if strings.HasPrefix(subject, "=?utf-8?b?") && strings.HasSuffix(subject, "?=") {
+					subject = strings.TrimPrefix(subject, "=?utf-8?b?")
+					subject = strings.TrimSuffix(subject, "?=")
+					raw, decodeError := base64.StdEncoding.DecodeString(subject)
+					if decodeError != nil {
+						t.LogError(decodeError, "while decoding base64 encoded header")
+						subject = "MALFORMED"
+					} else {
+						subject = string(raw)
+					}
+				}
+
 				t.LogInfo("Subject: %s", subject)
 				t.Span.SetAttributes(attribute.String("subject", subject))
 				t.SetFact(SubjectFact, subject)
