@@ -95,7 +95,7 @@ func TestDecodeBase64EncodedSubject(t *testing.T) {
 		"=?UTF-8?B?0YHQvtC9INCh0LLQtdGC0LvQsNC90Ys=?=":                                                              "сон Светланы",
 		"=?utf-8?b?RXh0ZXJuYWwgYW5zaWJsZSByZXBvcnQgLSDQstGB0ZEg0YDQsNCx0L7RgtCw0LXRgg==?=":                          "External ansible report - всё работает",
 		"=?UTF-8?b?RXh0ZXJuYWwgYW5zaWJsZSByZXBvcnQgLSDQstGB0ZEg0YDQsNCx0L7RgtCw0LXRgg==?=":                          "External ansible report - всё работает",
-		"=?utf-8?B?0JfQsNC00LDQudGC0LUg0LLQvtC/0YDQvtGBINC+INC/0YDQvtC40YE=?= =?utf-8?B?0YXQvtC20LTQtdC90LjQuCE=?=": "Задайте вопрос о проис хождении!",
+		"=?utf-8?B?0JfQsNC00LDQudGC0LUg0LLQvtC/0YDQvtGBINC+INC/0YDQvtC40YE=?= =?utf-8?B?0YXQvtC20LTQtdC90LjQuCE=?=": "Задайте вопрос о происхождении!",
 	}
 	for k, v := range cases {
 		decoded, err = decodeBase64EncodedSubject(k)

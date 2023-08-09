@@ -89,5 +89,5 @@ func decodeBase64EncodedSubject(input string) (output string, err error) {
 			return input, err
 		}
 	}
-	return string(bytes.Join(decoded, []byte(" "))), nil
+	return string(bytes.Join(decoded, []byte(""))), nil
 }
