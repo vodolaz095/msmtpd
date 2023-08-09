@@ -173,7 +173,8 @@ func (t *Transaction) handleDATA(cmd command) {
 						subject = string(raw)
 					}
 				}
-
+				// TODO - decode
+				// Subject: =?utf-8?B?0JfQsNC00LDQudGC0LUg0LLQvtC/0YDQvtGBINC+INC/0YDQvtC40YE=?= =?utf-8?B?0YXQvtC20LTQtdC90LjQuCE=?=
 				t.LogInfo("Subject: %s", subject)
 				t.Span.SetAttributes(attribute.String("subject", subject))
 				t.SetFact(SubjectFact, subject)
