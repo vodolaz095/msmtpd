@@ -2,12 +2,10 @@ package msmtpd
 
 import (
 	"bytes"
-	"encoding/base64"
 	"fmt"
 	"io"
 	"net/mail"
 	"net/textproto"
-	"strings"
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
@@ -149,35 +147,15 @@ func (t *Transaction) handleDATA(cmd command) {
 
 			subject := t.Parsed.Header.Get("Subject")
 			if subject != "" {
-				// =?UTF-8?B?0YHQvtC9INCh0LLQtdGC0LvQsNC90Ys=?=
-				if strings.HasPrefix(subject, "=?UTF-8?B?") && strings.HasSuffix(subject, "?=") {
-					subject = strings.TrimPrefix(subject, "=?UTF-8?B?")
-					subject = strings.TrimSuffix(subject, "?=")
-					raw, decodeError := base64.StdEncoding.DecodeString(subject)
-					if decodeError != nil {
-						t.LogError(decodeError, "while decoding base64 encoded header")
-						subject = "MALFORMED"
-					} else {
-						subject = string(raw)
-					}
+				decoded, decodeErr := decodeBase64EncodedSubject(subject)
+				if decodeErr != nil {
+					t.LogWarn("%s : while decoding base64 encoded header", decodeErr)
+				} else {
+					subject = decoded
+					t.LogInfo("Subject: %s", subject)
+					t.Span.SetAttributes(attribute.String("subject", subject))
+					t.SetFact(SubjectFact, subject)
 				}
-				// =?utf-8?b?RXh0ZXJuYWwgYW5zaWJsZSByZXBvcnQgLSDQstGB0ZEg0YDQsNCx0L7RgtCw0LXRgg==?=
-				if strings.HasPrefix(subject, "=?utf-8?b?") && strings.HasSuffix(subject, "?=") {
-					subject = strings.TrimPrefix(subject, "=?utf-8?b?")
-					subject = strings.TrimSuffix(subject, "?=")
-					raw, decodeError := base64.StdEncoding.DecodeString(subject)
-					if decodeError != nil {
-						t.LogError(decodeError, "while decoding base64 encoded header")
-						subject = "MALFORMED"
-					} else {
-						subject = string(raw)
-					}
-				}
-				// TODO - decode
-				// Subject: =?utf-8?B?0JfQsNC00LDQudGC0LUg0LLQvtC/0YDQvtGBINC+INC/0YDQvtC40YE=?= =?utf-8?B?0YXQvtC20LTQtdC90LjQuCE=?=
-				t.LogInfo("Subject: %s", subject)
-				t.Span.SetAttributes(attribute.String("subject", subject))
-				t.SetFact(SubjectFact, subject)
 			}
 
 			t.LogDebug("Message body of %v bytes is parsed, calling %v DataCheckers on it",

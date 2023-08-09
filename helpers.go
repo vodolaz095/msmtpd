@@ -1,6 +1,8 @@
 package msmtpd
 
 import (
+	"bytes"
+	"encoding/base64"
 	"strings"
 )
 
@@ -55,4 +57,37 @@ func parseLine(line string) (cmd command) {
 
 func mask(input string) string {
 	return string(input[0]) + "****"
+}
+
+func decodeBase64EncodedSubject(input string) (output string, err error) {
+	var match bool
+	if strings.HasPrefix(input, "=?UTF-8?B?") {
+		match = true
+	}
+	if strings.HasPrefix(input, "=?utf-8?B?") {
+		match = true
+	}
+	if strings.HasPrefix(input, "=?utf-8?b?") {
+		match = true
+	}
+	if strings.HasPrefix(input, "=?UTF-8?b?") {
+		match = true
+	}
+	if !match {
+		return input, nil
+	}
+	words := strings.Split(input, " ")
+	decoded := make([][]byte, len(words))
+	for i := range words {
+		words[i] = strings.TrimPrefix(words[i], "=?UTF-8?B?")
+		words[i] = strings.TrimPrefix(words[i], "=?UTF-8?b?")
+		words[i] = strings.TrimPrefix(words[i], "=?utf-8?B?")
+		words[i] = strings.TrimPrefix(words[i], "=?utf-8?b?")
+		words[i] = strings.TrimSuffix(words[i], "?=")
+		decoded[i], err = base64.StdEncoding.DecodeString(words[i])
+		if err != nil {
+			return input, err
+		}
+	}
+	return string(bytes.Join(decoded, []byte(" "))), nil
 }

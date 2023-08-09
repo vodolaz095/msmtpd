@@ -87,3 +87,33 @@ func TestMask(t *testing.T) {
 		t.Errorf("mask not works - %s", masked)
 	}
 }
+
+func TestDecodeBase64EncodedSubject(t *testing.T) {
+	var decoded string
+	var err error
+	cases := map[string]string{
+		"=?UTF-8?B?0YHQvtC9INCh0LLQtdGC0LvQsNC90Ys=?=":                                                              "сон Светланы",
+		"=?utf-8?b?RXh0ZXJuYWwgYW5zaWJsZSByZXBvcnQgLSDQstGB0ZEg0YDQsNCx0L7RgtCw0LXRgg==?=":                          "External ansible report - всё работает",
+		"=?UTF-8?b?RXh0ZXJuYWwgYW5zaWJsZSByZXBvcnQgLSDQstGB0ZEg0YDQsNCx0L7RgtCw0LXRgg==?=":                          "External ansible report - всё работает",
+		"=?utf-8?B?0JfQsNC00LDQudGC0LUg0LLQvtC/0YDQvtGBINC+INC/0YDQvtC40YE=?= =?utf-8?B?0YXQvtC20LTQtdC90LjQuCE=?=": "Задайте вопрос о проис хождении!",
+	}
+	for k, v := range cases {
+		decoded, err = decodeBase64EncodedSubject(k)
+		if err != nil {
+			t.Errorf("%s : while decoding `%s` into `%s`", err, k, v)
+		} else {
+			if decoded != v {
+				t.Errorf("wrong data decoded - `%s` into `%s`", decoded, v)
+			}
+		}
+	}
+	erroneous, err := decodeBase64EncodedSubject("=?utf-8?B?этоНеbase64?=")
+	if err != nil {
+		if err.Error() != "illegal base64 data at input byte 0" {
+			t.Errorf("%s : while decoding", err)
+		}
+	}
+	if erroneous != "=?utf-8?B?этоНеbase64?=" {
+		t.Error("should not modify")
+	}
+}
