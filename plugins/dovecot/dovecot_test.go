@@ -100,16 +100,7 @@ func TestDovecot_Authenticate(t *testing.T) {
 }
 
 func TestDovecot_DeliverRcptTo(t *testing.T) {
-	validMessage := `Date: Sun, 11 Jun 2023 19:49:29 +0300
-To: scuba@vodolaz095.ru
-From: scuba@vodolaz095.ru
-Subject: test Sun, 11 Jun 2023 19:49:29 +0300
-Message-Id: <20230611194929.017435@localhost>
-X-Mailer: swaks v20190914.0 jetmore.org/john/code/swaks/
-
-This is a test mailing during dovecot unit test for addresses
-`
-
+	validMessage := internal.MakeTestMessage("somebody@example.org", rcptTo)
 	if rcptTo == "" {
 		t.Skipf("skipping, because environment variable DOVECOT_RCPT_TO is not set")
 	}
@@ -136,16 +127,7 @@ This is a test mailing during dovecot unit test for addresses
 }
 
 func TestDovecot_DeliverAliases(t *testing.T) {
-	validMessage := `Date: Sun, 11 Jun 2023 19:49:29 +0300
-To: scuba@vodolaz095.ru
-From: scuba@vodolaz095.ru
-Subject: test Sun, 11 Jun 2023 19:49:29 +0300
-Message-Id: <20230611194929.017436@localhost>
-X-Mailer: swaks v20190914.0 jetmore.org/john/code/swaks/
-
-This is a test mailing during dovecot unit test for aliases
-`
-
+	validMessage := internal.MakeTestMessage("somebody@example.org", rcptTo)
 	if rcptTo == "" {
 		t.Skipf("skipping, because environment variable DOVECOT_RCPT_TO is not set")
 	}
