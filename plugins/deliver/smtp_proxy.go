@@ -36,6 +36,7 @@ func ViaSMTPProxy(opts SMTPProxyOptions) msmtpd.DataHandler {
 	return func(tr *msmtpd.Transaction) error {
 		var i int
 		var recipientsFound bool
+		tr.AddReceivedLine()
 		conn, err := net.Dial(opts.Network, opts.Address)
 		if err != nil {
 			tr.LogError(err, "error dialing SMTP backend")
@@ -145,7 +146,7 @@ func ViaSMTPProxy(opts SMTPProxyOptions) msmtpd.DataHandler {
 		tr.LogDebug("DATA closed...")
 		err = client.Close()
 		if err != nil {
-			tr.LogError(err, "error making MAILFROM to smtp backend")
+			tr.LogError(err, "error closing connection to smtp backend")
 			return errProxyMalfunction
 		}
 		tr.LogInfo("Message of %v bytes is proxied to smtp backend %s", i, opts.Address)
