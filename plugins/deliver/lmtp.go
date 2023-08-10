@@ -29,7 +29,7 @@ type LMTPOptions struct {
 
 // String returns where options urges to connect to
 func (opts *LMTPOptions) String() string {
-	return opts.Network + "//" + opts.Address
+	return opts.Network + "+lmtp://" + opts.Address
 }
 
 func dialLMTP(opts LMTPOptions) (*textproto.Conn, error) {
