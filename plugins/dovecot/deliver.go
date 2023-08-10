@@ -13,7 +13,7 @@ import (
 func (d *Dovecot) Deliver(tr *msmtpd.Transaction) (err error) {
 	opts := deliver.LMTPOptions{
 		Network: "unix",
-		Address: d.LtmpSocket,
+		Address: d.LmtpSocket,
 		LHLO:    "localhost",
 		Timeout: d.Timeout,
 	}

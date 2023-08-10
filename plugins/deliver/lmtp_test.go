@@ -24,7 +24,7 @@ func TestViaLocalMailTransferProtocol(t *testing.T) {
 				Network: "unix",
 				Address: "/var/run/dovecot/lmtp",
 				LHLO:    "localhost",
-				Timeout: 5,
+				Timeout: DefaultTimeout,
 			}),
 		},
 	})

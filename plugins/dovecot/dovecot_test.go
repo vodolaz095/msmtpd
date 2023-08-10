@@ -40,7 +40,7 @@ func TestDovecot_Exists(t *testing.T) {
 	dvc := Dovecot{
 		PathToAuthUserDBSocket: DefaultAuthUserSocketPath,
 		PathToAuthClientSocket: DefaultClientSocketPath,
-		LtmpSocket:             DefaultLMTPSocketPath,
+		LmtpSocket:             DefaultLMTPSocketPath,
 		Timeout:                5 * time.Second,
 	}
 	tr := msmtpd.Transaction{
@@ -78,7 +78,7 @@ func TestDovecot_Authenticate(t *testing.T) {
 	dvc := Dovecot{
 		PathToAuthUserDBSocket: DefaultAuthUserSocketPath,
 		PathToAuthClientSocket: DefaultClientSocketPath,
-		LtmpSocket:             DefaultLMTPSocketPath,
+		LmtpSocket:             DefaultLMTPSocketPath,
 		Timeout:                5 * time.Second,
 	}
 	tr := msmtpd.Transaction{
@@ -116,7 +116,7 @@ This is a test mailing during dovecot unit test for addresses
 	dvc := Dovecot{
 		PathToAuthUserDBSocket: DefaultAuthUserSocketPath,
 		PathToAuthClientSocket: DefaultClientSocketPath,
-		LtmpSocket:             DefaultLMTPSocketPath,
+		LmtpSocket:             DefaultLMTPSocketPath,
 		Timeout:                5 * time.Second,
 	}
 	tr := msmtpd.Transaction{
@@ -152,7 +152,7 @@ This is a test mailing during dovecot unit test for aliases
 	dvc := Dovecot{
 		PathToAuthUserDBSocket: DefaultAuthUserSocketPath,
 		PathToAuthClientSocket: DefaultClientSocketPath,
-		LtmpSocket:             DefaultLMTPSocketPath,
+		LmtpSocket:             DefaultLMTPSocketPath,
 		Timeout:                5 * time.Second,
 	}
 	tr := msmtpd.Transaction{
@@ -184,7 +184,7 @@ func TestDovecotIntegration(t *testing.T) {
 	dvc := Dovecot{
 		PathToAuthUserDBSocket: DefaultAuthUserSocketPath,
 		PathToAuthClientSocket: DefaultClientSocketPath,
-		LtmpSocket:             DefaultLMTPSocketPath,
+		LmtpSocket:             DefaultLMTPSocketPath,
 		Timeout:                5 * time.Second,
 	}
 	validMessage := internal.MakeTestMessage("sender@example.org", rcptTo)

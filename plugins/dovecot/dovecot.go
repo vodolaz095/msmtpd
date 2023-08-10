@@ -27,8 +27,8 @@ type Dovecot struct {
 	// provided correct username and password
 	PathToAuthClientSocket string
 
-	// LtmpSocket is LMTP protocol socket for dovecot to accept email for local delivery
-	LtmpSocket string
+	// LmtpSocket is LMTP protocol socket for dovecot to accept email for local delivery
+	LmtpSocket string
 
 	// Timeout for connection and I/O operations (applies on each call).
 	// Set to DefaultTimeout by NewAuth.

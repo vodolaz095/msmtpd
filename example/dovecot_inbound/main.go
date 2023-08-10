@@ -39,7 +39,7 @@ func main() {
 	backend := dovecot.Dovecot{
 		PathToAuthUserDBSocket: dovecot.DefaultAuthUserSocketPath,
 		PathToAuthClientSocket: dovecot.DefaultClientSocketPath,
-		LtmpSocket:             dovecot.DefaultLMTPSocketPath,
+		LmtpSocket:             dovecot.DefaultLMTPSocketPath,
 		Timeout:                0,
 	}
 	// make TLS config never be used for production
