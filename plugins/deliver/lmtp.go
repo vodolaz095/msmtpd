@@ -10,13 +10,19 @@ import (
 	"github.com/vodolaz095/msmtpd"
 )
 
+// LMTPOptions allows us to tune how we connect to LMTP server
 type LMTPOptions struct {
+	// Network can be `unix`, `tcp`, `tcp4` or `tcp6`
 	Network string
+	// Address shows where we connect
 	Address string
-	LHLO    string
+	// LHLO is greeting to LMTP server
+	LHLO string
+	// Timeout limits time of LMTP server interactions
 	Timeout time.Duration
 }
 
+// String returns where options urges to connect to
 func (opts *LMTPOptions) String() string {
 	return opts.Network + "//" + opts.Address
 }

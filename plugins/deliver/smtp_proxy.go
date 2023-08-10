@@ -123,7 +123,7 @@ func ViaSMTPProxy(opts SMTPProxyOptions) msmtpd.DataHandler {
 		}
 		if !recipientsFound {
 			tr.LogWarn("no recipients found")
-			return errProxyMalfunction
+			return UnknownRecipientError
 		}
 		wc, err := client.Data()
 		if err != nil {

@@ -13,15 +13,17 @@ import (
 
 var testProxyServer, testProxyUsername, testProxyPassword, testProxySender, testProxyRecipient string
 
-func TestProxyEnv(t *testing.T) {
+func TestDeliverViaSMTPProxy(t *testing.T) {
 	testProxyUsername = os.Getenv("TEST_PROXY_USERNAME")
 	testProxyServer = os.Getenv("TEST_PROXY_SERVER")
 	testProxyPassword = os.Getenv("TEST_PROXY_PASSWORD")
 	testProxySender = os.Getenv("TEST_PROXY_SENDER")
 	testProxyRecipient = os.Getenv("TEST_PROXY_RECIPIENT")
-}
 
-func TestDeliverViaSMTPProxy(t *testing.T) {
+	if testProxyServer == "" {
+		t.Skipf("environment variable TEST_PROXY_SERVER is not set")
+	}
+
 	validMessage := internal.MakeTestMessage(testProxySender, testProxyRecipient)
 	addr, closer := msmtpd.RunTestServerWithoutTLS(t, &msmtpd.Server{
 		DataHandlers: []msmtpd.DataHandler{
