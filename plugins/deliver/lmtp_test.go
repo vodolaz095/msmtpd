@@ -17,7 +17,7 @@ func TestViaLocalMailTransferProtocol(t *testing.T) {
 	if testLMTPRecipient == "" {
 		t.Skipf("TEST_LMTP_RECIPIENT is not set")
 	}
-	validMessage := internal.MakeTestMessage(testProxySender, testProxyRecipient)
+	validMessage := internal.MakeTestMessage("something@localhost", testLMTPRecipient)
 	addr, closer := msmtpd.RunTestServerWithoutTLS(t, &msmtpd.Server{
 		DataHandlers: []msmtpd.DataHandler{
 			ViaLocalMailTransferProtocol(LMTPOptions{
