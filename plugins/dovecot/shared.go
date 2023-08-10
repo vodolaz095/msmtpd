@@ -69,8 +69,8 @@ func write(conn *textproto.Conn, msg string) error {
 	return conn.W.Flush()
 }
 
-// isUsernameSafe to use in the dovecot protocol?
-// Unfotunately dovecot's protocol is not very robust wrt. whitespace,
+// isUsernameSafe ensures username is save to be used in dovecot's
+// protocol which is not very robust for whitespaces,
 // so we need to be careful.
 func isUsernameSafe(user string) bool {
 	for _, r := range user {
