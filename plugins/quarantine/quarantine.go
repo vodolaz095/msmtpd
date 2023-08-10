@@ -20,7 +20,7 @@ func MoveToDirectory(directory string) msmtpd.DataHandler {
 	}
 	return func(tr *msmtpd.Transaction) error {
 		if !tr.IsFlagSet(FlagName) {
-			tr.LogDebug("MoveToDirectory flag is not set")
+			tr.LogDebug("Flag %s is not set, no moving to quarantine directory", FlagName)
 			return nil
 		}
 		dir := filepath.Join(directory,

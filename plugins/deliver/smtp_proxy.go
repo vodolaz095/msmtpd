@@ -26,11 +26,6 @@ type SMTPProxyOptions struct {
 	RcptTo []string
 }
 
-var errProxyMalfunction = msmtpd.ErrorSMTP{
-	Code:    451,
-	Message: "temporary errors, please, try again later",
-}
-
 // ViaSMTPProxy adds DataHandler that performs delivery via 3rd party SMTP server
 func ViaSMTPProxy(opts SMTPProxyOptions) msmtpd.DataHandler {
 	return func(tr *msmtpd.Transaction) error {
@@ -39,18 +34,18 @@ func ViaSMTPProxy(opts SMTPProxyOptions) msmtpd.DataHandler {
 		conn, err := net.Dial(opts.Network, opts.Address)
 		if err != nil {
 			tr.LogError(err, "error dialing SMTP backend")
-			return errProxyMalfunction
+			return TemporaryError
 		}
 		client, err := smtp.NewClient(conn, opts.HELO)
 		if err != nil {
 			tr.LogError(err, "error making client to SMTP backend")
-			return errProxyMalfunction
+			return TemporaryError
 		}
 		tr.LogDebug("Connection to SMTP backend %s is established via %s", opts.Address, opts.Network)
 		err = client.Hello(opts.HELO)
 		if err != nil {
 			tr.LogError(err, "error making HELO/EHLO to SMTP backend")
-			return errProxyMalfunction
+			return TemporaryError
 		}
 		tr.LogDebug("HELO/EHLO %s passed to SMTP backend", opts.HELO)
 		if opts.TLS != nil {
@@ -58,7 +53,7 @@ func ViaSMTPProxy(opts SMTPProxyOptions) msmtpd.DataHandler {
 			err = client.StartTLS(opts.TLS)
 			if err != nil {
 				tr.LogError(err, "error making STARTTLS to smtp backend")
-				return errProxyMalfunction
+				return TemporaryError
 			}
 		}
 		if opts.Auth != nil {
@@ -66,7 +61,7 @@ func ViaSMTPProxy(opts SMTPProxyOptions) msmtpd.DataHandler {
 			err = client.Auth(opts.Auth)
 			if err != nil {
 				tr.LogError(err, "error performing authorization for smtp backend")
-				return errProxyMalfunction
+				return TemporaryError
 			}
 			tr.LogDebug("Authorization to SMTP backend is passed")
 		}
@@ -80,7 +75,7 @@ func ViaSMTPProxy(opts SMTPProxyOptions) msmtpd.DataHandler {
 		}
 		if err != nil {
 			tr.LogError(err, "error making MAILFROM to smtp backend")
-			return errProxyMalfunction
+			return TemporaryError
 		}
 		if opts.RcptTo != nil {
 			for i = range opts.RcptTo {
@@ -128,25 +123,25 @@ func ViaSMTPProxy(opts SMTPProxyOptions) msmtpd.DataHandler {
 		wc, err := client.Data()
 		if err != nil {
 			tr.LogError(err, "error making DATA to smtp backend")
-			return errProxyMalfunction
+			return TemporaryError
 		}
 		tr.LogDebug("DATA started...")
 		i, err = wc.Write(tr.Body)
 		if err != nil {
 			tr.LogError(err, "error writing body to smtp backend")
-			return errProxyMalfunction
+			return TemporaryError
 		}
 		tr.LogDebug("%v bytes of DATA is written, closing...", i)
 		err = wc.Close()
 		if err != nil {
 			tr.LogError(err, "error closing data to smtp backend")
-			return errProxyMalfunction
+			return TemporaryError
 		}
 		tr.LogDebug("DATA closed...")
 		err = client.Close()
 		if err != nil {
 			tr.LogError(err, "error closing connection to smtp backend")
-			return errProxyMalfunction
+			return TemporaryError
 		}
 		tr.LogInfo("Message of %v bytes is proxied to smtp backend %s", i, opts.Address)
 		return nil

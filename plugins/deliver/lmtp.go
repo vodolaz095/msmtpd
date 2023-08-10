@@ -10,6 +10,11 @@ import (
 	"github.com/vodolaz095/msmtpd"
 )
 
+// Good read:
+// https://en.wikipedia.org/wiki/Local_Mail_Transfer_Protocol
+// https://github.com/emersion/go-smtp/blob/master/lmtp_server_test.go
+// https://www.rfc-editor.org/rfc/rfc2033.html#section-4.2
+
 // LMTPOptions allows us to tune how we connect to LMTP server
 type LMTPOptions struct {
 	// Network can be `unix`, `tcp`, `tcp4` or `tcp6`

@@ -80,8 +80,10 @@ func (kh *Handler) ConnectionChecker(tr *msmtpd.Transaction) (err error) {
 
 // CloseHandler saves Transaction Karma into Storage after connection is finished
 func (kh *Handler) CloseHandler(tr *msmtpd.Transaction) (err error) {
+	var isGood bool
 	if tr.Karma() > kh.HateLimit {
 		tr.LogDebug("preparing to save transaction karma of %v as good", tr.Karma())
+		isGood = true
 		err = kh.Storage.SaveGood(tr)
 	} else {
 		tr.LogDebug("preparing to save transaction karma of %v as bad", tr.Karma())
@@ -90,7 +92,11 @@ func (kh *Handler) CloseHandler(tr *msmtpd.Transaction) (err error) {
 	if err != nil {
 		tr.LogError(err, fmt.Sprintf("while saving transaction %s karma %v", tr.ID, tr.Karma()))
 	} else {
-		tr.LogInfo("Transaction karma %v is saved", tr.Karma())
+		if isGood {
+			tr.LogInfo("Transaction is saved as GOOD with love %v", tr.Karma())
+		} else {
+			tr.LogInfo("Transaction is saved as BAD with love %v", tr.Karma())
+		}
 	}
 	return
 }
