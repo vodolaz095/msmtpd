@@ -82,7 +82,8 @@ func ViaSMTPProxy(opts SMTPProxyOptions) msmtpd.DataHandler {
 				tr.LogDebug("Sending `RCPT TO <%s>` from options...", opts.RcptTo[i])
 				err = client.Rcpt(opts.RcptTo[i])
 				if err != nil {
-					tr.LogWarn("proxy recipient override %s is not accepted", opts.RcptTo[i])
+					tr.LogWarn("%s: proxy recipient override %s is not accepted",
+						err, opts.RcptTo[i])
 				} else {
 					tr.LogDebug("Sending `RCPT TO <%s>` accepted!", opts.RcptTo[i])
 					recipientsFound = true
@@ -94,7 +95,7 @@ func ViaSMTPProxy(opts SMTPProxyOptions) msmtpd.DataHandler {
 					tr.LogDebug("Sending `RCPT TO <%s>` from aliases...", tr.Aliases[i].Address)
 					err = client.Rcpt(tr.Aliases[i].Address)
 					if err != nil {
-						tr.LogWarn("original alias %s is not accepted", tr.Aliases[i].Address)
+						tr.LogWarn("%s: original alias %s is not accepted", err, tr.Aliases[i].Address)
 					} else {
 						tr.LogDebug("Sending `RCPT TO <%s>` accepted!", tr.Aliases[i].Address)
 						recipientsFound = true
@@ -107,7 +108,7 @@ func ViaSMTPProxy(opts SMTPProxyOptions) msmtpd.DataHandler {
 						tr.LogDebug("Sending `RCPT TO <%s>` from RCPT TO provided by client...", tr.RcptTo[i].Address)
 						err = client.Rcpt(tr.RcptTo[i].Address)
 						if err != nil {
-							tr.LogWarn("original recipient %s is not accepted", tr.RcptTo[i].Address)
+							tr.LogWarn("%s: original recipient %s is not accepted", err, tr.RcptTo[i].Address)
 						} else {
 							tr.LogDebug("Sending `RCPT TO <%s>` accepted!", tr.RcptTo[i].Address)
 							recipientsFound = true
