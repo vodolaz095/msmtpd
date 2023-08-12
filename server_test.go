@@ -1,6 +1,7 @@
 package msmtpd
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 	"net"
@@ -381,4 +382,125 @@ func TestWaitFailsIfNotShutdown(t *testing.T) {
 	if err == nil {
 		t.Errorf("Wait() did not fail as expected")
 	}
+}
+
+func TestServerDefaultContext(t *testing.T) {
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	server := Server{
+		Logger: &TestLogger{Suite: t},
+	}
+	addr, closer := RunTestServerWithoutTLS(t, &server)
+	defer closer()
+	go func() {
+		<-server.Context.Done()
+		t.Logf("Server context canceled!")
+		wg.Done()
+	}()
+	c, err := smtp.Dial(addr)
+	if err != nil {
+		t.Errorf("%s : while dialing server", err)
+	}
+	server.Cancel()
+	err = c.Quit()
+	if err != nil {
+		t.Errorf("%s : while quiting", err)
+	}
+	wg.Wait()
+}
+
+func TestServerExternalContext(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.TODO())
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	server := Server{
+		Context: ctx,
+		Cancel:  cancel,
+		Logger:  &TestLogger{Suite: t},
+	}
+	addr, closer := RunTestServerWithoutTLS(t, &server)
+	defer closer()
+	go func() {
+		<-ctx.Done()
+		t.Logf("Server context canceled!")
+		wg.Done()
+	}()
+	c, err := smtp.Dial(addr)
+	if err != nil {
+		t.Errorf("%s : while dialing server", err)
+	}
+	cancel()
+	err = c.Quit()
+	if err != nil {
+		t.Errorf("%s : while quiting", err)
+	}
+	wg.Wait()
+}
+
+func TestServerContextDoesNotStopTransaction(t *testing.T) {
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	server := Server{
+		Logger: &TestLogger{Suite: t},
+	}
+	addr, closer := RunTestServerWithoutTLS(t, &server)
+	defer closer()
+	go func() {
+		<-server.Context.Done()
+		t.Logf("Server context canceled!")
+		wg.Done()
+	}()
+	c, err := smtp.Dial(addr)
+	if err != nil {
+		t.Errorf("%s : while dialing server", err)
+	}
+	server.Cancel()
+	err = c.Hello("smtp.yandex.ru")
+	if err != nil {
+		t.Errorf("%s : while sending helo", err)
+	}
+	err = c.Quit()
+	if err != nil {
+		t.Errorf("%s : while quiting", err)
+	}
+	wg.Wait()
+}
+
+func TestServerContextDoneInTransaction(t *testing.T) {
+	wg := sync.WaitGroup{}
+	wg.Add(2)
+	server := Server{
+		Logger: &TestLogger{Suite: t},
+		ConnectionCheckers: []ConnectionChecker{
+			func(tr *Transaction) error {
+				go func() {
+					<-tr.Context().Done()
+					t.Logf("Context in transaction is canceled!")
+					wg.Done()
+				}()
+				return nil
+			},
+		},
+	}
+	addr, closer := RunTestServerWithoutTLS(t, &server)
+	defer closer()
+	go func() {
+		<-server.Context.Done()
+		t.Logf("Server context canceled!")
+		wg.Done()
+	}()
+	c, err := smtp.Dial(addr)
+	if err != nil {
+		t.Errorf("%s : while dialing server", err)
+	}
+	server.Cancel()
+	err = c.Hello("smtp.yandex.ru")
+	if err != nil {
+		t.Errorf("%s : while sending helo", err)
+	}
+	err = c.Quit()
+	if err != nil {
+		t.Errorf("%s : while quiting", err)
+	}
+	wg.Wait()
 }

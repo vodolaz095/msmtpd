@@ -146,6 +146,7 @@ type Server struct {
 	Logger Logger
 	// Tracer is OpenTelemetry tracer which starts spans for every Transaction
 	Tracer trace.Tracer
+
 	// mu guards doneChan and makes closing it and listener atomic from
 	// perspective of Serve()
 	mu         sync.Mutex
@@ -153,6 +154,11 @@ type Server struct {
 	listener   *net.Listener
 	waitgrp    sync.WaitGroup
 	inShutdown atomic.Bool
+
+	// Context is main context in which server is started
+	Context context.Context
+	// Cancel cancels main server Context
+	Cancel context.CancelFunc
 
 	// counters for Server.StartPrometheusScrapperEndpoint
 	bytesRead                uint64
@@ -172,7 +178,7 @@ func (srv *Server) startTransaction(c net.Conn) (t *Transaction) {
 	atomic.AddUint64(&srv.transactionsAll, 1)
 	atomic.AddInt32(&srv.transactionsActive, 1)
 	srv.lastTransactionStartedAt = now
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(srv.Context)
 	remoteAddr := c.RemoteAddr().(*net.TCPAddr)
 	ctxWithTracer, span := srv.Tracer.Start(ctx, "transaction",
 		trace.WithSpanKind(trace.SpanKindServer), // важно
@@ -391,7 +397,12 @@ func (srv *Server) Shutdown(wait bool) error {
 	if wait {
 		srv.Wait()
 	}
-
+	// cancels main server context
+	if srv.Context != nil {
+		if srv.Cancel != nil {
+			srv.Cancel()
+		}
+	}
 	return lnerr
 }
 
@@ -411,6 +422,9 @@ func (srv *Server) Address() net.Addr {
 }
 
 func (srv *Server) configureDefaults() {
+	if srv.Context == nil {
+		srv.Context, srv.Cancel = context.WithCancel(context.Background())
+	}
 	if srv.MaxMessageSize == 0 {
 		srv.MaxMessageSize = 10240000
 	}
