@@ -18,7 +18,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-// CheckerFunc are signature of functions used in checks for client issuing HELO/EHLO, MAIL FROM, RCPT TO commands
+// CheckerFunc are signature of functions used in checks for client issuing HELO/EHLO, MAIL FROM, DATA commands
 // Note that we can store counters and Facts in Transaction, in order to extract and reuse it in the future.
 type CheckerFunc func(transaction *Transaction) error
 
@@ -452,7 +452,7 @@ func (srv *Server) configureDefaults() {
 	if srv.WelcomeMessage == "" {
 		srv.WelcomeMessage = fmt.Sprintf("%s ESMTP ready.", srv.Hostname)
 	}
-	if srv.Logger == nil {
+	if srv.Resolver == nil {
 		srv.Resolver = net.DefaultResolver
 	}
 	if srv.Logger == nil {
