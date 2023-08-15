@@ -59,26 +59,33 @@ func mask(input string) string {
 	return string(input[0]) + "****"
 }
 
+func isBase64Encoded(input string) (yes bool) {
+	if strings.Contains(input, "=?UTF-8?B?") {
+		return true
+	}
+	if strings.Contains(input, "=?utf-8?B?") {
+		return true
+	}
+	if strings.Contains(input, "=?utf-8?b?") {
+		return true
+	}
+	if strings.Contains(input, "=?UTF-8?b?") {
+		return true
+	}
+	return false
+}
+
 func decodeBase64EncodedSubject(input string) (output string, err error) {
-	var match bool
-	if strings.HasPrefix(input, "=?UTF-8?B?") {
-		match = true
-	}
-	if strings.HasPrefix(input, "=?utf-8?B?") {
-		match = true
-	}
-	if strings.HasPrefix(input, "=?utf-8?b?") {
-		match = true
-	}
-	if strings.HasPrefix(input, "=?UTF-8?b?") {
-		match = true
-	}
-	if !match {
+	if !isBase64Encoded(input) {
 		return input, nil
 	}
 	words := strings.Split(input, " ")
 	decoded := make([][]byte, len(words))
 	for i := range words {
+		if !isBase64Encoded(words[i]) {
+			decoded[i] = []byte(words[i] + " ")
+			continue
+		}
 		words[i] = strings.TrimPrefix(words[i], "=?UTF-8?B?")
 		words[i] = strings.TrimPrefix(words[i], "=?UTF-8?b?")
 		words[i] = strings.TrimPrefix(words[i], "=?utf-8?B?")
