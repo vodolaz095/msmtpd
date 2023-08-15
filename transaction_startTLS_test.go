@@ -24,7 +24,7 @@ func TestSTARTTLS(t *testing.T) {
 		t.Error("AUTH supported before TLS")
 	}
 	if err = c.Mail("sender@example.org"); err == nil {
-		t.Error("Mail workded before TLS with ForceTLS")
+		t.Error("Mail worked before TLS with ForceTLS")
 	}
 	if err = internal.DoCommand(c.Text, 220, "STARTTLS"); err != nil {
 		t.Errorf("STARTTLS failed: %v", err)

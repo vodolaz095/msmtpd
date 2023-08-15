@@ -29,10 +29,14 @@ func ViaSendmail(opts *SendmailOptions) msmtpd.DataHandler {
 		opts.PathToExecutable = executablePath
 	}
 	return func(tr *msmtpd.Transaction) error {
+		if tr.IsFlagSet(DiscardFlag) {
+			tr.LogInfo("Message was discarded, nothing is send via %s", opts.PathToExecutable)
+			return nil
+		}
+
 		var err error
 		var args []string
 		var recipients []string
-
 		tr.LogDebug("Preparing to start sendmail executable at %s...", opts.PathToExecutable)
 		if tr.MailFrom.Name != "" {
 			args = append(args, "-F "+tr.MailFrom.Name)

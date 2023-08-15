@@ -26,9 +26,17 @@ type SMTPProxyOptions struct {
 	RcptTo []string
 }
 
+func (so *SMTPProxyOptions) String() string {
+	return so.Network + "+smtp://" + so.Address
+}
+
 // ViaSMTPProxy adds DataHandler that performs delivery via 3rd party SMTP server
 func ViaSMTPProxy(opts SMTPProxyOptions) msmtpd.DataHandler {
 	return func(tr *msmtpd.Transaction) error {
+		if tr.IsFlagSet(DiscardFlag) {
+			tr.LogInfo("Message was discarded, nothing is send via %s", opts.String())
+			return nil
+		}
 		var i int
 		var recipientsFound bool
 		conn, err := net.Dial(opts.Network, opts.Address)

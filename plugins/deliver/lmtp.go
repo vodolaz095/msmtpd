@@ -69,6 +69,11 @@ func write(conn *textproto.Conn, msg string) error {
 // ViaLocalMailTransferProtocol sends email message via LMTP protocol
 func ViaLocalMailTransferProtocol(opts LMTPOptions) msmtpd.DataHandler {
 	return func(tr *msmtpd.Transaction) error {
+		if tr.IsFlagSet(DiscardFlag) {
+			tr.LogInfo("Message was discarded, nothing is send to %s", opts.String())
+			return nil
+		}
+
 		pr, err := dialLMTP(opts)
 		if err != nil {
 			tr.LogError(err, "while dialing LMTP socket")
