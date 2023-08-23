@@ -15,13 +15,16 @@ Main features
    on different actions of client (connection, HELO/EHLO command, StartTLS)
 2. `StartTLS`, `XClient`, `Proxy` command support
 3. Easy to implement logger interface
-4. Build-in [OpenTelemetry](https://opentelemetry.io/) support
+4. Build-in [OpenTelemetry](https://opentelemetry.io/) support - see [dovecot_inbound](example%2Fdovecot_inbound)
+   and [dovecot_outbound](example%2Fdovecot_outbound) examples
 5. Lot of [plugins](plugins), including:
 6. [Dovecot](plugins%2Fdovecot) plugin for authentication and LMTP mail delivery
 7. [Rspamd](plugins%2Frspamd) plugin for blocking spam
 8. Plugins to deliver via 3rd party [SMTP proxy](plugins%2Fdeliver%2Fsmtp_proxy.go), 
    [LMTP](plugins%2Fdeliver%2Flmtp.go) and [SendMail](plugins%2Fdeliver%2Fsendmail.go).
-9. Experimental Karma plugin to implement connection scoring (IP addresses making failed SMTP transactions will be blacklisted)
+9. Experimental [Karma](plugins%2Fkarma) plugin to implement connection scoring (IP addresses making failed SMTP transactions will be blacklisted)
+10. HELO/EHLO checkers, including complicated [ones](plugins%2Fhelo)
+11. [Sender resolvable](plugins%2Fsender%2Fsender_resolvable.go) checker plugin to ensure sender's domain can accept our replies 
 
 Examples / Примеры
 ================================
