@@ -33,7 +33,7 @@ jobs:
       run: go install golang.org/x/vuln/cmd/govulncheck@latest
 
     - name: install golint
-      run: go install github.com/golang/lint@latest
+      run: go install golang.org/x/lint@latest
 
     - name: lint
       run: make lint
