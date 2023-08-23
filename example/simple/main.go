@@ -65,19 +65,15 @@ func main() {
 				return nil
 			},
 		},
-		// DataCheckers are called on message body to ensure it properly formatted ham email
+		// DataCheckers are called on message body to ensure it is properly formatted ham email
 		// message according to RFC 5322 and RFC 6532.
 		DataCheckers: []msmtpd.DataChecker{
 			func(tr *msmtpd.Transaction) error {
-				subject := tr.Parsed.Header.Get("Subject")
-				if subject == "" {
+				if tr.Parsed.Header.Get("X-Priority") == "" {
 					return msmtpd.ErrorSMTP{
 						Code:    535,
-						Message: "Please, provide subject for your message!",
+						Message: "Please, provide priority for your message!",
 					}
-				} else {
-					// set string fact about transaction
-					tr.SetFact("subject", subject)
 				}
 				// Add header to message
 				tr.AddHeader("Something", "interesting")

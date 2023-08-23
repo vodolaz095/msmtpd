@@ -71,3 +71,6 @@ check_dovecot_outbound:
           --server localhost --port 1587 \
           --tls-on-connect --timeout 600
 
+docs:
+	which godoc
+	godoc -http=localhost:6060
