@@ -15,20 +15,13 @@ import (
 
 var testRspamdURL, testRspamdPassword string
 
-func TestRspamdEnv(t *testing.T) {
-	if os.Getenv("TEST_RSPAMD_URL") == "" {
-		t.Errorf("Environment variable TEST_RSPAMD_URL is not set")
-	} else {
-		testRspamdURL = os.Getenv("TEST_RSPAMD_URL")
-	}
-	if os.Getenv("TEST_RSPAMD_PASSWORD") == "" {
-		t.Errorf("Environment variable TEST_RSPAMD_PASSWORD is not set")
-	} else {
-		testRspamdPassword = os.Getenv("TEST_RSPAMD_PASSWORD")
-	}
-}
-
 func TestCheckPyRealRSPAMD(t *testing.T) {
+	testRspamdURL = os.Getenv("TEST_RSPAMD_URL")
+	testRspamdPassword = os.Getenv("TEST_RSPAMD_PASSWORD")
+	if testRspamdURL == "" {
+		t.Skipf("Connection string to real RSPAMD is missing")
+	}
+
 	validMessage := internal.MakeTestMessage("sender@example.org", "recipient@example.net", "recipient2@example.net")
 	addr, closer := msmtpd.RunTestServerWithoutTLS(t, &msmtpd.Server{
 		DataCheckers: []msmtpd.DataChecker{
@@ -91,7 +84,8 @@ func TestCheckPyMockRSPAMDFail(t *testing.T) {
 	defer httpmock.DeactivateAndReset()
 	httpmock.RegisterResponder(http.MethodGet, DefaultAddress+"ping",
 		httpmock.NewStringResponder(200, "pong\r\n"))
-	// no re
+	// no reply for checker endpoint
+
 	validMessage := internal.MakeTestMessage("sender@example.org", "recipient@example.net", "recipient2@example.net")
 	addr, closer := msmtpd.RunTestServerWithoutTLS(t, &msmtpd.Server{
 		DataCheckers: []msmtpd.DataChecker{
