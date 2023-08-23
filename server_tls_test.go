@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"net"
 	"net/smtp"
+	"strings"
 	"testing"
 	"time"
 
@@ -99,9 +100,8 @@ func TestStartWithTLS_SNI_fail(t *testing.T) {
 		InsecureSkipVerify: false,
 	})
 	if err != nil {
-		t.Logf("tls handshake error: %s", err)
-		if err.Error() != "x509: certificate is not valid for any names, but wanted to match smtp.yandex.ru" {
-			t.Errorf("%s : while making TLS connection", err)
+		if !strings.Contains(err.Error(), "certificate is not valid for any names, but wanted to match smtp.yandex.ru") {
+			t.Errorf("%s : unexpected error while making TLS connection", err)
 		}
 	} else {
 		t.Errorf("tls connection error not thrown")
