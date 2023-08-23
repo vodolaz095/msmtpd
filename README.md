@@ -152,3 +152,9 @@ $ swaks --to recipient1@example.org,recipient2@example.org,recipient3@example.or
 -> QUIT
 <- 221 Farewell, my friend! Transaction 4dfe768e04186309306b1af3194b05c4 is finished
 ```
+
+
+
+Support development / Поддержать разработку
+====================
+https://www.tinkoff.ru/rm/ostroumov.anatoliy2/4HFzm76801/
