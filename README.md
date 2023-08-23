@@ -9,7 +9,10 @@ Golang framework for building Simple Mail Transfer Protocol Daemons.
 
 Фреймворк для создания почтовых серверов, написанный на Go.
 
-Mirror - https://gitflic.ru/project/vodolaz095/msmtpd
+Mirrors
+=================
+- https://gitflic.ru/project/vodolaz095/msmtpd
+- https://github.com/vodolaz095/msmtpd
 
 Main features
 ================================
