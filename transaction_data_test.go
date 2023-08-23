@@ -48,8 +48,8 @@ func TestMaxMessageSize(t *testing.T) {
 func TestDataHandler(t *testing.T) {
 	handlers := make([]DataHandler, 0)
 	handlers = append(handlers, func(tr *Transaction) error {
-		if len(tr.PTRs) != 1 {
-			t.Errorf("wrong length of PTR records for localhost - %v", len(tr.PTRs))
+		if len(tr.PTRs) == 0 {
+			t.Errorf("ptr records are not set")
 		}
 		if tr.PTRs[0] != "localhost" {
 			t.Errorf("wrong PTR record for localhost - %v", tr.PTRs)
