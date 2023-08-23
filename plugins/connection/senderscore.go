@@ -52,9 +52,8 @@ func RequireSenderScore(minimalSenderScore uint) msmtpd.ConnectionChecker {
 				tr.LogInfo("senderscore is 0")
 				if minimalSenderScore > 0 {
 					return msmtpd.ErrServiceNotAvailable
-				} else {
-					return nil
 				}
+				return nil
 			}
 			tr.LogError(err, fmt.Sprintf("while resolving senderscore for transaction address %s", tr.Addr.String()))
 			return msmtpd.ErrServiceNotAvailable
@@ -63,9 +62,8 @@ func RequireSenderScore(minimalSenderScore uint) msmtpd.ConnectionChecker {
 			tr.LogInfo("senderscore is 0")
 			if minimalSenderScore > 0 {
 				return msmtpd.ErrServiceNotAvailable
-			} else {
-				return nil
 			}
+			return nil
 		}
 		if len(names) > 1 {
 			tr.LogError(
@@ -87,10 +85,9 @@ func RequireSenderScore(minimalSenderScore uint) msmtpd.ConnectionChecker {
 			if minimalSenderScore > uint(senderScore64) {
 				tr.LogInfo("SenderScore %v is lower than %v", senderScore64, minimalSenderScore)
 				return msmtpd.ErrServiceNotAvailable
-			} else {
-				tr.LogInfo("SenderScore %v is bigger than %v", senderScore64, minimalSenderScore)
-				return nil
 			}
+			tr.LogInfo("SenderScore %v is bigger than %v", senderScore64, minimalSenderScore)
+			return nil
 		}
 		tr.LogError(
 			fmt.Errorf("strange senderscore response %s", names[0]),

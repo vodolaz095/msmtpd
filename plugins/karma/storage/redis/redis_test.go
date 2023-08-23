@@ -10,24 +10,24 @@ import (
 	"github.com/vodolaz095/msmtpd"
 )
 
-var testRedisUrl string
+var testRedisURL string
 
 func TestRedisEnvironmentIsSet(t *testing.T) {
-	testRedisUrl = os.Getenv("REDIS_URL")
-	if testRedisUrl == "" {
+	testRedisURL = os.Getenv("REDIS_URL")
+	if testRedisURL == "" {
 		t.Skipf("set redis connection string as REDIS_URL environmen variable")
 	}
-	t.Logf("Dialing redis via %s", testRedisUrl)
+	t.Logf("Dialing redis via %s", testRedisURL)
 }
 
 func TestStorage(t *testing.T) {
 	var score int
-	if testRedisUrl == "" {
+	if testRedisURL == "" {
 		t.Skipf("set redis connection string as REDIS_URL environmen variable")
 	}
-	opts, err := redis.ParseURL(testRedisUrl)
+	opts, err := redis.ParseURL(testRedisURL)
 	if err != nil {
-		t.Errorf("%s : while parsing redis url %s", err, testRedisUrl)
+		t.Errorf("%s : while parsing redis url %s", err, testRedisURL)
 	}
 	client := redis.NewClient(opts)
 

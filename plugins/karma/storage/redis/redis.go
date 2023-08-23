@@ -9,6 +9,7 @@ import (
 	"github.com/vodolaz095/msmtpd"
 )
 
+// Storage saves IP address history into redis database
 type Storage struct {
 	Client *redis.Client
 }

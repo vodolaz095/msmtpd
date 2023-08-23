@@ -1,7 +1,7 @@
 package helo
 
 import (
-	_ "embed"
+	_ "embed" // we use https://pkg.go.dev/embed
 	"strings"
 )
 
@@ -11,6 +11,7 @@ import (
 //go:embed tlds-alpha-by-domain.txt
 var rawData string
 
+// TopListDomains is array of top list domain suffixes
 var TopListDomains []string
 
 func init() {

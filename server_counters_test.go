@@ -94,7 +94,7 @@ func TestCountersHttpExporter(t *testing.T) {
 	go func() {
 		sErr := srv.StartPrometheusScrapperEndpoint("127.0.0.1:5031", "/metrics")
 		if sErr != nil {
-			t.Fatalf("%s : while starting metrics HTTP server", sErr)
+			t.Errorf("%s : while starting metrics HTTP server", sErr)
 		}
 	}()
 	addr, closer := RunTestServerWithoutTLS(t, srv)
