@@ -446,6 +446,7 @@ func TestServerContextDoesNotStopTransaction(t *testing.T) {
 	addr, closer := RunTestServerWithoutTLS(t, &server)
 	defer closer()
 	go func() {
+		time.Sleep(100 * time.Millisecond)
 		<-server.Context.Done()
 		t.Logf("Server context canceled!")
 		wg.Done()
