@@ -98,6 +98,26 @@ func main() {
 		DataCheckers: []msmtpd.DataChecker{
 			// add random delay to make user believe we send her message somehow
 			worker.WaitForData(),
+			// ensure message body has valid FROM header matching MAIL FROM
+			// to prevent abusing service by sending messages on behalf of somebody else
+			func(tr *msmtpd.Transaction) error {
+				froms, fromErr := tr.Parsed.Header.AddressList("From")
+				if fromErr != nil {
+					tr.LogError(fromErr, "while parsing from header")
+					return msmtpd.ErrServiceDoesNotAcceptEmail
+				}
+				if len(froms) != 1 {
+					tr.LogWarn("Duplicate FROM header?")
+					return msmtpd.ErrServiceDoesNotAcceptEmail
+				}
+				if froms[0].Address != tr.MailFrom.Address {
+					return msmtpd.ErrorSMTP{
+						Code:    535,
+						Message: fmt.Sprintf("You are not allowed to send email as different user"),
+					}
+				}
+				return nil
+			},
 		},
 		DataHandlers: []msmtpd.DataHandler{
 			func(tr *msmtpd.Transaction) error {

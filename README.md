@@ -4,12 +4,29 @@ msmtpd
 [![PkgGoDev](https://pkg.go.dev/badge/github.com/vodolaz095/msmtpd)](https://pkg.go.dev/github.com/vodolaz095/msmtpd?tab=doc)
 [![Go Report Card](https://goreportcard.com/badge/github.com/vodolaz095/msmtpd)](https://goreportcard.com/report/github.com/vodolaz095/msmtpd)
 
-Golang framework for building Simple Mail Transfer Protocol Daemons
-Фреймворк для создания почтовых серверов, написанный на Go
+Golang framework for building Simple Mail Transfer Protocol Daemons.
+
+Фреймворк для создания почтовых серверов, написанный на Go.
+
+Main features
+================================
+
+1. [Haraka hooks](https://haraka.github.io/core/Plugins#available-hooks) inspired CheckerFunc's being called 
+   on different actions of client (connection, HELO/EHLO command, StartTLS)
+2. `StartTLS`, `XClient`, `Proxy` command support
+3. Easy to implement logger interface
+4. Build-in [OpenTelemetry](https://opentelemetry.io/) support
+5. Lot of [plugins](plugins), including:
+6. [Dovecot](plugins%2Fdovecot) plugin for authentication and LMTP mail delivery
+7. [Rspamd](plugins%2Frspamd) plugin for blocking spam
+8. Plugins to deliver via 3rd party [SMTP proxy](plugins%2Fdeliver%2Fsmtp_proxy.go), 
+   [LMTP](plugins%2Fdeliver%2Flmtp.go) and [SendMail](plugins%2Fdeliver%2Fsendmail.go).
+9. Experimental Karma plugin to implement connection scoring (IP addresses making failed SMTP transactions will be blacklisted)
 
 Examples / Примеры
 ================================
 
+- [custom_logger](example%2Fcustom_logger)
 - [dovecot_inbound](example%2Fdovecot_inbound)
 - [dovecot_outbound](example%2Fdovecot_outbound)
 - [metrics](example%2Fmetrics)

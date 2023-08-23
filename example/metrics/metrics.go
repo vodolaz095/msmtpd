@@ -2,7 +2,7 @@ package main
 
 import (
 	"log"
-	_ "net/http/pprof"
+	_ "net/http/pprof" // it is ok to make default HTTP server to publish debug information
 
 	"github.com/vodolaz095/msmtpd"
 )

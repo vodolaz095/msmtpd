@@ -40,7 +40,7 @@ func main() {
 	// we configure 3rd party SMTP proxy (tested with smtp.yandex.ru, haraka, postfix) that performs
 	// actual delivery of email messages
 	proxyOptions := deliver.SMTPProxyOptions{
-		Network:  "tcp",
+		Network:  "tcp", // also it can be "unix" for POSIX compatible sockets
 		Address:  "smtp.example.org:25",
 		HELO:     "localhost",
 		TLS:      &tls.Config{},
