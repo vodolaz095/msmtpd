@@ -514,9 +514,8 @@ func TestBodyParseAndCheckHeadersMissingMandatoryHeaderFrom(t *testing.T) {
 		if err.Error() == "521 Stop sending me this nonsense, please!" {
 			t.Logf("proper error is thrown")
 			return
-		} else {
-			t.Errorf("Data close failed with wrong error %v", err)
 		}
+		t.Errorf("Data close failed with wrong error %v", err)
 	}
 	t.Errorf("error not thrown")
 }
@@ -558,9 +557,8 @@ func TestBodyParseAndCheckHeadersMissingMandatoryHeaderDate(t *testing.T) {
 		if err.Error() == "521 Stop sending me this nonsense, please!" {
 			t.Logf("proper error is thrown")
 			return
-		} else {
-			t.Errorf("Data close failed with wrong error %v", err)
 		}
+		t.Errorf("Data close failed with wrong error %v", err)
 	}
 	t.Errorf("error not thrown")
 }
@@ -603,9 +601,8 @@ func TestBodyParseAndCheckHeadersDuplicate(t *testing.T) {
 		if err.Error() == "521 Stop sending me this nonsense, please!" {
 			t.Logf("proper error is thrown")
 			return
-		} else {
-			t.Errorf("Data close failed with wrong error %v", err)
 		}
+		t.Errorf("Data close failed with wrong error %v", err)
 	}
 	t.Errorf("error not thrown")
 }
@@ -704,9 +701,8 @@ func TestBodyParseAndCheckHeadersDateMalformed(t *testing.T) {
 		if err.Error() == "521 Stop sending me this nonsense, please!" {
 			t.Logf("proper error is thrown")
 			return
-		} else {
-			t.Errorf("Data close failed with wrong error %v", err)
 		}
+		t.Errorf("Data close failed with wrong error %v", err)
 	}
 	t.Errorf("error not thrown")
 }
@@ -748,9 +744,8 @@ func TestBodyParseTwoFromSenders(t *testing.T) {
 		if err.Error() == "521 Stop sending me this nonsense, please!" {
 			t.Logf("proper error is thrown")
 			return
-		} else {
-			t.Errorf("Data close failed with wrong error %v", err)
 		}
+		t.Errorf("Data close failed with wrong error %v", err)
 	}
 	t.Errorf("error not thrown")
 }
