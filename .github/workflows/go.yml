@@ -16,6 +16,8 @@ jobs:
     services:
       redis:
         image: redis:7
+        ports:
+          - 6379:6379
         options: >-
           --health-cmd "redis-cli ping"
           --health-interval 10s
@@ -42,4 +44,6 @@ jobs:
       run: make vuln
 
     - name: run unit test
+      env:
+        REDIS_URL: redis://127.0.0.1:6379
       run: go test -v ./...

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/smtp"
+	"os"
 	"sync"
 	"testing"
 
@@ -16,12 +17,20 @@ import (
 
 func TestKarmaPluginRedisBad(t *testing.T) {
 	var err error
+
+	testRedisURL := os.Getenv("REDIS_URL")
+	if testRedisURL == "" {
+		t.Skipf("set redis connection string as REDIS_URL environmen variable")
+	}
+	t.Logf("Dialing redis via %s", testRedisURL)
+	opts, err := redis.ParseURL(testRedisURL)
+	if err != nil {
+		t.Errorf("%s : while parsing redis url %s", err, testRedisURL)
+	}
+
 	wg := sync.WaitGroup{}
 	wg.Add(1)
-	client := redis.NewClient(&redis.Options{
-		Network: "tcp",
-		Addr:    "127.0.0.1:6379",
-	})
+	client := redis.NewClient(opts)
 	err = client.Del(context.TODO(), "karma|8.8.8.8").Err()
 	if err != nil {
 		t.Errorf("%s : while deleting test key", err)
@@ -85,12 +94,20 @@ func TestKarmaPluginRedisBad(t *testing.T) {
 
 func TestKarmaPluginRedisGood(t *testing.T) {
 	var err error
+
+	testRedisURL := os.Getenv("REDIS_URL")
+	if testRedisURL == "" {
+		t.Skipf("set redis connection string as REDIS_URL environmen variable")
+	}
+	t.Logf("Dialing redis via %s", testRedisURL)
+	opts, err := redis.ParseURL(testRedisURL)
+	if err != nil {
+		t.Errorf("%s : while parsing redis url %s", err, testRedisURL)
+	}
+
 	wg := sync.WaitGroup{}
 	wg.Add(1)
-	client := redis.NewClient(&redis.Options{
-		Network: "tcp",
-		Addr:    "127.0.0.1:6379",
-	})
+	client := redis.NewClient(opts)
 	err = client.Del(context.TODO(), "karma|1.1.1.1").Err()
 	if err != nil {
 		t.Errorf("%s : while deleting test key", err)
