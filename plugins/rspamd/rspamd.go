@@ -69,22 +69,22 @@ type AddHeader struct {
 	Order int
 }
 
-// ActionNoop is thing rspamd recomends to do with this message
+// ActionNoop is thing rspamd recommends to do with this message
 const ActionNoop = "no action"
 
-// ActionGreylist is thing rspamd recomends to do with this message
+// ActionGreylist is thing rspamd recommends to do with this message
 const ActionGreylist = "greylist"
 
-// ActionAddHeader is thing rspamd recomends to do with this message
+// ActionAddHeader is thing rspamd recommends to do with this message
 const ActionAddHeader = "add header"
 
-// ActionRewriteSubject is thing rspamd recomends to do with this message
+// ActionRewriteSubject is thing rspamd recommends to do with this message
 const ActionRewriteSubject = "rewrite subject"
 
-// ActionSoftReject is thing rspamd recomends to do with this message
+// ActionSoftReject is thing rspamd recommends to do with this message
 const ActionSoftReject = "soft reject"
 
-// ActionHardReject is thing rspamd recomends to do with this message
+// ActionHardReject is thing rspamd recommends to do with this message
 const ActionHardReject = "reject"
 
 const rspamdComplain = "Too many letters, i cannot read them all now. Please, resend your message later"

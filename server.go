@@ -78,7 +78,7 @@ type Server struct {
 	Resolver *net.Resolver
 
 	// SkipResolvingPTR disables resolving reverse/point DNS records of connecting IP address,
-	// it can be usefull in various DNS checks, but it reduces perfomance due to quite
+	// it can be useful in various DNS checks, but it reduces performance due to quite
 	// expensive and slow DNS calls. By default resolving PTR records is enabled
 	SkipResolvingPTR bool
 

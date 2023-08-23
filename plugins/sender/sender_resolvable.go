@@ -161,7 +161,7 @@ func IsResolvable(opts IsResolvableOptions) msmtpd.SenderChecker {
 				continue
 			}
 			if ip.IsLinkLocalUnicast() {
-				transaction.LogDebug("%s of MX of %s is link local unicast - wierd",
+				transaction.LogDebug("%s of MX of %s is link local unicast - weird",
 					ip.String(), domain,
 				)
 				continue

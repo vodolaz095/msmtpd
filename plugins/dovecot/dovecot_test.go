@@ -60,7 +60,7 @@ func TestDovecot_Exists(t *testing.T) {
 	})
 	if err != nil {
 		if err.Error() != "521 i have no idea about recipient you want to deliver message to" {
-			t.Errorf("%s : wrong error while checking non existant mailbox", err)
+			t.Errorf("%s : wrong error while checking non existent mailbox", err)
 		}
 	} else {
 		t.Errorf("error is expected")
