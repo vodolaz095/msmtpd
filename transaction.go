@@ -95,7 +95,11 @@ type Transaction struct {
 	writer  *bufio.Writer
 	scanner *bufio.Scanner
 
+	// closeHandlersCalled used to ensure close handlers are called only once
 	closeHandlersCalled bool
+	// dataHandlersCalledProperly shows if data handlers for transaction are called properly,
+	// so we consider it is delivered
+	dataHandlersCalledProperly bool
 }
 
 // Context returns transaction context, which is canceled when transaction is closed

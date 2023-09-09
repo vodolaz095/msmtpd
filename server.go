@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	tracesdk "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -164,6 +165,8 @@ type Server struct {
 	bytesRead                uint64
 	bytesWritten             uint64
 	transactionsAll          uint64
+	transactionsSuccess      uint64
+	transactionsFail         uint64
 	transactionsActive       int32
 	lastTransactionStartedAt time.Time
 }
@@ -278,6 +281,7 @@ func (srv *Server) ListenAndServe(addr string) error {
 func (srv *Server) runCloseHandlers(transaction *Transaction) {
 	transaction.mu.Lock()
 	defer transaction.mu.Unlock()
+	closedProperly := true
 	if transaction.closeHandlersCalled {
 		transaction.LogDebug("close handlers already called")
 		return
@@ -288,6 +292,7 @@ func (srv *Server) runCloseHandlers(transaction *Transaction) {
 		srv.Logger.Debugf(transaction, "Starting close handler %v...", k)
 		closeError = srv.CloseHandlers[k](transaction)
 		if closeError != nil {
+			closedProperly = false
 			transaction.LogError(closeError, "while calling close handler")
 		} else {
 			transaction.LogDebug("closing handler %v is called", k)
@@ -296,6 +301,16 @@ func (srv *Server) runCloseHandlers(transaction *Transaction) {
 	transaction.closeHandlersCalled = true
 	srv.Logger.Infof(transaction, "Closing transaction %s.", transaction.ID)
 	atomic.AddInt32(&srv.transactionsActive, -1)
+	if closedProperly {
+		if transaction.dataHandlersCalledProperly {
+			transaction.Span.SetStatus(codes.Ok, "Transaction completed")
+			atomic.AddUint64(&srv.transactionsSuccess, 1)
+		} else {
+			atomic.AddUint64(&srv.transactionsFail, 1)
+		}
+	} else {
+		atomic.AddUint64(&srv.transactionsFail, 1)
+	}
 }
 
 // Serve starts the SMTP server and listens on the Listener provided
