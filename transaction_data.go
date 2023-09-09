@@ -187,6 +187,7 @@ func (t *Transaction) handleDATA(cmd command) {
 			t.reply(250, "Thank you.")
 			t.Love(commandExecutedProperly)
 			t.reset()
+			t.dataHandlersCalledProperly = true
 			return
 		}
 		t.LogError(err, "possible network error while reading message data")

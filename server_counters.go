@@ -52,6 +52,16 @@ func (srv *Server) GetActiveTransactionsCount() int32 {
 	return srv.transactionsActive
 }
 
+// GetSuccessfulTransactionsCount returns number of successful transactions this server processed
+func (srv *Server) GetSuccessfulTransactionsCount() uint64 {
+	return srv.transactionsSuccess
+}
+
+// GetFailedTransactionsCount returns number of failed transactions this server processed
+func (srv *Server) GetFailedTransactionsCount() uint64 {
+	return srv.transactionsFail
+}
+
 // ResetCounters resets counters
 func (srv *Server) ResetCounters() {
 	srv.bytesRead = 0
@@ -73,6 +83,11 @@ func (srv *Server) StartPrometheusScrapperEndpoint(address, path string) (err er
 			srv.Hostname, srv.GetActiveTransactionsCount(), srv.lastTransactionStartedAt.UnixMilli())
 		fmt.Fprintf(res, "all_transactions_count{hostname=\"%s\"} %v %v\n",
 			srv.Hostname, srv.GetTransactionsCount(), srv.lastTransactionStartedAt.UnixMilli())
+		fmt.Fprintf(res, "successfull_transactions_count{hostname=\"%s\"} %v %v\n",
+			srv.Hostname, srv.GetSuccessfulTransactionsCount(), srv.lastTransactionStartedAt.UnixMilli())
+		fmt.Fprintf(res, "failed_transactions_count{hostname=\"%s\"} %v %v\n",
+			srv.Hostname, srv.GetFailedTransactionsCount(), srv.lastTransactionStartedAt.UnixMilli())
+
 	})
 	return http.ListenAndServe(address, http.DefaultServeMux)
 }
