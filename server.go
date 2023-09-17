@@ -9,6 +9,7 @@ import (
 	"log"
 	"net"
 	"net/mail"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -249,7 +250,13 @@ func (srv *Server) startTransaction(c net.Conn) (t *Transaction) {
 	if !srv.SkipResolvingPTR {
 		ptrs, err = t.Resolver().LookupAddr(t.Context(), remoteAddr.IP.String())
 		if err != nil {
-			t.LogError(err, "while resolving remote address PTR record")
+			if strings.Contains(err.Error(), "no such host") {
+				t.LogDebug("unable to resolve PTR record for %s: %s",
+					remoteAddr.IP.String(), err,
+				)
+			} else {
+				t.LogError(err, "while resolving remote address PTR record")
+			}
 			t.PTRs = make([]string, 0)
 		} else {
 			t.LogDebug("PTR addresses resolved for %s : %v",
