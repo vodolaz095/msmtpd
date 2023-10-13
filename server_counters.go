@@ -72,6 +72,10 @@ func (srv *Server) ResetCounters() {
 // StartPrometheusScrapperEndpoint starts prometheus scrapper endpoint with data
 // in this format https://prometheus.io/docs/instrumenting/exposition_formats/
 func (srv *Server) StartPrometheusScrapperEndpoint(address, path string) (err error) {
+	httpServ := http.Server{
+		Addr:    address,
+		Handler: http.DefaultServeMux,
+	}
 	http.HandleFunc(path, func(res http.ResponseWriter, req *http.Request) {
 		res.Header().Add("Content-Type", "text/plain; version=0.0.4")
 		res.WriteHeader(http.StatusOK)
@@ -87,7 +91,10 @@ func (srv *Server) StartPrometheusScrapperEndpoint(address, path string) (err er
 			srv.Hostname, srv.GetSuccessfulTransactionsCount(), srv.lastTransactionStartedAt.UnixMilli())
 		fmt.Fprintf(res, "failed_transactions_count{hostname=\"%s\"} %v %v\n",
 			srv.Hostname, srv.GetFailedTransactionsCount(), srv.lastTransactionStartedAt.UnixMilli())
-
 	})
-	return http.ListenAndServe(address, http.DefaultServeMux)
+	go func() {
+		<-srv.Context.Done()
+		httpServ.Close()
+	}()
+	return httpServ.ListenAndServe()
 }
