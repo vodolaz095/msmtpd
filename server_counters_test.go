@@ -2,6 +2,7 @@ package msmtpd
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"net/http"
 	"net/smtp"
@@ -83,7 +84,8 @@ func TestCountersHttpExporter(t *testing.T) {
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 	srv := &Server{
-		Logger: &TestLogger{Suite: t},
+		Context: context.TODO(),
+		Logger:  &TestLogger{Suite: t},
 		CloseHandlers: []CloseHandler{
 			func(tr *Transaction) error {
 				wg.Done()
