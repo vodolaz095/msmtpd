@@ -72,7 +72,7 @@ func TestTransaction_Resolver_In_Server_Custom(t *testing.T) {
 				d := net.Dialer{
 					Timeout: time.Millisecond * time.Duration(10000),
 				}
-				return d.DialContext(ctx, network, "1.1.1.1:53")
+				return d.DialContext(ctx, network, "8.8.8.8:53")
 			},
 		},
 		HeloCheckers: []HelloChecker{

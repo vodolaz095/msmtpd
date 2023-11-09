@@ -1,6 +1,7 @@
 package connection
 
 import (
+	"context"
 	"net"
 	"net/smtp"
 	"testing"
@@ -26,6 +27,13 @@ func TestCheckByRbl(t *testing.T) {
 
 	for i := range cases {
 		addr, closer := msmtpd.RunTestServerWithoutTLS(t, &msmtpd.Server{
+			Resolver: &net.Resolver{
+				PreferGo: true,
+				Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
+					d := net.Dialer{}
+					return d.DialContext(ctx, network, "8.8.8.8:53")
+				},
+			},
 			ConnectionCheckers: []msmtpd.ConnectionChecker{
 				func(tr *msmtpd.Transaction) error {
 					tr.Addr = &cases[i]
