@@ -17,6 +17,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	tracesdk "go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -139,7 +140,8 @@ type Server struct {
 	EnableXCLIENT bool
 	// EnableProxyProtocol enables Proxy command support (disabled by default, since it is security risk)
 	EnableProxyProtocol bool
-
+	// HideTransactionHeader hides transaction header
+	HideTransactionHeader bool
 	// TLSConfig is used both for STARTTLS and operation over TLS channel
 	TLSConfig *tls.Config
 	// ForceTLS requires connections to be encrypted
@@ -186,9 +188,8 @@ func (srv *Server) startTransaction(c net.Conn) (t *Transaction) {
 	remoteAddr := c.RemoteAddr().(*net.TCPAddr)
 	ctxWithTracer, span := srv.Tracer.Start(ctx, "transaction",
 		trace.WithSpanKind(trace.SpanKindServer), // важно
-		trace.WithAttributes(attribute.String("remote_addr", c.RemoteAddr().String())),
-		trace.WithAttributes(attribute.String("remote_ip", remoteAddr.IP.String())),
-		trace.WithAttributes(attribute.Int("remote_port", remoteAddr.Port)),
+		trace.WithAttributes(semconv.ClientSocketAddress(remoteAddr.IP.String())),
+		trace.WithAttributes(semconv.ClientSocketPort(remoteAddr.Port)),
 	)
 	t = &Transaction{
 		ID:        span.SpanContext().TraceID().String(),

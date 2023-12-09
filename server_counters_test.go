@@ -75,7 +75,7 @@ func TestCounters(t *testing.T) {
 	if srv.lastTransactionStartedAt.IsZero() {
 		t.Errorf("transaction time is not set")
 	}
-	if time.Now().Sub(srv.lastTransactionStartedAt) > 3*time.Second {
+	if time.Since(srv.lastTransactionStartedAt) > 3*time.Second {
 		t.Errorf("last transaction time is too old")
 	}
 }

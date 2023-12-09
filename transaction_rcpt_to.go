@@ -62,13 +62,10 @@ func (t *Transaction) handleRCPT(cmd command) {
 	switch len(t.RcptTo) {
 	case 1:
 		t.LogInfo("Recipient %s will be 1st one in transaction!", addr)
-		break
 	case 2:
 		t.LogInfo("Recipient %s will be 2nd one in transaction!", addr)
-		break
 	case 3:
 		t.LogInfo("Recipient %s will be 3rd one in transaction!", addr)
-		break
 	default:
 		t.LogInfo("Recipient %s will be %dth one in transaction!", addr, len(t.RcptTo))
 	}
@@ -86,5 +83,4 @@ func (t *Transaction) handleRCPT(cmd command) {
 	if len(t.RcptTo) == 1 { // too many recipients should not give too many love for transaction
 		t.Love(commandExecutedProperly)
 	}
-	return
 }

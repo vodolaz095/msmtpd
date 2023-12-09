@@ -12,40 +12,28 @@ func (t *Transaction) handle(line string) {
 	switch cmd.action {
 	case "PROXY":
 		t.handlePROXY(cmd)
-		break
 	case "HELO":
 		t.handleHELO(cmd)
-		break
 	case "EHLO":
 		t.handleEHLO(cmd)
-		break
 	case "MAIL":
 		t.handleMAIL(cmd)
-		break
 	case "RCPT":
 		t.handleRCPT(cmd)
-		break
 	case "STARTTLS":
 		t.handleSTARTTLS(cmd)
-		break
 	case "DATA":
 		t.handleDATA(cmd)
-		break
 	case "RSET":
 		t.handleRSET(cmd)
-		break
 	case "NOOP":
 		t.handleNOOP(cmd)
-		break
 	case "QUIT":
 		t.handleQUIT(cmd)
-		break
 	case "AUTH":
 		t.handleAUTH(cmd)
-		break
 	case "XCLIENT":
 		t.handleXCLIENT(cmd)
-		break
 	default:
 		t.Hate(unknownCommandPenalty)
 		t.LogDebug("Unsupported command received: %s", line)
@@ -53,19 +41,16 @@ func (t *Transaction) handle(line string) {
 	}
 }
 
-func (t *Transaction) handleRSET(cmd command) {
+func (t *Transaction) handleRSET(_ command) {
 	t.reset()
 	t.reply(250, "I forgot everything you have said, go ahead please!")
-	return
 }
 
-func (t *Transaction) handleNOOP(cmd command) {
+func (t *Transaction) handleNOOP(_ command) {
 	t.reply(250, "I'm finishing procrastinating, go ahead please!")
-	return
 }
 
-func (t *Transaction) handleQUIT(cmd command) {
+func (t *Transaction) handleQUIT(_ command) {
 	t.reply(221, fmt.Sprintf("Farewell, my friend! Transaction %s is finished", t.ID))
 	t.close()
-	return
 }

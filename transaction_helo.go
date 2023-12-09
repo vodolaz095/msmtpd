@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"go.opentelemetry.io/otel/attribute"
+	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
 )
 
 func (t *Transaction) handleHELO(cmd command) {
@@ -21,7 +22,7 @@ func (t *Transaction) handleHELO(cmd command) {
 	t.HeloName = cmd.fields[1]
 	t.Protocol = SMTP
 	t.Span.SetAttributes(attribute.String("helo", t.HeloName))
-	t.Span.SetAttributes(attribute.String("protocol", "SMTP"))
+	t.Span.SetAttributes(semconv.NetProtocolName("smtp"))
 	for k := range t.server.HeloCheckers {
 		err = t.server.HeloCheckers[k](t)
 		if err != nil {
@@ -68,7 +69,7 @@ func (t *Transaction) handleEHLO(cmd command) {
 	t.HeloName = cmd.fields[1]
 	t.Protocol = ESMTP
 	t.Span.SetAttributes(attribute.String("ehlo", t.HeloName))
-	t.Span.SetAttributes(attribute.String("protocol", "ESMTP"))
+	t.Span.SetAttributes(semconv.NetProtocolName("esmtp"))
 	for k := range t.server.HeloCheckers {
 		err = t.server.HeloCheckers[k](t)
 		if err != nil {

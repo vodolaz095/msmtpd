@@ -9,6 +9,7 @@ import (
 )
 
 func (t *Transaction) handleSTARTTLS(cmd command) {
+	var err error
 	if t.Encrypted {
 		t.LogDebug("Connection is already encrypted!")
 		t.reply(502, "Already running in TLS")
@@ -21,7 +22,8 @@ func (t *Transaction) handleSTARTTLS(cmd command) {
 	t.LogDebug("STARTTLS [%s] is received...", cmd.line)
 	tlsConn := tls.Server(t.conn, t.server.TLSConfig)
 	t.reply(220, "Connection is encrypted, we can talk freely now!")
-	if err := tlsConn.Handshake(); err != nil {
+	err = tlsConn.Handshake()
+	if err != nil {
 		t.LogError(err, "couldn't perform handshake")
 		t.reply(550, "TLS Handshake error")
 		return
@@ -32,7 +34,13 @@ func (t *Transaction) handleSTARTTLS(cmd command) {
 	t.reset()
 	// Reset deadlines on the underlying connection before I replace it
 	// with a TLS connection
-	t.conn.SetDeadline(time.Time{})
+	err = t.conn.SetDeadline(time.Time{})
+	if err != nil {
+		t.LogError(err, "error setting deadline for encrypted connection")
+		t.reply(550, "TLS Handshake error")
+		return
+	}
+
 	// Replace connection with a TLS connection
 	t.conn = tlsConn
 	t.reader = bufio.NewReader(tlsConn)

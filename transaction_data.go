@@ -31,7 +31,7 @@ var uniqueHeaders = []string{
 	"Subject",
 }
 
-func (t *Transaction) handleDATA(cmd command) {
+func (t *Transaction) handleDATA(_ command) {
 	var checkErr error
 	var deliverErr error
 	var createdAt time.Time
@@ -69,15 +69,21 @@ func (t *Transaction) handleDATA(cmd command) {
 	}
 	t.LogDebug("DATA is called...")
 	t.reply(354, "Ok, you managed to talk me into accepting your message. Go on, end your data with <CR><LF>.<CR><LF>")
-	t.conn.SetDeadline(time.Now().Add(t.server.DataTimeout))
+	err := t.conn.SetDeadline(time.Now().Add(t.server.DataTimeout))
+	if err != nil {
+		t.LogError(err, "while setting deadline for connection")
+		return
+	}
 	data := bytes.NewBufferString("")
 	reader := textproto.NewReader(t.reader).DotReader()
-	_, err := io.CopyN(data, reader, int64(t.server.MaxMessageSize))
+	_, err = io.CopyN(data, reader, int64(t.server.MaxMessageSize))
 	if err != nil {
 		if err == io.EOF {
 			// EOF was reached before MaxMessageSize, so we can accept and deliver message
 			t.Body = data.Bytes()
-			t.AddHeader("MSMTPD-Transaction-Id", t.ID)
+			if !t.server.HideTransactionHeader {
+				t.AddHeader("MSMTPD-Transaction-Id", t.ID)
+			}
 			t.AddReceivedLine() // will be added as first one
 			t.LogDebug("Parsing message body with size %v...", data.Len())
 			t.Span.SetAttributes(attribute.Int("size", data.Len()))
@@ -205,5 +211,4 @@ func (t *Transaction) handleDATA(cmd command) {
 	))
 	t.Hate(tooBigMessagePenalty)
 	t.reset()
-	return
 }

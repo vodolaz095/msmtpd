@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"go.opentelemetry.io/otel/attribute"
+	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
 )
 
 func (t *Transaction) handleAUTH(cmd command) {
@@ -58,7 +59,7 @@ func (t *Transaction) handleAUTH(cmd command) {
 		}
 		username = string(parts[1])
 		password = string(parts[2])
-		break
+
 	case "LOGIN":
 		encodedUsername := ""
 		if len(cmd.fields) < 3 {
@@ -87,7 +88,7 @@ func (t *Transaction) handleAUTH(cmd command) {
 		}
 		username = string(byteUsername)
 		password = string(bytePassword)
-		break
+
 	default:
 		t.LogDebug("unknown authentication mechanism: %s", mechanism)
 		t.reply(502, "Unknown authentication mechanism")
@@ -106,8 +107,7 @@ func (t *Transaction) handleAUTH(cmd command) {
 	// i know saving password here is security risk, but we can implement something like
 	// Haraka plugin to prevent credential leaks
 	// https://haraka.github.io/plugins/prevent_credential_leaks
-	t.Span.SetAttributes(attribute.String("username", username))
-	t.Span.SetAttributes(attribute.String("password", mask(password)))
+	t.Span.SetAttributes(semconv.EnduserID(username))
+	t.Span.SetAttributes(attribute.String("enduser.password", mask(password)))
 	t.reply(235, "OK, you are now authenticated")
-	return
 }

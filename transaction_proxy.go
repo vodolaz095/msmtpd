@@ -22,8 +22,8 @@ func (t *Transaction) handlePROXY(cmd command) {
 		return
 	}
 	var (
-		newAddr    net.IP = nil
-		newTCPPort uint64 = 0
+		newAddr    net.IP
+		newTCPPort uint64
 		err        error
 	)
 	switch cmd.fields[1] {

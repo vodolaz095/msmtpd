@@ -54,9 +54,9 @@ func (t *Transaction) handleXCLIENT(cmd command) {
 			newUsername = value
 			continue
 		case "PROTO":
-			if value == "SMTP" {
+			if value == string(SMTP) {
 				newProto = SMTP
-			} else if value == "ESMTP" {
+			} else if value == string(ESMTP) {
 				newProto = ESMTP
 			}
 			continue

@@ -61,7 +61,7 @@ func TestKarma(t *testing.T) {
 	if err != nil {
 		t.Errorf("Data failed: %v", err)
 	}
-	_, err = fmt.Fprintf(wc, internal.MakeTestMessage("sender@example.org", "recipient@example.net"))
+	_, err = fmt.Fprint(wc, internal.MakeTestMessage("sender@example.org", "recipient@example.net"))
 	if err != nil {
 		t.Errorf("Data body failed: %v", err)
 	}

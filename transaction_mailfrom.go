@@ -66,5 +66,4 @@ func (t *Transaction) handleMAIL(cmd command) {
 	)
 	t.reply(250, "Ok, it makes sense, go ahead please!")
 	t.Love(commandExecutedProperly)
-	return
 }
