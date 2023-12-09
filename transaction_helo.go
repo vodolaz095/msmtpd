@@ -87,5 +87,4 @@ func (t *Transaction) handleEHLO(cmd command) {
 	}
 	t.reply(250, extensions[len(extensions)-1])
 	t.Love(commandExecutedProperly)
-	return
 }
