@@ -27,6 +27,9 @@ func TestSenderIsResolvableDefault(t *testing.T) {
 	testCases["somebody@feedback.vodolaz095.ru"] = fmt.Errorf("421 %s", IsNotResolvableComplain)
 	testCases["somebody@ivory.vodolaz095.ru"] = fmt.Errorf("421 %s", IsNotResolvableComplain)
 
+	testCases[""] = fmt.Errorf("521 %s", "Null sender is not allowed, go and bother different domains")
+	testCases["@"] = fmt.Errorf("502 Malformed e-mail address")
+
 	addr, closer := msmtpd.RunTestServerWithoutTLS(t, &msmtpd.Server{
 		SenderCheckers: []msmtpd.SenderChecker{
 			IsResolvable(IsResolvableOptions{}),
