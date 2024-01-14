@@ -69,7 +69,7 @@ func TestCheckPyRealRSPAMD(t *testing.T) {
 	if err != nil {
 		t.Errorf("Data failed: %v", err)
 	}
-	_, err = fmt.Fprintf(wc, validMessage)
+	_, err = fmt.Fprint(wc, validMessage)
 	if err != nil {
 		t.Errorf("Data body failed: %v", err)
 	}
@@ -139,7 +139,7 @@ func TestCheckPyMockRSPAMDFail(t *testing.T) {
 	if err != nil {
 		t.Errorf("Data failed: %v", err)
 	}
-	_, err = fmt.Fprintf(wc, validMessage)
+	_, err = fmt.Fprint(wc, validMessage)
 	if err != nil {
 		t.Errorf("Data body failed: %v", err)
 	}
@@ -220,7 +220,7 @@ func TestCheckPyMockRSPAMDActionNoop(t *testing.T) {
 	if err != nil {
 		t.Errorf("Data failed: %v", err)
 	}
-	_, err = fmt.Fprintf(wc, validMessage)
+	_, err = fmt.Fprint(wc, validMessage)
 	if err != nil {
 		t.Errorf("Data body failed: %v", err)
 	}
@@ -297,7 +297,7 @@ func TestCheckPyMockRSPAMDActionGreylist(t *testing.T) {
 	if err != nil {
 		t.Errorf("Data failed: %v", err)
 	}
-	_, err = fmt.Fprintf(wc, validMessage)
+	_, err = fmt.Fprint(wc, validMessage)
 	if err != nil {
 		t.Errorf("Data body failed: %v", err)
 	}
@@ -388,7 +388,7 @@ func TestCheckPyMockRSPAMDActionAddHeader(t *testing.T) {
 	if err != nil {
 		t.Errorf("Data failed: %v", err)
 	}
-	_, err = fmt.Fprintf(wc, validMessage)
+	_, err = fmt.Fprint(wc, validMessage)
 	if err != nil {
 		t.Errorf("Data body failed: %v", err)
 	}
@@ -465,7 +465,7 @@ func TestCheckPyMockRSPAMDActionSoftReject(t *testing.T) {
 	if err != nil {
 		t.Errorf("Data failed: %v", err)
 	}
-	_, err = fmt.Fprintf(wc, validMessage)
+	_, err = fmt.Fprint(wc, validMessage)
 	if err != nil {
 		t.Errorf("Data body failed: %v", err)
 	}
@@ -546,7 +546,7 @@ func TestCheckPyMockRSPAMDActionHardReject(t *testing.T) {
 	if err != nil {
 		t.Errorf("Data failed: %v", err)
 	}
-	_, err = fmt.Fprintf(wc, validMessage)
+	_, err = fmt.Fprint(wc, validMessage)
 	if err != nil {
 		t.Errorf("Data body failed: %v", err)
 	}
@@ -631,7 +631,7 @@ func TestCheckPyMockRSPAMDActionRewriteSubject(t *testing.T) {
 	if err != nil {
 		t.Errorf("Data failed: %v", err)
 	}
-	_, err = fmt.Fprintf(wc, validMessage)
+	_, err = fmt.Fprint(wc, validMessage)
 	if err != nil {
 		t.Errorf("Data body failed: %v", err)
 	}

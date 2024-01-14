@@ -45,7 +45,7 @@ func TestViaSendmail(t *testing.T) {
 	if err != nil {
 		t.Errorf("Data failed: %v", err)
 	}
-	_, err = fmt.Fprintf(wc, validMessage)
+	_, err = fmt.Fprint(wc, validMessage)
 	if err != nil {
 		t.Errorf("Data body failed: %v", err)
 	}

@@ -219,7 +219,7 @@ func TestDovecotIntegration(t *testing.T) {
 		t.Errorf("Data failed: %v", err)
 		return
 	}
-	_, err = fmt.Fprintf(wc, validMessage)
+	_, err = fmt.Fprint(wc, validMessage)
 	if err != nil {
 		t.Errorf("Data body failed: %v", err)
 		return
