@@ -181,7 +181,7 @@ func ViaLocalMailTransferProtocol(opts LMTPOptions) msmtpd.DataHandler {
 			tr.LogError(err, "while closing connection by QUIT")
 			return TemporaryError
 		}
-		tr.LogInfo("Message delivered to dovecot via LMTP %s", opts.String())
+		tr.LogInfo("Message is delivered via LMTP %s", opts.String())
 		return nil
 	}
 }

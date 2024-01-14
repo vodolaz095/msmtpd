@@ -39,7 +39,10 @@ func ViaSMTPProxy(opts SMTPProxyOptions) msmtpd.DataHandler {
 		}
 		var i int
 		var recipientsFound bool
-		conn, err := net.Dial(opts.Network, opts.Address)
+		dialer := net.Dialer{
+			Resolver: tr.Resolver(),
+		}
+		conn, err := dialer.DialContext(tr.Context(), opts.Network, opts.Address)
 		if err != nil {
 			tr.LogError(err, "error dialing SMTP backend")
 			return TemporaryError
