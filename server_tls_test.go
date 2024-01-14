@@ -16,7 +16,7 @@ func TestStartWithTLS_OK(t *testing.T) {
 	if err != nil {
 		t.Fatalf("%s : while loading test certs for localhost", err)
 	}
-	clear, err := net.Listen("tcp", "127.0.0.1:0")
+	clearTextListener, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		t.Fatalf("%s : while starting clear text listener", err)
 	}
@@ -36,7 +36,7 @@ func TestStartWithTLS_OK(t *testing.T) {
 	server.TLSConfig = cfg
 	logger := TestLogger{Suite: t}
 	server.Logger = &logger
-	ln := tls.NewListener(clear, cfg)
+	ln := tls.NewListener(clearTextListener, cfg)
 	server.configureDefaults()
 
 	go func() {
@@ -53,10 +53,15 @@ func TestStartWithTLS_OK(t *testing.T) {
 		MaxVersion:         tls.VersionTLS13,
 		InsecureSkipVerify: true,
 	})
+	if err != nil {
+		t.Errorf("%s : while dialing %s with tls", err, ln.Addr().String())
+		return
+	}
 
 	c, err := smtp.NewClient(conn, "localhost")
 	if err != nil {
 		t.Errorf("%s : while connecting to %s", err, ln.Addr().String())
+		return
 	}
 	err = c.Hello("localhost")
 	if err != nil {

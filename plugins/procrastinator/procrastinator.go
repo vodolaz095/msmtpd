@@ -29,8 +29,7 @@ func Default() Procrastinator {
 }
 
 func doRandomDelay(dur time.Duration) (howMuch time.Duration, err error) {
-	max := big.NewInt(dur.Milliseconds())
-	delay, err := rand.Int(rand.Reader, max)
+	delay, err := rand.Int(rand.Reader, big.NewInt(dur.Milliseconds()))
 	if err != nil {
 		return
 	}
