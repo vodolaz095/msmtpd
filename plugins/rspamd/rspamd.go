@@ -127,6 +127,7 @@ func DataChecker(opts Opts) msmtpd.DataChecker {
 				Message: rspamdComplain,
 			}
 		}
+		req = req.WithContext(transaction.Context())
 		req.Header.Add("IP", transaction.Addr.(*net.TCPAddr).IP.String())
 		req.Header.Add("Helo", transaction.HeloName)
 		req.Header.Add("From", transaction.MailFrom.String())
