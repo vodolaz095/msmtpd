@@ -13,6 +13,12 @@ func (t *Transaction) handleMAIL(cmd command) {
 		t.reply(502, "Invalid syntax.")
 		return
 	}
+	if t.dataHandlersCalledProperly {
+		t.LogWarn("MAIL FROM called after DATA accepted")
+		t.Hate(wrongCommandOrderPenalty)
+		t.reply(502, "wrong order of commands")
+		return
+	}
 	if t.HeloName == "" {
 		t.Hate(missingParameterPenalty)
 		t.LogDebug("MAIL FROM called without HELO/EHLO")

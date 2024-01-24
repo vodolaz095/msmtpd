@@ -8,6 +8,7 @@ const lineLength = 76
 
 // Karma related
 const tlsHandshakeFailedHate = 1
+const wrongCommandOrderPenalty = 1
 const missingParameterPenalty = 1
 const unknownCommandPenalty = 2
 const tooManyRecipientsPenalty = 5

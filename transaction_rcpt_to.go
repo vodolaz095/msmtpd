@@ -12,6 +12,12 @@ func (t *Transaction) handleRCPT(cmd command) {
 		t.reply(502, "Invalid syntax.")
 		return
 	}
+	if t.dataHandlersCalledProperly {
+		t.LogWarn("RCPT TO called after DATA accepted")
+		t.Hate(wrongCommandOrderPenalty)
+		t.reply(502, "wrong order of commands")
+		return
+	}
 	if t.HeloName == "" {
 		t.LogDebug("RCPT TO called without HELO/EHLO")
 		t.Hate(missingParameterPenalty)

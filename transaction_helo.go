@@ -14,6 +14,12 @@ func (t *Transaction) handleHELO(cmd command) {
 		t.Hate(missingParameterPenalty)
 		return
 	}
+	if t.dataHandlersCalledProperly {
+		t.LogWarn("HELO called after DATA accepted")
+		t.reply(502, "wrong order of commands")
+		t.Hate(wrongCommandOrderPenalty)
+		return
+	}
 	if t.HeloName != "" {
 		// Reset envelope in case of duplicate HELO
 		t.reset()
@@ -59,6 +65,12 @@ func (t *Transaction) handleEHLO(cmd command) {
 	if len(cmd.fields) < 2 {
 		t.reply(502, "i think you have missed parameter")
 		t.Hate(missingParameterPenalty)
+		return
+	}
+	if t.dataHandlersCalledProperly {
+		t.LogWarn("EHLO called after DATA accepted")
+		t.reply(502, "wrong order of commands")
+		t.Hate(wrongCommandOrderPenalty)
 		return
 	}
 	if t.HeloName != "" {
