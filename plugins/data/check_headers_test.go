@@ -42,7 +42,7 @@ func TestBodyParseAndCheckHeadersOK(t *testing.T) {
 	if err != nil {
 		t.Errorf("Data failed: %v", err)
 	}
-	_, err = fmt.Fprintf(wc, buf.String())
+	_, err = fmt.Fprint(wc, buf.String())
 	if err != nil {
 		t.Errorf("Data body failed: %v", err)
 	}
@@ -77,7 +77,7 @@ func TestBodyParseAndCheckHeadersMalformed(t *testing.T) {
 	if err != nil {
 		t.Errorf("Data failed: %v", err)
 	}
-	_, err = fmt.Fprintf(wc, malformedMessage)
+	_, err = fmt.Fprint(wc, malformedMessage)
 	if err != nil {
 		t.Errorf("Data body failed: %v", err)
 	}
@@ -125,7 +125,7 @@ func TestBodyParseAndCheckHeadersMissingMandatoryHeaderFrom(t *testing.T) {
 	if err != nil {
 		t.Errorf("Data failed: %v", err)
 	}
-	_, err = fmt.Fprintf(wc, buf.String())
+	_, err = fmt.Fprint(wc, buf.String())
 	if err != nil {
 		t.Errorf("Data body failed: %v", err)
 	}
@@ -174,7 +174,7 @@ func TestBodyParseAndCheckHeadersMissingMandatoryHeaderDate(t *testing.T) {
 	if err != nil {
 		t.Errorf("Data failed: %v", err)
 	}
-	_, err = fmt.Fprintf(wc, buf.String())
+	_, err = fmt.Fprint(wc, buf.String())
 	if err != nil {
 		t.Errorf("Data body failed: %v", err)
 	}
@@ -222,7 +222,7 @@ func TestBodyParseAndCheckHeadersMissingRequiredSubject(t *testing.T) {
 	if err != nil {
 		t.Errorf("Data failed: %v", err)
 	}
-	_, err = fmt.Fprintf(wc, buf.String())
+	_, err = fmt.Fprint(wc, buf.String())
 	if err != nil {
 		t.Errorf("Data body failed: %v", err)
 	}
@@ -271,7 +271,7 @@ func TestBodyParseAndCheckHeadersDuplicate(t *testing.T) {
 	if err != nil {
 		t.Errorf("Data failed: %v", err)
 	}
-	_, err = fmt.Fprintf(wc, buf.String())
+	_, err = fmt.Fprint(wc, buf.String())
 	if err != nil {
 		t.Errorf("Data body failed: %v", err)
 	}
@@ -319,7 +319,7 @@ func TestBodyParseAndCheckHeadersDateTooOld(t *testing.T) {
 	if err != nil {
 		t.Errorf("Data failed: %v", err)
 	}
-	_, err = fmt.Fprintf(wc, buf.String())
+	_, err = fmt.Fprint(wc, buf.String())
 	if err != nil {
 		t.Errorf("Data body failed: %v", err)
 	}
@@ -367,7 +367,7 @@ func TestBodyParseAndCheckHeadersDateToFarInFuture(t *testing.T) {
 	if err != nil {
 		t.Errorf("Data failed: %v", err)
 	}
-	_, err = fmt.Fprintf(wc, buf.String())
+	_, err = fmt.Fprint(wc, buf.String())
 	if err != nil {
 		t.Errorf("Data body failed: %v", err)
 	}
@@ -415,7 +415,7 @@ func TestBodyParseAndCheckHeadersDateMalformed(t *testing.T) {
 	if err != nil {
 		t.Errorf("Data failed: %v", err)
 	}
-	_, err = fmt.Fprintf(wc, buf.String())
+	_, err = fmt.Fprint(wc, buf.String())
 	if err != nil {
 		t.Errorf("Data body failed: %v", err)
 	}

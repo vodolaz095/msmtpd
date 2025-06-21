@@ -9,7 +9,7 @@ test: check
 # install it by go install golang.org/x/vuln/cmd/govulncheck@latest
 vuln:
 	which govulncheck
-	govulncheck ./...
+	govulncheck -show verbose ./...
 
 lint:
 	gofmt  -w=true -s=true -l=true ./

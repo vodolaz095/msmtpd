@@ -58,7 +58,7 @@ func TestAddHeader(t *testing.T) {
 	if err != nil {
 		t.Errorf("Data failed: %v", err)
 	}
-	_, err = fmt.Fprintf(wc, internal.MakeTestMessage("scuba@vodolaz095.ru", "scuba@vodolaz095.ru"))
+	_, err = fmt.Fprint(wc, internal.MakeTestMessage("scuba@vodolaz095.ru", "scuba@vodolaz095.ru"))
 	if err != nil {
 		t.Errorf("Data body failed: %v", err)
 	}

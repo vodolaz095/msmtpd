@@ -32,7 +32,7 @@ func TestMaxMessageSize(t *testing.T) {
 	if err != nil {
 		t.Errorf("Data failed: %v", err)
 	}
-	_, err = fmt.Fprintf(wc, internal.MakeTestMessage("sender@example.org", "recipient@example.net"))
+	_, err = fmt.Fprint(wc, internal.MakeTestMessage("sender@example.org", "recipient@example.net"))
 	if err != nil {
 		t.Errorf("Data body failed: %v", err)
 	}
@@ -95,7 +95,7 @@ func TestDataHandler(t *testing.T) {
 	if err != nil {
 		t.Errorf("Data failed: %v", err)
 	}
-	_, err = fmt.Fprintf(wc, internal.MakeTestMessage("sender@example.org", "recipient@example.net"))
+	_, err = fmt.Fprint(wc, internal.MakeTestMessage("sender@example.org", "recipient@example.net"))
 	if err != nil {
 		t.Errorf("Data body failed: %v", err)
 	}
@@ -131,7 +131,7 @@ func TestRejectHandler(t *testing.T) {
 	if err != nil {
 		t.Errorf("Data failed: %v", err)
 	}
-	_, err = fmt.Fprintf(wc, internal.MakeTestMessage("sender@example.org", "recipient@example.net"))
+	_, err = fmt.Fprint(wc, internal.MakeTestMessage("sender@example.org", "recipient@example.net"))
 	if err != nil {
 		t.Errorf("Data body failed: %v", err)
 	}
@@ -218,7 +218,7 @@ func TestWrongOrderForData(t *testing.T) {
 	if err != nil {
 		t.Errorf("%s : while sending Data", err)
 	}
-	_, err = fmt.Fprintf(wc, internal.MakeTestMessage("somebody@example.org", "bill.gates@microsoft.com"))
+	_, err = fmt.Fprint(wc, internal.MakeTestMessage("somebody@example.org", "bill.gates@microsoft.com"))
 	if err != nil {
 		t.Errorf("%s : while sending message body", err)
 	}
@@ -263,7 +263,7 @@ func TestRejectByDataChecker(t *testing.T) {
 	if err != nil {
 		t.Errorf("Data failed: %v", err)
 	}
-	_, err = fmt.Fprintf(wc, internal.MakeTestMessage("sender@example.org", "recipient@example.net"))
+	_, err = fmt.Fprint(wc, internal.MakeTestMessage("sender@example.org", "recipient@example.net"))
 	if err != nil {
 		t.Errorf("Data body failed: %v", err)
 	}
@@ -311,7 +311,7 @@ func TestEnvelopeReceived(t *testing.T) {
 	if err != nil {
 		t.Errorf("Data failed: %v", err)
 	}
-	_, err = fmt.Fprintf(wc, internal.MakeTestMessage("sender@example.org", "recipient@example.net"))
+	_, err = fmt.Fprint(wc, internal.MakeTestMessage("sender@example.org", "recipient@example.net"))
 	if err != nil {
 		t.Errorf("Data body failed: %v", err)
 	}
@@ -369,7 +369,7 @@ func TestAddExtraHeader(t *testing.T) {
 	if err != nil {
 		t.Errorf("Data failed: %v", err)
 	}
-	_, err = fmt.Fprintf(wc, internal.MakeTestMessage("sender@example.org", "recipient@example.net"))
+	_, err = fmt.Fprint(wc, internal.MakeTestMessage("sender@example.org", "recipient@example.net"))
 	if err != nil {
 		t.Errorf("Data body failed: %v", err)
 	}
@@ -430,7 +430,7 @@ func TestTwoExtraHeadersMakeMessageParsable(t *testing.T) {
 		t.Errorf("Data failed: %v", err)
 	}
 
-	_, err = fmt.Fprintf(wc, internal.MakeTestMessage("sender@example.org", "recipient@example.net"))
+	_, err = fmt.Fprint(wc, internal.MakeTestMessage("sender@example.org", "recipient@example.net"))
 	if err != nil {
 		t.Errorf("Data body failed: %v", err)
 	}
@@ -460,7 +460,7 @@ func TestMalformedMessageBody(t *testing.T) {
 	if err != nil {
 		t.Errorf("Data failed: %v", err)
 	}
-	_, err = fmt.Fprintf(wc, "this is nonsense")
+	_, err = fmt.Fprint(wc, "this is nonsense")
 	if err != nil {
 		t.Errorf("Data body failed: %v", err)
 	}
@@ -505,7 +505,7 @@ func TestBodyParseAndCheckHeadersMissingMandatoryHeaderFrom(t *testing.T) {
 	if err != nil {
 		t.Errorf("Data failed: %v", err)
 	}
-	_, err = fmt.Fprintf(wc, buf.String())
+	_, err = fmt.Fprint(wc, buf.String())
 	if err != nil {
 		t.Errorf("Data body failed: %v", err)
 	}
@@ -548,7 +548,7 @@ func TestBodyParseAndCheckHeadersMissingMandatoryHeaderDate(t *testing.T) {
 	if err != nil {
 		t.Errorf("Data failed: %v", err)
 	}
-	_, err = fmt.Fprintf(wc, buf.String())
+	_, err = fmt.Fprint(wc, buf.String())
 	if err != nil {
 		t.Errorf("Data body failed: %v", err)
 	}
@@ -592,7 +592,7 @@ func TestBodyParseAndCheckHeadersDuplicate(t *testing.T) {
 	if err != nil {
 		t.Errorf("Data failed: %v", err)
 	}
-	_, err = fmt.Fprintf(wc, buf.String())
+	_, err = fmt.Fprint(wc, buf.String())
 	if err != nil {
 		t.Errorf("Data body failed: %v", err)
 	}
@@ -650,7 +650,7 @@ func TestBodyParseAndCheckHeadersSubjectBase64Encoded(t *testing.T) {
 	if err != nil {
 		t.Errorf("Data failed: %v", err)
 	}
-	_, err = fmt.Fprintf(wc, buf.String())
+	_, err = fmt.Fprint(wc, buf.String())
 	if err != nil {
 		t.Errorf("Data body failed: %v", err)
 	}
@@ -692,7 +692,7 @@ func TestBodyParseAndCheckHeadersDateMalformed(t *testing.T) {
 	if err != nil {
 		t.Errorf("Data failed: %v", err)
 	}
-	_, err = fmt.Fprintf(wc, buf.String())
+	_, err = fmt.Fprint(wc, buf.String())
 	if err != nil {
 		t.Errorf("Data body failed: %v", err)
 	}
@@ -735,7 +735,7 @@ func TestBodyParseTwoFromSenders(t *testing.T) {
 	if err != nil {
 		t.Errorf("Data failed: %v", err)
 	}
-	_, err = fmt.Fprintf(wc, buf.String())
+	_, err = fmt.Fprint(wc, buf.String())
 	if err != nil {
 		t.Errorf("Data body failed: %v", err)
 	}
@@ -774,7 +774,7 @@ func TestInterruptedDATA(t *testing.T) {
 	if err != nil {
 		t.Errorf("Data failed: %v", err)
 	}
-	_, err = fmt.Fprintf(wc, internal.MakeTestMessage("sender@example.org", "recipient@example.net"))
+	_, err = fmt.Fprint(wc, internal.MakeTestMessage("sender@example.org", "recipient@example.net"))
 	if err != nil {
 		t.Errorf("Data body failed: %v", err)
 	}
