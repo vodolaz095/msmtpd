@@ -1,6 +1,7 @@
 package msmtpd
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -96,5 +97,11 @@ func (srv *Server) StartPrometheusScrapperEndpoint(address, path string) (err er
 		<-srv.Context.Done()
 		httpServ.Close()
 	}()
-	return httpServ.ListenAndServe()
+	err = httpServ.ListenAndServe()
+	if err != nil {
+		if errors.Is(err, http.ErrServerClosed) {
+			return nil
+		}
+	}
+	return err
 }

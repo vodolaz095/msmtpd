@@ -9,6 +9,7 @@ import (
 	"log"
 	"net"
 	"net/mail"
+	"runtime"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -188,8 +189,14 @@ func (srv *Server) startTransaction(c net.Conn) (t *Transaction) {
 	remoteAddr := c.RemoteAddr().(*net.TCPAddr)
 	ctxWithTracer, span := srv.Tracer.Start(ctx, "transaction",
 		trace.WithSpanKind(trace.SpanKindServer), // важно
-		trace.WithAttributes(semconv.ClientSocketAddress(remoteAddr.IP.String())),
-		trace.WithAttributes(semconv.ClientSocketPort(remoteAddr.Port)),
+		trace.WithAttributes(
+			semconv.OSName(runtime.GOOS),
+			semconv.HostArchKey.String(runtime.GOARCH),
+			semconv.ServerAddress(srv.Address().String()),
+			semconv.HostName(srv.Hostname),
+			semconv.ClientSocketAddress(remoteAddr.IP.String()),
+			semconv.ClientSocketPort(remoteAddr.Port),
+		),
 	)
 	t = &Transaction{
 		ID:        span.SpanContext().TraceID().String(),
