@@ -32,7 +32,7 @@ func TestAddHeader(t *testing.T) {
 				if val[0] != "interesting" {
 					t.Errorf("wrong header added to parsed body object")
 				}
-				t.Logf(tr.Parsed.Header.Get("Something"))
+				t.Logf("Header=%s", tr.Parsed.Header.Get("Something"))
 				if tr.Parsed.Header.Get("Something") != "interesting" {
 					t.Errorf("wrong header added to parsed body object")
 				}
