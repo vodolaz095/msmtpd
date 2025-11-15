@@ -1,6 +1,7 @@
 package karma
 
 import (
+	"context"
 	"fmt"
 	"net/smtp"
 	"sync"
@@ -33,7 +34,7 @@ func TestKarmaPluginMemoryGood(t *testing.T) {
 		},
 		CloseHandlers: []msmtpd.CloseHandler{
 			kh.CloseHandler,
-			func(transaction *msmtpd.Transaction) error {
+			func(_ context.Context, transaction *msmtpd.Transaction) error {
 				wg.Done()
 				return nil
 			},
@@ -107,7 +108,7 @@ func TestKarmaPluginMemoryBad(t *testing.T) {
 		},
 		CloseHandlers: []msmtpd.CloseHandler{
 			kh.CloseHandler,
-			func(transaction *msmtpd.Transaction) error {
+			func(_ context.Context, transaction *msmtpd.Transaction) error {
 				wg.Done()
 				return nil
 			},

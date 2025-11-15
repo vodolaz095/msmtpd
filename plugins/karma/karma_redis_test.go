@@ -45,7 +45,7 @@ func TestKarmaPluginRedisBad(t *testing.T) {
 
 	addr, closer := msmtpd.RunTestServerWithoutTLS(t, &msmtpd.Server{
 		ConnectionCheckers: []msmtpd.ConnectionChecker{
-			func(tr *msmtpd.Transaction) error {
+			func(_ context.Context, tr *msmtpd.Transaction) error {
 				tr.Addr = &net.TCPAddr{
 					IP:   net.ParseIP("8.8.8.8"),
 					Port: 60123,
@@ -56,7 +56,7 @@ func TestKarmaPluginRedisBad(t *testing.T) {
 		},
 		CloseHandlers: []msmtpd.CloseHandler{
 			kh.CloseHandler,
-			func(transaction *msmtpd.Transaction) error {
+			func(_ context.Context, transaction *msmtpd.Transaction) error {
 				wg.Done()
 				return nil
 			},
@@ -122,7 +122,7 @@ func TestKarmaPluginRedisGood(t *testing.T) {
 
 	addr, closer := msmtpd.RunTestServerWithoutTLS(t, &msmtpd.Server{
 		ConnectionCheckers: []msmtpd.ConnectionChecker{
-			func(tr *msmtpd.Transaction) error {
+			func(_ context.Context, tr *msmtpd.Transaction) error {
 				tr.Addr = &net.TCPAddr{
 					IP:   net.ParseIP("1.1.1.1"),
 					Port: 60123,
@@ -133,7 +133,7 @@ func TestKarmaPluginRedisGood(t *testing.T) {
 		},
 		CloseHandlers: []msmtpd.CloseHandler{
 			kh.CloseHandler,
-			func(transaction *msmtpd.Transaction) error {
+			func(_ context.Context, transaction *msmtpd.Transaction) error {
 				wg.Done()
 				return nil
 			},
