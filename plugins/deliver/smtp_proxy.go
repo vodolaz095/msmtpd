@@ -1,6 +1,7 @@
 package deliver
 
 import (
+	"context"
 	"crypto/tls"
 	"net"
 	"net/smtp"
@@ -32,7 +33,7 @@ func (so *SMTPProxyOptions) String() string {
 
 // ViaSMTPProxy adds DataHandler that performs delivery via 3rd party SMTP server
 func ViaSMTPProxy(opts SMTPProxyOptions) msmtpd.DataHandler {
-	return func(tr *msmtpd.Transaction) error {
+	return func(_ context.Context, tr *msmtpd.Transaction) error {
 		if tr.IsFlagSet(DiscardFlag) {
 			tr.LogInfo("Message was discarded, nothing is send via %s", opts.String())
 			return nil

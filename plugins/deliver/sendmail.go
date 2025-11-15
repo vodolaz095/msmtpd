@@ -2,6 +2,7 @@ package deliver
 
 import (
 	"bytes"
+	"context"
 	"log"
 	"os/exec"
 	"strings"
@@ -28,7 +29,7 @@ func ViaSendmail(opts *SendmailOptions) msmtpd.DataHandler {
 		}
 		opts.PathToExecutable = executablePath
 	}
-	return func(tr *msmtpd.Transaction) error {
+	return func(_ context.Context, tr *msmtpd.Transaction) error {
 		if tr.IsFlagSet(DiscardFlag) {
 			tr.LogInfo("Message was discarded, nothing is send via %s", opts.PathToExecutable)
 			return nil
