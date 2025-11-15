@@ -60,6 +60,9 @@ check_dovecot_inbound:
           --server localhost --port 1025 \
           --tls --timeout 600
 
+start_tracing:
+	go run example/tracing/main.go
+
 start_dovecot_outbound:
 	go run example/dovecot_outbound/main.go
 

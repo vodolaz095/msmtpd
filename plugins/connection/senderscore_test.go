@@ -1,6 +1,7 @@
 package connection
 
 import (
+	"context"
 	"net"
 	"net/smtp"
 	"testing"
@@ -23,12 +24,12 @@ func TestCheckSenderScore(t *testing.T) {
 	for i := range cases {
 		addr, closer := msmtpd.RunTestServerWithoutTLS(t, &msmtpd.Server{
 			ConnectionCheckers: []msmtpd.ConnectionChecker{
-				func(tr *msmtpd.Transaction) error {
+				func(_ context.Context, tr *msmtpd.Transaction) error {
 					tr.Addr = &cases[i]
 					return nil
 				},
 				RequireSenderScore(1),
-				func(tr *msmtpd.Transaction) error {
+				func(_ context.Context, tr *msmtpd.Transaction) error {
 					senderscore, found := tr.GetCounter(SenderscoreCounter)
 					if !found {
 						t.Errorf("senderscore not found for %s", tr.Addr.String())

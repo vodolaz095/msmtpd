@@ -1,6 +1,7 @@
 package msmtpd
 
 import (
+	"context"
 	"crypto/tls"
 	"net"
 	"net/smtp"
@@ -22,7 +23,7 @@ func TestStartWithTLS_OK(t *testing.T) {
 	}
 	server := Server{
 		HeloCheckers: []HelloChecker{
-			func(tr *Transaction) error {
+			func(_ context.Context, tr *Transaction) error {
 				if !tr.Encrypted {
 					t.Errorf("connection is not encrypted")
 				}
@@ -120,13 +121,13 @@ func TestStartWithTLS_SNI_unsecure(t *testing.T) {
 	if err != nil {
 		t.Fatalf("%s : while loading test certs for localhost", err)
 	}
-	clear, err := net.Listen("tcp", "127.0.0.1:0")
+	clearListerer, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		t.Fatalf("%s : while starting clear text listener", err)
 	}
 	server := Server{
 		HeloCheckers: []HelloChecker{
-			func(tr *Transaction) error {
+			func(_ context.Context, tr *Transaction) error {
 				if !tr.Encrypted {
 					t.Errorf("connection is not encrypted")
 				}
@@ -141,7 +142,7 @@ func TestStartWithTLS_SNI_unsecure(t *testing.T) {
 	server.TLSConfig = cfg
 	logger := TestLogger{Suite: t}
 	server.Logger = &logger
-	ln := tls.NewListener(clear, cfg)
+	ln := tls.NewListener(clearListerer, cfg)
 	server.configureDefaults()
 
 	go func() {

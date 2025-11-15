@@ -2,6 +2,7 @@ package msmtpd
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"fmt"
 	"net/mail"
@@ -47,7 +48,7 @@ func TestMaxMessageSize(t *testing.T) {
 
 func TestDataHandler(t *testing.T) {
 	handlers := make([]DataHandler, 0)
-	handlers = append(handlers, func(tr *Transaction) error {
+	handlers = append(handlers, func(_ context.Context, tr *Transaction) error {
 		if len(tr.PTRs) == 0 {
 			t.Errorf("ptr records are not set")
 		}
@@ -110,7 +111,7 @@ func TestDataHandler(t *testing.T) {
 
 func TestRejectHandler(t *testing.T) {
 	handlers := make([]DataHandler, 0)
-	handlers = append(handlers, func(tr *Transaction) error {
+	handlers = append(handlers, func(_ context.Context, tr *Transaction) error {
 		return ErrorSMTP{Code: 550, Message: "Rejected"}
 	})
 	addr, closer := RunTestServerWithoutTLS(t, &Server{
@@ -235,13 +236,13 @@ func TestWrongOrderForData(t *testing.T) {
 func TestRejectByDataChecker(t *testing.T) {
 	addr, closer := RunTestServerWithoutTLS(t, &Server{
 		DataCheckers: []DataChecker{
-			func(tr *Transaction) error {
+			func(_ context.Context, tr *Transaction) error {
 				tr.LogInfo("Data checker called!")
 				return fmt.Errorf("something is broken")
 			},
 		},
 		DataHandlers: []DataHandler{
-			func(tr *Transaction) error {
+			func(_ context.Context, tr *Transaction) error {
 				tr.LogInfo("Data checker called!")
 				t.Errorf("data handler called")
 				return nil
@@ -284,7 +285,7 @@ func TestEnvelopeReceived(t *testing.T) {
 	addr, closer := RunTestServerWithTLS(t, &Server{
 		Hostname: "foobar.example.net",
 		DataHandlers: []DataHandler{
-			func(tr *Transaction) error {
+			func(_ context.Context, tr *Transaction) error {
 				if !bytes.HasPrefix(tr.Body, []byte("Received: from localhost ([127.0.0.1]) by foobar.example.net with ESMTP;")) {
 					t.Error("Wrong received line.")
 				}
@@ -328,7 +329,7 @@ func TestAddExtraHeader(t *testing.T) {
 	addr, closer := RunTestServerWithTLS(t, &Server{
 		Hostname: "foobar.example.net",
 		DataHandlers: []DataHandler{
-			func(tr *Transaction) error {
+			func(_ context.Context, tr *Transaction) error {
 				tr.AddHeader("Something", "interesting")
 				if !bytes.HasPrefix(tr.Body, []byte("Something: interesting")) {
 					t.Error("Wrong extra header line.")
@@ -386,7 +387,7 @@ func TestTwoExtraHeadersMakeMessageParsable(t *testing.T) {
 	addr, closer := RunTestServerWithTLS(t, &Server{
 		Hostname: "foobar.example.net",
 		DataHandlers: []DataHandler{
-			func(tr *Transaction) error {
+			func(_ context.Context, tr *Transaction) error {
 				tr.AddHeader("Something1", "interesting 1")
 				tr.AddHeader("Something2", "interesting 2")
 				tr.AddReceivedLine()
@@ -618,7 +619,7 @@ func TestBodyParseAndCheckHeadersSubjectBase64Encoded(t *testing.T) {
 
 	addr, closer := RunTestServerWithoutTLS(t, &Server{
 		DataHandlers: []DataHandler{
-			func(tr *Transaction) error {
+			func(_ context.Context, tr *Transaction) error {
 				subject, found := tr.GetFact(SubjectFact)
 				if !found {
 					t.Errorf("subject fact is not set")
@@ -752,7 +753,7 @@ func TestBodyParseTwoFromSenders(t *testing.T) {
 
 func TestInterruptedDATA(t *testing.T) {
 	handlers := make([]DataHandler, 0)
-	handlers = append(handlers, func(tr *Transaction) error {
+	handlers = append(handlers, func(_ context.Context, tr *Transaction) error {
 		t.Error("Accepted DATA despite disconnection")
 		return nil
 	})

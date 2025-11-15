@@ -1,6 +1,7 @@
 package connection
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"strings"
@@ -13,7 +14,7 @@ import (
 // CheckByReverseIPBlacklists checks Transaction IP address against Reverse IP Blacklists provided. If IP address
 // presents in lists more times than tolerance, connection is blocked
 func CheckByReverseIPBlacklists(tolerance uint32, lists []string) msmtpd.ConnectionChecker {
-	return func(tr *msmtpd.Transaction) error {
+	return func(_ context.Context, tr *msmtpd.Transaction) error {
 		var listed uint32
 		ip := tr.Addr.(*net.TCPAddr).IP
 		reversed, err := reverse(ip)

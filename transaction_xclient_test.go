@@ -1,6 +1,7 @@
 package msmtpd
 
 import (
+	"context"
 	"fmt"
 	"net/smtp"
 	"testing"
@@ -32,7 +33,7 @@ func TestXCLIENTNotEnabled(t *testing.T) {
 
 func TestXCLIENTSuccess(t *testing.T) {
 	sc := make([]SenderChecker, 0)
-	sc = append(sc, func(tr *Transaction) error {
+	sc = append(sc, func(_ context.Context, tr *Transaction) error {
 		if tr.HeloName != "new.example.net" {
 			t.Errorf("Didn't override HELO name: %v", tr.HeloName)
 		}

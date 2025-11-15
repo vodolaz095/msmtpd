@@ -5,6 +5,8 @@ import (
 	"strconv"
 
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // Additional documentation:
@@ -12,6 +14,14 @@ import (
 // Example:  `PROXY TCP4 8.8.8.8 127.0.0.1 443 25`
 
 func (t *Transaction) handlePROXY(cmd command) {
+	_, span := t.server.Tracer.Start(t.Context(), "handle_proxy",
+		trace.WithSpanKind(trace.SpanKindInternal), // важно
+		trace.WithAttributes(attribute.String("line", cmd.line)),
+		trace.WithAttributes(attribute.String("action", cmd.action)),
+		trace.WithAttributes(attribute.StringSlice("arguments", cmd.fields)),
+		trace.WithAttributes(attribute.StringSlice("params", cmd.params)),
+	)
+	defer span.End()
 	t.LogTrace("Proxy command: %s", cmd.line)
 	if !t.server.EnableProxyProtocol {
 		t.reply(550, "Proxy Protocol not enabled")
@@ -64,4 +74,5 @@ func (t *Transaction) handlePROXY(cmd command) {
 	t.Addr = tcpAddr
 	t.Span.SetAttributes(attribute.String("PROXY", cmd.line))
 	t.welcome()
+	span.SetStatus(codes.Ok, "proxy command accepted")
 }

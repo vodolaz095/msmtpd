@@ -1,6 +1,7 @@
 package quarantine
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -18,7 +19,7 @@ func MoveToDirectory(directory string) msmtpd.DataHandler {
 	if err != nil {
 		log.Fatalf("%s : while making MoveToDirectory directory at %s", err, directory)
 	}
-	return func(tr *msmtpd.Transaction) error {
+	return func(_ context.Context, tr *msmtpd.Transaction) error {
 		if !tr.IsFlagSet(FlagName) {
 			tr.LogDebug("Flag %s is not set, no moving to quarantine directory", FlagName)
 			return nil

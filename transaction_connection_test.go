@@ -1,6 +1,7 @@
 package msmtpd
 
 import (
+	"context"
 	"errors"
 	"net/smtp"
 	"sync"
@@ -9,7 +10,7 @@ import (
 
 func TestConnectionCheck(t *testing.T) {
 	cc := make([]ConnectionChecker, 0)
-	cc = append(cc, func(tr *Transaction) error {
+	cc = append(cc, func(_ context.Context, tr *Transaction) error {
 		return ErrorSMTP{Code: 552, Message: "Denied"}
 	})
 	addr, closer := RunTestServerWithoutTLS(t, &Server{
@@ -23,7 +24,7 @@ func TestConnectionCheck(t *testing.T) {
 
 func TestConnectionCheckSimpleError(t *testing.T) {
 	cc := make([]ConnectionChecker, 0)
-	cc = append(cc, func(tr *Transaction) error {
+	cc = append(cc, func(_ context.Context, tr *Transaction) error {
 		return errors.New("Denied")
 	})
 	addr, closer := RunTestServerWithoutTLS(t, &Server{
@@ -41,14 +42,14 @@ func TestConnectionCheckerRejectingAndCloseHandler(t *testing.T) {
 	wg.Add(2)
 	addr, closer := RunTestServerWithoutTLS(t, &Server{
 		ConnectionCheckers: []ConnectionChecker{
-			func(tr *Transaction) error {
+			func(_ context.Context, tr *Transaction) error {
 				connectionHandlerCalled = true
 				wg.Done()
 				return ErrorSMTP{Code: 521, Message: "i do not like you"}
 			},
 		},
 		CloseHandlers: []CloseHandler{
-			func(tr *Transaction) error {
+			func(_ context.Context, tr *Transaction) error {
 				t.Logf("close handler is called")
 				closeHandlerCalled = true
 				wg.Done()

@@ -18,13 +18,13 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	tracesdk "go.opentelemetry.io/otel/sdk/trace"
-	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.37.0"
 	"go.opentelemetry.io/otel/trace"
 )
 
 // CheckerFunc are signature of functions used in checks for client issuing HELO/EHLO, MAIL FROM, DATA commands
 // Note that we can store counters and Facts in Transaction, in order to extract and reuse it in the future.
-type CheckerFunc func(transaction *Transaction) error
+type CheckerFunc func(ctx context.Context, transaction *Transaction) error
 
 // ConnectionChecker are called when tcp connection are established, if they return non-null error,
 // connection is terminated
@@ -41,7 +41,7 @@ type SenderChecker CheckerFunc
 // RecipientChecker is called for each RCPT TO client provided, if they return null error,
 // recipient is added to Transaction.RcptTo, else returned errors are send
 // to client as ErrorSMTP responses
-type RecipientChecker func(transaction *Transaction, recipient *mail.Address) error
+type RecipientChecker func(ctx context.Context, transaction *Transaction, recipient *mail.Address) error
 
 // DataChecker is called when client provided message body, and we need to ensure it is sane.
 // It is good place to use RSPAMD and other message body validators here
@@ -56,7 +56,7 @@ type DataHandler CheckerFunc
 type CloseHandler CheckerFunc
 
 // AuthenticatorFunc is signature of function used to handle authentication
-type AuthenticatorFunc func(transaction *Transaction, username, password string) error
+type AuthenticatorFunc func(ctx context.Context, transaction *Transaction, username, password string) error
 
 // Server defines the parameters for running the SMTP server
 type Server struct {
@@ -116,7 +116,7 @@ type Server struct {
 	// Authenticator, while being not nil, enables PLAIN/LOGIN authentication,
 	// only available after STARTTLS. Variable can be left empty for no authentication support.
 	// If Authenticator returns error, authentication will be considered erroneous.
-	Authenticator func(transaction *Transaction, username, password string) error
+	Authenticator AuthenticatorFunc
 
 	// DataCheckers are functions called to check message body before passing it
 	// to DataHandlers for delivery. If left empty, body is not checked. It is worth
@@ -194,8 +194,8 @@ func (srv *Server) startTransaction(c net.Conn) (t *Transaction) {
 			semconv.HostArchKey.String(runtime.GOARCH),
 			semconv.ServerAddress(srv.Address().String()),
 			semconv.HostName(srv.Hostname),
-			semconv.ClientSocketAddress(remoteAddr.IP.String()),
-			semconv.ClientSocketPort(remoteAddr.Port),
+			semconv.ClientAddress(remoteAddr.IP.String()),
+			semconv.ClientPort(remoteAddr.Port),
 		),
 	)
 	t = &Transaction{
@@ -305,7 +305,7 @@ func (srv *Server) runCloseHandlers(transaction *Transaction) {
 	srv.Logger.Debugf(transaction, "Starting %v close handlers...", len(srv.CloseHandlers))
 	for k := range srv.CloseHandlers {
 		srv.Logger.Debugf(transaction, "Starting close handler %v...", k)
-		closeError = srv.CloseHandlers[k](transaction)
+		closeError = srv.CloseHandlers[k](transaction.Context(), transaction)
 		if closeError != nil {
 			closedProperly = false
 			transaction.LogError(closeError, "while calling close handler")
@@ -361,7 +361,7 @@ func (srv *Server) Serve(l net.Listener) error {
 		broken = false
 		transaction := srv.startTransaction(conn)
 		for k := range srv.ConnectionCheckers {
-			err = srv.ConnectionCheckers[k](transaction)
+			err = srv.ConnectionCheckers[k](transaction.Context(), transaction)
 			if err != nil {
 				transaction.LogWarn("%s : after connection checker %v executed", err, k)
 				transaction.error(err)

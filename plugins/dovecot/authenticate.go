@@ -1,6 +1,7 @@
 package dovecot
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"os"
@@ -10,7 +11,7 @@ import (
 )
 
 // Authenticate performs authorization via AuthClientSocket of dovecot
-func (d *Dovecot) Authenticate(tr *msmtpd.Transaction, user, passwd string) error {
+func (d *Dovecot) Authenticate(_ context.Context, tr *msmtpd.Transaction, user, passwd string) error {
 	if !isUsernameSafe(user) {
 		tr.LogWarn("user %s is considered unsafe for dovecot usage", user)
 		return permanentError

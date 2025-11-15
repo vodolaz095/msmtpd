@@ -1,6 +1,7 @@
 package deliver
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"net/textproto"
@@ -68,7 +69,7 @@ func write(conn *textproto.Conn, msg string) error {
 
 // ViaLocalMailTransferProtocol sends email message via LMTP protocol
 func ViaLocalMailTransferProtocol(opts LMTPOptions) msmtpd.DataHandler {
-	return func(tr *msmtpd.Transaction) error {
+	return func(_ context.Context, tr *msmtpd.Transaction) error {
 		if tr.IsFlagSet(DiscardFlag) {
 			tr.LogInfo("Message was discarded, nothing is send to %s", opts.String())
 			return nil

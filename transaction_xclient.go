@@ -6,9 +6,19 @@ import (
 	"strings"
 
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func (t *Transaction) handleXCLIENT(cmd command) {
+	_, span := t.server.Tracer.Start(t.Context(), "handle_start_tls",
+		trace.WithSpanKind(trace.SpanKindInternal), // важно
+		trace.WithAttributes(attribute.String("line", cmd.line)),
+		trace.WithAttributes(attribute.String("action", cmd.action)),
+		trace.WithAttributes(attribute.StringSlice("arguments", cmd.fields)),
+		trace.WithAttributes(attribute.StringSlice("params", cmd.params)),
+	)
+	defer span.End()
 	if len(cmd.fields) < 2 {
 		t.reply(502, "Invalid syntax.")
 		return
@@ -89,4 +99,5 @@ func (t *Transaction) handleXCLIENT(cmd command) {
 		t.Addr = tcpAddr
 	}
 	t.welcome()
+	span.SetStatus(codes.Ok, "xclient accepted")
 }

@@ -5,9 +5,20 @@ import (
 	"strings"
 
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func (t *Transaction) handleMAIL(cmd command) {
+	ctxWithTracer, span := t.server.Tracer.Start(t.Context(), "handle_mail",
+		trace.WithSpanKind(trace.SpanKindInternal), // важно
+		trace.WithAttributes(attribute.String("line", cmd.line)),
+		trace.WithAttributes(attribute.String("action", cmd.action)),
+		trace.WithAttributes(attribute.StringSlice("arguments", cmd.fields)),
+		trace.WithAttributes(attribute.StringSlice("params", cmd.params)),
+	)
+	defer span.End()
+
 	if len(cmd.params) != 2 || strings.ToUpper(cmd.params[0]) != "FROM" {
 		t.Hate(missingParameterPenalty)
 		t.reply(502, "Invalid syntax.")
@@ -60,8 +71,9 @@ func (t *Transaction) handleMAIL(cmd command) {
 		t.MailFrom.String(), len(t.server.SenderCheckers),
 	)
 	t.Span.SetAttributes(attribute.String("from", t.MailFrom.String()))
+	span.SetAttributes(attribute.String("from", t.MailFrom.String()))
 	for k := range t.server.SenderCheckers {
-		err = t.server.SenderCheckers[k](t)
+		err = t.server.SenderCheckers[k](ctxWithTracer, t)
 		if err != nil {
 			t.error(err)
 			return
@@ -72,4 +84,5 @@ func (t *Transaction) handleMAIL(cmd command) {
 	)
 	t.reply(250, "Ok, it makes sense, go ahead please!")
 	t.Love(commandExecutedProperly)
+	span.SetStatus(codes.Ok, "sender's address accepted")
 }

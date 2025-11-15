@@ -1,6 +1,7 @@
 package connection
 
 import (
+	"context"
 	"net/smtp"
 	"testing"
 	"time"
@@ -27,7 +28,7 @@ func TestDenyPTRs(t *testing.T) {
 	for i := range cases {
 		addr, closer := msmtpd.RunTestServerWithoutTLS(t, &msmtpd.Server{
 			ConnectionCheckers: []msmtpd.ConnectionChecker{
-				func(tr *msmtpd.Transaction) error {
+				func(_ context.Context, tr *msmtpd.Transaction) error {
 					tr.PTRs = cases[i].PTRs
 					return nil
 				},

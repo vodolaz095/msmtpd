@@ -1,6 +1,7 @@
 package dovecot
 
 import (
+	"context"
 	"fmt"
 	"net/mail"
 	"strings"
@@ -9,7 +10,7 @@ import (
 )
 
 // CheckRecipient returns true if the user exists, false otherwise.
-func (d *Dovecot) CheckRecipient(tr *msmtpd.Transaction, recipient *mail.Address) error {
+func (d *Dovecot) CheckRecipient(ctx context.Context, tr *msmtpd.Transaction, recipient *mail.Address) error {
 	var user string
 	alias, overrideFound := tr.GetFact(RecipientOverrideFact)
 	if overrideFound {

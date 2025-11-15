@@ -1,6 +1,7 @@
 package msmtpd
 
 import (
+	"context"
 	"fmt"
 	"net/mail"
 	"net/smtp"
@@ -13,7 +14,7 @@ import (
 func TestKarma(t *testing.T) {
 	addr, closer := RunTestServerWithoutTLS(t, &Server{
 		SenderCheckers: []SenderChecker{
-			func(transaction *Transaction) error {
+			func(_ context.Context, transaction *Transaction) error {
 				karma := transaction.Karma()
 				if karma != commandExecutedProperly { // because HELO passed
 					t.Errorf("wrong initial karma %v", karma)
@@ -25,7 +26,7 @@ func TestKarma(t *testing.T) {
 			},
 		},
 		DataHandlers: []DataHandler{
-			func(tr *Transaction) error {
+			func(_ context.Context, tr *Transaction) error {
 				if tr.Karma() < 1000 {
 					t.Errorf("not enough karma. Required at least 1000. Actual: %v", tr.Karma())
 				}
@@ -82,7 +83,7 @@ func TestContext(t *testing.T) {
 	wg.Add(1)
 	addr, closer := RunTestServerWithoutTLS(t, &Server{
 		ConnectionCheckers: []ConnectionChecker{
-			func(transaction *Transaction) error {
+			func(_ context.Context, transaction *Transaction) error {
 				ctx := transaction.Context()
 				t.Logf("context is extracted!")
 				go func() {
@@ -115,7 +116,7 @@ func TestMeta(t *testing.T) {
 	addr, closer := RunTestServerWithoutTLS(t, &Server{
 		MaxConnections: 1,
 		HeloCheckers: []HelloChecker{
-			func(transaction *Transaction) error {
+			func(_ context.Context, transaction *Transaction) error {
 				name := transaction.HeloName
 				transaction.SetFact("something", name)
 				transaction.Incr("int64", 1)
@@ -126,7 +127,7 @@ func TestMeta(t *testing.T) {
 			},
 		},
 		SenderCheckers: []SenderChecker{
-			func(transaction *Transaction) error {
+			func(_ context.Context, transaction *Transaction) error {
 				var found bool
 				_, found = transaction.GetFact("nothing")
 				if found {
@@ -167,7 +168,7 @@ func TestMeta(t *testing.T) {
 			},
 		},
 		RecipientCheckers: []RecipientChecker{
-			func(transaction *Transaction, _ *mail.Address) error {
+			func(_ context.Context, transaction *Transaction, _ *mail.Address) error {
 				var found bool
 				a, found := transaction.GetCounter("int64")
 				if !found {

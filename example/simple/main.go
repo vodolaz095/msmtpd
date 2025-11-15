@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/mail"
 	"strings"
@@ -25,18 +26,18 @@ func main() {
 
 		// ConnectionCheckers are called when client performed TCP connection
 		ConnectionCheckers: []msmtpd.ConnectionChecker{
-			func(tr *msmtpd.Transaction) error {
+			func(_ context.Context, tr *msmtpd.Transaction) error {
 				tr.LogInfo("Client connects from %s...", tr.Addr.String())
 				return nil
 			},
 		},
 		// HeloCheckers are called when client tries to perform HELO/EHLO
 		HeloCheckers: []msmtpd.HelloChecker{
-			func(tr *msmtpd.Transaction) error {
+			func(_ context.Context, tr *msmtpd.Transaction) error {
 				tr.LogInfo("Client HELO is %s", tr.HeloName)
 				return nil
 			},
-			func(tr *msmtpd.Transaction) error {
+			func(_ context.Context, tr *msmtpd.Transaction) error {
 				if tr.HeloName != "localhost" {
 					tr.Hate(1) // i do not like being irritated
 				} else {
@@ -47,7 +48,7 @@ func main() {
 		},
 		// SenderCheckers are called when client provides MAIL FROM to define who sends email message
 		SenderCheckers: []msmtpd.SenderChecker{
-			func(tr *msmtpd.Transaction) error {
+			func(_ context.Context, tr *msmtpd.Transaction) error {
 				tr.LogInfo("Somebody called %s tries to send message...", tr.MailFrom)
 				return nil
 			},
@@ -55,7 +56,7 @@ func main() {
 		// RecipientCheckers are called each time client provides RCPT TO
 		// in order to define for whom to send email message
 		RecipientCheckers: []msmtpd.RecipientChecker{
-			func(tr *msmtpd.Transaction, recipient *mail.Address) error {
+			func(_ context.Context, tr *msmtpd.Transaction, recipient *mail.Address) error {
 				if strings.HasPrefix(recipient.Address, "info@") {
 					return msmtpd.ErrorSMTP{
 						Code:    535,
@@ -68,7 +69,7 @@ func main() {
 		// DataCheckers are called on message body to ensure it is properly formatted ham email
 		// message according to RFC 5322 and RFC 6532.
 		DataCheckers: []msmtpd.DataChecker{
-			func(tr *msmtpd.Transaction) error {
+			func(_ context.Context, tr *msmtpd.Transaction) error {
 				if tr.Parsed.Header.Get("X-Priority") == "" {
 					return msmtpd.ErrorSMTP{
 						Code:    535,
@@ -82,7 +83,7 @@ func main() {
 		},
 		// DataHandlers are actual message delivery to persistent storage
 		DataHandlers: []msmtpd.DataHandler{
-			func(tr *msmtpd.Transaction) error {
+			func(_ context.Context, tr *msmtpd.Transaction) error {
 				tr.LogInfo("We pretend we deliver %v bytes of message somehow", len(tr.Body))
 				// set float64 fact abount transaction
 				tr.Incr("size", float64(len(tr.Body)))
@@ -92,7 +93,7 @@ func main() {
 		// CloseHandlers are called when client closes connection, they can be used
 		// to, for example, record connection data in database or save metrics
 		CloseHandlers: []msmtpd.CloseHandler{
-			func(tr *msmtpd.Transaction) error {
+			func(_ context.Context, tr *msmtpd.Transaction) error {
 				tr.LogInfo("Closing connection. Karma is %d", tr.Karma())
 				// reading string fact
 				subject, found := tr.GetFact("subject")

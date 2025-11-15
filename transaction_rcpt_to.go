@@ -4,9 +4,19 @@ import (
 	"strings"
 
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func (t *Transaction) handleRCPT(cmd command) {
+	ctxWithTracer, span := t.server.Tracer.Start(t.Context(), "handle_rcpt",
+		trace.WithSpanKind(trace.SpanKindInternal), // важно
+		trace.WithAttributes(attribute.String("line", cmd.line)),
+		trace.WithAttributes(attribute.String("action", cmd.action)),
+		trace.WithAttributes(attribute.StringSlice("arguments", cmd.fields)),
+		trace.WithAttributes(attribute.StringSlice("params", cmd.params)),
+	)
+	defer span.End()
 	if len(cmd.params) != 2 || strings.ToUpper(cmd.params[0]) != "TO" {
 		t.Hate(missingParameterPenalty)
 		t.reply(502, "Invalid syntax.")
@@ -57,7 +67,7 @@ func (t *Transaction) handleRCPT(cmd command) {
 	t.LogDebug("Checking recipient %s by %v RecipientCheckers...",
 		addr.String(), len(t.server.RecipientCheckers))
 	for k := range t.server.RecipientCheckers {
-		err = t.server.RecipientCheckers[k](t, addr)
+		err = t.server.RecipientCheckers[k](ctxWithTracer, t, addr)
 		if err != nil {
 			t.Hate(unknownRecipientPenalty)
 			t.error(err)
@@ -80,12 +90,15 @@ func (t *Transaction) handleRCPT(cmd command) {
 		recipientsAsStrings[i] = t.RcptTo[i].String()
 	}
 	t.Span.SetAttributes(attribute.StringSlice("to", recipientsAsStrings))
+	span.SetAttributes(attribute.StringSlice("to", recipientsAsStrings))
 	aliasesAsStrings := make([]string, len(t.Aliases))
 	for i := range t.Aliases {
 		aliasesAsStrings[i] = t.Aliases[i].String()
 	}
 	t.Span.SetAttributes(attribute.StringSlice("aliases", aliasesAsStrings))
+	span.SetAttributes(attribute.StringSlice("aliases", aliasesAsStrings))
 	t.reply(250, "It seems i can handle delivery for this recipient, i'll do my best!")
+	span.SetStatus(codes.Ok, "recipients are found")
 	if len(t.RcptTo) == 1 { // too many recipients should not give too many love for transaction
 		t.Love(commandExecutedProperly)
 	}

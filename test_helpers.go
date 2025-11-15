@@ -1,6 +1,7 @@
 package msmtpd
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"testing"
@@ -51,13 +52,13 @@ func (tl *TestLogger) Fatalf(transaction *Transaction, format string, args ...an
 }
 
 // AuthenticatorForTestsThatAlwaysWorks should not be used for production
-func AuthenticatorForTestsThatAlwaysWorks(tr *Transaction, username, password string) error {
+func AuthenticatorForTestsThatAlwaysWorks(_ context.Context, tr *Transaction, username, password string) error {
 	tr.LogInfo("Pretend we authenticate as %s %s and succeed!", username, password)
 	return nil
 }
 
 // AuthenticatorForTestsThatAlwaysFails should not be used for production
-func AuthenticatorForTestsThatAlwaysFails(tr *Transaction, username, password string) error {
+func AuthenticatorForTestsThatAlwaysFails(_ context.Context, tr *Transaction, username, password string) error {
 	tr.LogInfo("Pretend we authenticate as %s %s and fail!", username, password)
 	return ErrorSMTP{Code: 550, Message: "Denied"}
 }

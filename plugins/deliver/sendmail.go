@@ -2,6 +2,7 @@ package deliver
 
 import (
 	"bytes"
+	"context"
 	"log"
 	"os/exec"
 	"strings"
@@ -28,7 +29,7 @@ func ViaSendmail(opts *SendmailOptions) msmtpd.DataHandler {
 		}
 		opts.PathToExecutable = executablePath
 	}
-	return func(tr *msmtpd.Transaction) error {
+	return func(ctx context.Context, tr *msmtpd.Transaction) error {
 		if tr.IsFlagSet(DiscardFlag) {
 			tr.LogInfo("Message was discarded, nothing is send via %s", opts.PathToExecutable)
 			return nil
@@ -56,7 +57,7 @@ func ViaSendmail(opts *SendmailOptions) msmtpd.DataHandler {
 			}
 			args = append(args, strings.Join(recipients, ","))
 		}
-		cmd := exec.CommandContext(tr.Context(), opts.PathToExecutable, args...)
+		cmd := exec.CommandContext(ctx, opts.PathToExecutable, args...)
 		tr.LogDebug("Preparing to execute %s...", cmd.String())
 		cmd.Stdin = bytes.NewBuffer(tr.Body)
 		output, err := cmd.CombinedOutput()

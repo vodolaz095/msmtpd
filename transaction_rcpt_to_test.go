@@ -1,6 +1,7 @@
 package msmtpd
 
 import (
+	"context"
 	"crypto/tls"
 	"net/mail"
 	"net/smtp"
@@ -11,7 +12,7 @@ import (
 
 func TestRecipientCheck(t *testing.T) {
 	rc := make([]RecipientChecker, 0)
-	rc = append(rc, func(tr *Transaction, name *mail.Address) error {
+	rc = append(rc, func(_ context.Context, tr *Transaction, name *mail.Address) error {
 		return ErrorSMTP{Code: 552, Message: "Denied"}
 	})
 	addr, closer := RunTestServerWithoutTLS(t, &Server{
