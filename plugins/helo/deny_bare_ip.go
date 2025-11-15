@@ -1,13 +1,14 @@
 package helo
 
 import (
+	"context"
 	"net"
 
 	"github.com/vodolaz095/msmtpd"
 )
 
 // DenyBareIP denies clients which provide bare IP address in HELO/EHLO command
-func DenyBareIP(transaction *msmtpd.Transaction) error {
+func DenyBareIP(_ context.Context, transaction *msmtpd.Transaction) error {
 	if transaction.IsFlagSet(IsLocalAddressFlagName) {
 		transaction.LogDebug("Connecting from local address %s, DenyBareIP check disabled",
 			transaction.Addr.String())

@@ -6,6 +6,7 @@ package connection
 // https://socketloop.com/tutorials/golang-reverse-ip-address-for-reverse-dns-lookup-example
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"strconv"
@@ -38,7 +39,7 @@ func RequireSenderScore(minimalSenderScore uint) msmtpd.ConnectionChecker {
 		panic("maximum sender score is 100")
 	}
 
-	return func(tr *msmtpd.Transaction) error {
+	return func(_ context.Context, tr *msmtpd.Transaction) error {
 		reversed, err := reverse(tr.Addr.(*net.TCPAddr).IP)
 		if err != nil {
 			tr.LogError(err, fmt.Sprintf("while reversing transaction address %s", tr.Addr.String()))

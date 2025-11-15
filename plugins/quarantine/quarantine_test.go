@@ -1,6 +1,7 @@
 package quarantine
 
 import (
+	"context"
 	"fmt"
 	"net/smtp"
 	"os"
@@ -19,7 +20,7 @@ func TestQuarantine(t *testing.T) {
 	validMessage := internal.MakeTestMessage("scuba@vodolaz095.ru", "scuba@vodolaz095.ru")
 	addr, closer := msmtpd.RunTestServerWithoutTLS(t, &msmtpd.Server{
 		DataCheckers: []msmtpd.DataChecker{
-			func(tr *msmtpd.Transaction) error {
+			func(_ context.Context, tr *msmtpd.Transaction) error {
 				tr.SetFlag(FlagName)
 				tID = tr.ID
 				createdAt = tr.StartedAt

@@ -1,13 +1,14 @@
 package helo
 
 import (
+	"context"
 	"net/netip"
 
 	"github.com/vodolaz095/msmtpd"
 )
 
 // SkipHeloCheckForLocal allows local clients provide anything in HELO/EHLO
-func SkipHeloCheckForLocal(transaction *msmtpd.Transaction) error {
+func SkipHeloCheckForLocal(_ context.Context, transaction *msmtpd.Transaction) error {
 	addrPort, err := netip.ParseAddrPort(transaction.Addr.String())
 	if err != nil {
 		transaction.LogError(err, "while parsing remote address "+transaction.Addr.String())

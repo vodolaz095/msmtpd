@@ -1,6 +1,7 @@
 package sender
 
 import (
+	"context"
 	"net"
 	"strings"
 
@@ -39,7 +40,7 @@ const IsNotResolvableComplain = "Seems like i cannot find your sender address ma
 
 // IsResolvable is msmtpd.SenderChecker checker that performs DNS validations to proof we can send answer back to sender's email address
 func IsResolvable(opts IsResolvableOptions) msmtpd.SenderChecker {
-	return func(transaction *msmtpd.Transaction) error {
+	return func(_ context.Context, transaction *msmtpd.Transaction) error {
 		parts := strings.Split(transaction.MailFrom.Address, "@")
 		if len(parts) != 2 {
 			transaction.LogInfo("Null sender %s is not allowed",

@@ -1,6 +1,7 @@
 package recipient
 
 import (
+	"context"
 	"log"
 	"net/mail"
 	"strings"
@@ -27,7 +28,7 @@ func AcceptMailForDomainsOrAddresses(whitelistedDomains, whitelistedAddresses []
 	for _, raw := range whitelistedDomains {
 		goodDomains[strings.ToLower(raw)] = true
 	}
-	return func(transaction *msmtpd.Transaction, recipient *mail.Address) error {
+	return func(_ context.Context, transaction *msmtpd.Transaction, recipient *mail.Address) error {
 		domain := strings.Split(recipient.Address, "@")[1]
 		_, found := goodDomains[domain]
 		if found {

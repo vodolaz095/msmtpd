@@ -1,6 +1,7 @@
 package helo
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"strings"
@@ -10,7 +11,7 @@ import (
 
 // DenyDynamicIP ensures helo/ehlo does not contain parts if connection IP address like ISP
 // usually do with residential and dynamic IP addresses
-func DenyDynamicIP(transaction *msmtpd.Transaction) error {
+func DenyDynamicIP(_ context.Context, transaction *msmtpd.Transaction) error {
 	if transaction.IsFlagSet(IsLocalAddressFlagName) {
 		transaction.LogDebug("Connecting from local address %s, DenyBareIP check disabled",
 			transaction.Addr.String())
