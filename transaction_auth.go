@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"go.opentelemetry.io/otel/attribute"
-	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.38.0"
 )
 
 func (t *Transaction) handleAUTH(cmd command) {

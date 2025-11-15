@@ -167,7 +167,7 @@ func (t *Transaction) handleDATA(_ command) {
 			t.LogDebug("Message body of %v bytes is parsed, calling %v DataCheckers on it",
 				data.Len(), len(t.server.DataCheckers))
 			for j := range t.server.DataCheckers {
-				checkErr = t.server.DataCheckers[j](t)
+				checkErr = t.server.DataCheckers[j](t.Context(), t)
 				if checkErr != nil {
 					t.error(checkErr)
 					return
@@ -179,7 +179,7 @@ func (t *Transaction) handleDATA(_ command) {
 
 			t.LogDebug("Starting delivery by %v DataHandlers...", len(t.server.DataHandlers))
 			for k := range t.server.DataHandlers {
-				deliverErr = t.server.DataHandlers[k](t)
+				deliverErr = t.server.DataHandlers[k](t.Context(), t)
 				if deliverErr != nil {
 					t.error(deliverErr)
 					return

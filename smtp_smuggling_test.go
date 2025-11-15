@@ -2,6 +2,7 @@ package msmtpd
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"net/mail"
 	"net/smtp"
@@ -56,7 +57,7 @@ func TestSMTPSmugglingNotWorks(t *testing.T) {
 			var numberOfMessagesAccepted uint32
 			addr, closer := RunTestServerWithoutTLS(tt, &Server{
 				HeloCheckers: []HelloChecker{
-					func(tr *Transaction) error {
+					func(_ context.Context, tr *Transaction) error {
 						if tr.HeloName == "lol" {
 							tt.Errorf("smuggling encountered, helo accepted from message body")
 						}
@@ -64,7 +65,7 @@ func TestSMTPSmugglingNotWorks(t *testing.T) {
 					},
 				},
 				SenderCheckers: []SenderChecker{
-					func(tr *Transaction) error {
+					func(_ context.Context, tr *Transaction) error {
 						if tr.MailFrom.Address == "bad@example.org" {
 							tt.Errorf("smuggling encountered, MAIL FROM accepted from message body")
 						}
@@ -72,7 +73,7 @@ func TestSMTPSmugglingNotWorks(t *testing.T) {
 					},
 				},
 				RecipientCheckers: []RecipientChecker{
-					func(tr *Transaction, recipient *mail.Address) error {
+					func(_ context.Context, tr *Transaction, recipient *mail.Address) error {
 						if recipient.Address == "bad@example.org" {
 							tt.Errorf("smuggling encountered, RCPT TO accepted from message body")
 						}
@@ -80,7 +81,7 @@ func TestSMTPSmugglingNotWorks(t *testing.T) {
 					},
 				},
 				DataHandlers: []DataHandler{
-					func(tr *Transaction) error {
+					func(_ context.Context, tr *Transaction) error {
 						atomic.AddUint32(&numberOfMessagesAccepted, 1)
 						tt.Log("Message content: ", string(tr.Body))
 						return nil

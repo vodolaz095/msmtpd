@@ -195,20 +195,20 @@ func TestCloseHandlers(t *testing.T) {
 	addr, closer := RunTestServerWithoutTLS(t, &Server{
 		Logger: &TestLogger{Suite: t},
 		ConnectionCheckers: []ConnectionChecker{
-			func(transaction *Transaction) error {
+			func(_ context.Context, transaction *Transaction) error {
 				t.Logf("Giving 2 wg to transaction %s", transaction.ID)
 				wg.Add(2)
 				return nil
 			},
 		},
 		CloseHandlers: []CloseHandler{
-			func(transaction *Transaction) error {
+			func(_ context.Context, transaction *Transaction) error {
 				t.Logf("Closing transaction %s by 1st handler", transaction.ID)
 				closeHandler1Called = true
 				wg.Done()
 				return nil
 			},
-			func(transaction *Transaction) error {
+			func(_ context.Context, transaction *Transaction) error {
 				t.Logf("Closing transaction %s by 2nd handler", transaction.ID)
 				closeHandler2Called = true
 				wg.Done()
@@ -473,7 +473,7 @@ func TestServerContextDoneInTransaction(t *testing.T) {
 	server := Server{
 		Logger: &TestLogger{Suite: t},
 		ConnectionCheckers: []ConnectionChecker{
-			func(tr *Transaction) error {
+			func(_ context.Context, tr *Transaction) error {
 				go func() {
 					<-tr.Context().Done()
 					t.Logf("Context in transaction is canceled!")

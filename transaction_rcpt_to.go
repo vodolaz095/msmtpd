@@ -57,7 +57,7 @@ func (t *Transaction) handleRCPT(cmd command) {
 	t.LogDebug("Checking recipient %s by %v RecipientCheckers...",
 		addr.String(), len(t.server.RecipientCheckers))
 	for k := range t.server.RecipientCheckers {
-		err = t.server.RecipientCheckers[k](t, addr)
+		err = t.server.RecipientCheckers[k](t.Context(), t, addr)
 		if err != nil {
 			t.Hate(unknownRecipientPenalty)
 			t.error(err)

@@ -4,10 +4,21 @@ import (
 	"fmt"
 
 	"go.opentelemetry.io/otel/attribute"
-	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
+	"go.opentelemetry.io/otel/codes"
+	semconv "go.opentelemetry.io/otel/semconv/v1.37.0"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func (t *Transaction) handleHELO(cmd command) {
+	ctxWithTracer, span := t.server.Tracer.Start(t.Context(), "helo",
+		trace.WithSpanKind(trace.SpanKindInternal), // важно
+		trace.WithAttributes(attribute.String("line", cmd.line)),
+		trace.WithAttributes(attribute.String("action", cmd.action)),
+		trace.WithAttributes(attribute.StringSlice("arguments", cmd.fields)),
+		trace.WithAttributes(attribute.StringSlice("params", cmd.params)),
+	)
+	defer span.End()
+
 	var err error
 	if len(cmd.fields) < 2 {
 		t.reply(502, "i think you have missed parameter")
@@ -28,9 +39,11 @@ func (t *Transaction) handleHELO(cmd command) {
 	t.HeloName = cmd.fields[1]
 	t.Protocol = SMTP
 	t.Span.SetAttributes(attribute.String("helo", t.HeloName))
-	t.Span.SetAttributes(semconv.NetProtocolName("smtp"))
+	t.Span.SetAttributes(semconv.NetworkProtocolName("smtp"))
+	span.SetAttributes(attribute.String("helo", t.HeloName))
+	span.SetAttributes(semconv.NetworkProtocolName("smtp"))
 	for k := range t.server.HeloCheckers {
-		err = t.server.HeloCheckers[k](t)
+		err = t.server.HeloCheckers[k](ctxWithTracer, t)
 		if err != nil {
 			t.error(err)
 			return
@@ -39,6 +52,7 @@ func (t *Transaction) handleHELO(cmd command) {
 	t.LogInfo("HELO <%s> is accepted!", cmd.fields[1])
 	t.reply(250, "Go on, i'm listening...")
 	t.Love(commandExecutedProperly)
+	span.SetStatus(codes.Ok, "accepted")
 	return
 }
 
@@ -61,6 +75,15 @@ func (t *Transaction) extensions() []string {
 }
 
 func (t *Transaction) handleEHLO(cmd command) {
+	ctxWithTracer, span := t.server.Tracer.Start(t.Context(), "ehlo",
+		trace.WithSpanKind(trace.SpanKindInternal), // важно
+		trace.WithAttributes(attribute.String("line", cmd.line)),
+		trace.WithAttributes(attribute.String("action", cmd.action)),
+		trace.WithAttributes(attribute.StringSlice("arguments", cmd.fields)),
+		trace.WithAttributes(attribute.StringSlice("params", cmd.params)),
+	)
+	defer span.End()
+
 	var err error
 	if len(cmd.fields) < 2 {
 		t.reply(502, "i think you have missed parameter")
@@ -81,9 +104,11 @@ func (t *Transaction) handleEHLO(cmd command) {
 	t.HeloName = cmd.fields[1]
 	t.Protocol = ESMTP
 	t.Span.SetAttributes(attribute.String("ehlo", t.HeloName))
-	t.Span.SetAttributes(semconv.NetProtocolName("esmtp"))
+	t.Span.SetAttributes(semconv.NetworkProtocolName("esmtp"))
+	span.SetAttributes(attribute.String("ehlo", t.HeloName))
+	span.SetAttributes(semconv.NetworkProtocolName("esmtp"))
 	for k := range t.server.HeloCheckers {
-		err = t.server.HeloCheckers[k](t)
+		err = t.server.HeloCheckers[k](ctxWithTracer, t)
 		if err != nil {
 			t.error(err)
 			return
@@ -99,4 +124,5 @@ func (t *Transaction) handleEHLO(cmd command) {
 	}
 	t.reply(250, extensions[len(extensions)-1])
 	t.Love(commandExecutedProperly)
+	span.SetStatus(codes.Ok, "accepted")
 }

@@ -17,7 +17,7 @@ func TestCounters(t *testing.T) {
 	srv := &Server{
 		Logger: &TestLogger{Suite: t},
 		CloseHandlers: []CloseHandler{
-			func(tr *Transaction) error {
+			func(_ context.Context, tr *Transaction) error {
 				wg.Done()
 				return nil
 			},
@@ -87,7 +87,7 @@ func TestCountersHttpExporter(t *testing.T) {
 		Context: context.TODO(),
 		Logger:  &TestLogger{Suite: t},
 		CloseHandlers: []CloseHandler{
-			func(tr *Transaction) error {
+			func(_ context.Context, tr *Transaction) error {
 				wg.Done()
 				return nil
 			},

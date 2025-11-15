@@ -55,18 +55,18 @@ func Example() {
 
 		// ConnectionCheckers are called when client performed TCP connection
 		ConnectionCheckers: []ConnectionChecker{
-			func(tr *Transaction) error {
+			func(_ context.Context, tr *Transaction) error {
 				tr.LogInfo("Client connects from %s...", tr.Addr.String())
 				return nil
 			},
 		},
 		// HeloCheckers are called when client tries to perform HELO/EHLO
 		HeloCheckers: []HelloChecker{
-			func(tr *Transaction) error {
+			func(_ context.Context, tr *Transaction) error {
 				tr.LogInfo("Client HELO is %s", tr.HeloName)
 				return nil
 			},
-			func(tr *Transaction) error {
+			func(_ context.Context, tr *Transaction) error {
 				if tr.HeloName != "localhost" {
 					tr.Hate(1) // i do not like being irritated
 				} else {
@@ -77,7 +77,7 @@ func Example() {
 		},
 		// SenderCheckers are called when client provides MAIL FROM to define who sends email message
 		SenderCheckers: []SenderChecker{
-			func(tr *Transaction) error {
+			func(_ context.Context, tr *Transaction) error {
 				tr.LogInfo("Somebody called %s tries to send message...", tr.MailFrom)
 				return nil
 			},
@@ -85,7 +85,7 @@ func Example() {
 		// RecipientCheckers are called each time client provides RCPT TO
 		// in order to define for whom to send email message
 		RecipientCheckers: []RecipientChecker{
-			func(tr *Transaction, recipient *mail.Address) error {
+			func(_ context.Context, tr *Transaction, recipient *mail.Address) error {
 				if strings.HasPrefix(recipient.Address, "info@") {
 					return ErrorSMTP{
 						Code:    535,
@@ -98,7 +98,7 @@ func Example() {
 		// DataCheckers are called on message body to ensure it is properly formatted ham email
 		// message according to RFC 5322 and RFC 6532.
 		DataCheckers: []DataChecker{
-			func(tr *Transaction) error {
+			func(_ context.Context, tr *Transaction) error {
 				if tr.Parsed.Header.Get("X-Priority") == "" {
 					return ErrorSMTP{
 						Code:    535,
@@ -112,7 +112,7 @@ func Example() {
 		},
 		// DataHandlers do actual message delivery to persistent storage
 		DataHandlers: []DataHandler{
-			func(tr *Transaction) error {
+			func(_ context.Context, tr *Transaction) error {
 				tr.LogInfo("We pretend we deliver %v bytes of message somehow", len(tr.Body))
 				// set float64 fact about transaction
 				tr.Incr("size", float64(len(tr.Body)))
@@ -122,7 +122,7 @@ func Example() {
 		// CloseHandlers are called when client closes connection, they can be used
 		// to, for example, record connection data in database or save metrics
 		CloseHandlers: []CloseHandler{
-			func(tr *Transaction) error {
+			func(_ context.Context, tr *Transaction) error {
 				tr.LogInfo("Closing connection. Karma is %d", tr.Karma())
 				// reading string fact
 				subject, found := tr.GetFact(SubjectFact)
