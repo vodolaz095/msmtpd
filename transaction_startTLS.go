@@ -6,9 +6,19 @@ import (
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func (t *Transaction) handleSTARTTLS(cmd command) {
+	_, span := t.server.Tracer.Start(t.Context(), "handle_start_tls",
+		trace.WithSpanKind(trace.SpanKindInternal), // важно
+		trace.WithAttributes(attribute.String("line", cmd.line)),
+		trace.WithAttributes(attribute.String("action", cmd.action)),
+		trace.WithAttributes(attribute.StringSlice("arguments", cmd.fields)),
+		trace.WithAttributes(attribute.StringSlice("params", cmd.params)),
+	)
+	defer span.End()
 	var err error
 	if t.Encrypted {
 		t.LogDebug("Connection is already encrypted!")
@@ -53,4 +63,5 @@ func (t *Transaction) handleSTARTTLS(cmd command) {
 	// Flush the connection to set new timeout deadlines
 	t.flush()
 	t.Love(commandExecutedProperly)
+	span.SetStatus(codes.Ok, "connection is encrypted")
 }

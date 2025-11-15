@@ -7,6 +7,7 @@ package main
 // http://127.0.0.1:16686/
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 	"log"
@@ -83,7 +84,7 @@ func main() {
 
 		SenderCheckers: []msmtpd.SenderChecker{
 			// ensure user doesn't sends emails from his boss account
-			func(tr *msmtpd.Transaction) error {
+			func(_ context.Context, tr *msmtpd.Transaction) error {
 				if tr.Username == tr.MailFrom.Address {
 					return nil
 				}
@@ -100,7 +101,7 @@ func main() {
 			worker.WaitForData(),
 			// ensure message body has valid FROM header matching MAIL FROM
 			// to prevent abusing service by sending messages on behalf of somebody else
-			func(tr *msmtpd.Transaction) error {
+			func(_ context.Context, tr *msmtpd.Transaction) error {
 				froms, fromErr := tr.Parsed.Header.AddressList("From")
 				if fromErr != nil {
 					tr.LogError(fromErr, "while parsing from header")
@@ -120,7 +121,7 @@ func main() {
 			},
 		},
 		DataHandlers: []msmtpd.DataHandler{
-			func(tr *msmtpd.Transaction) error {
+			func(_ context.Context, tr *msmtpd.Transaction) error {
 				// pretend we deliver message
 				return nil
 			},

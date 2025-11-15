@@ -5,11 +5,12 @@ import (
 	"strings"
 
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )
 
 func (t *Transaction) handleMAIL(cmd command) {
-	ctxWithTracer, span := t.server.Tracer.Start(t.Context(), "mail",
+	ctxWithTracer, span := t.server.Tracer.Start(t.Context(), "handle_mail",
 		trace.WithSpanKind(trace.SpanKindInternal), // важно
 		trace.WithAttributes(attribute.String("line", cmd.line)),
 		trace.WithAttributes(attribute.String("action", cmd.action)),
@@ -83,4 +84,5 @@ func (t *Transaction) handleMAIL(cmd command) {
 	)
 	t.reply(250, "Ok, it makes sense, go ahead please!")
 	t.Love(commandExecutedProperly)
+	span.SetStatus(codes.Ok, "sender's address accepted")
 }

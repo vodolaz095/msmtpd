@@ -10,7 +10,7 @@ import (
 )
 
 func (t *Transaction) handleHELO(cmd command) {
-	ctxWithTracer, span := t.server.Tracer.Start(t.Context(), "helo",
+	ctxWithTracer, span := t.server.Tracer.Start(t.Context(), "handle_helo",
 		trace.WithSpanKind(trace.SpanKindInternal), // важно
 		trace.WithAttributes(attribute.String("line", cmd.line)),
 		trace.WithAttributes(attribute.String("action", cmd.action)),
@@ -75,7 +75,7 @@ func (t *Transaction) extensions() []string {
 }
 
 func (t *Transaction) handleEHLO(cmd command) {
-	ctxWithTracer, span := t.server.Tracer.Start(t.Context(), "ehlo",
+	ctxWithTracer, span := t.server.Tracer.Start(t.Context(), "handle_ehlo",
 		trace.WithSpanKind(trace.SpanKindInternal), // важно
 		trace.WithAttributes(attribute.String("line", cmd.line)),
 		trace.WithAttributes(attribute.String("action", cmd.action)),

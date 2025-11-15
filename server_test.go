@@ -248,7 +248,7 @@ func TestTLSListener(t *testing.T) {
 	addr := ln.Addr().String()
 	server := &Server{
 		Logger: &TestLogger{Suite: t},
-		Authenticator: func(tr *Transaction, username, password string) error {
+		Authenticator: func(_ context.Context, tr *Transaction, username, password string) error {
 			if tr.TLS == nil {
 				t.Error("didn't correctly set connection state on TLS connection")
 			}

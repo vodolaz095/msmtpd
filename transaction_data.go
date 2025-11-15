@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // All messages MUST have a 'Date' and 'From' header and a message may not
@@ -31,7 +33,16 @@ var uniqueHeaders = []string{
 	"Subject",
 }
 
-func (t *Transaction) handleDATA(_ command) {
+func (t *Transaction) handleDATA(cmd command) {
+	ctx, span := t.server.Tracer.Start(t.Context(), "handle_data",
+		trace.WithSpanKind(trace.SpanKindInternal), // важно
+		trace.WithAttributes(attribute.String("line", cmd.line)),
+		trace.WithAttributes(attribute.String("action", cmd.action)),
+		trace.WithAttributes(attribute.StringSlice("arguments", cmd.fields)),
+		trace.WithAttributes(attribute.StringSlice("params", cmd.params)),
+	)
+	defer span.End()
+
 	var checkErr error
 	var deliverErr error
 	var createdAt time.Time
@@ -87,6 +98,7 @@ func (t *Transaction) handleDATA(_ command) {
 			t.AddReceivedLine() // will be added as first one
 			t.LogDebug("Parsing message body with size %v...", data.Len())
 			t.Span.SetAttributes(attribute.Int("size", data.Len()))
+			span.SetAttributes(attribute.Int("size", data.Len()))
 			t.Parsed, checkErr = mail.ReadMessage(bytes.NewReader(t.Body))
 			if checkErr != nil {
 				t.LogWarn("%s : while parsing message body", checkErr)
@@ -160,6 +172,7 @@ func (t *Transaction) handleDATA(_ command) {
 					subject = decoded
 					t.LogInfo("Subject: %s", subject)
 					t.Span.SetAttributes(attribute.String("subject", subject))
+					span.SetAttributes(attribute.String("subject", subject))
 					t.SetFact(SubjectFact, subject)
 				}
 			}
@@ -167,7 +180,7 @@ func (t *Transaction) handleDATA(_ command) {
 			t.LogDebug("Message body of %v bytes is parsed, calling %v DataCheckers on it",
 				data.Len(), len(t.server.DataCheckers))
 			for j := range t.server.DataCheckers {
-				checkErr = t.server.DataCheckers[j](t.Context(), t)
+				checkErr = t.server.DataCheckers[j](ctx, t)
 				if checkErr != nil {
 					t.error(checkErr)
 					return
@@ -179,7 +192,7 @@ func (t *Transaction) handleDATA(_ command) {
 
 			t.LogDebug("Starting delivery by %v DataHandlers...", len(t.server.DataHandlers))
 			for k := range t.server.DataHandlers {
-				deliverErr = t.server.DataHandlers[k](t.Context(), t)
+				deliverErr = t.server.DataHandlers[k](ctx, t)
 				if deliverErr != nil {
 					t.error(deliverErr)
 					return
@@ -192,6 +205,7 @@ func (t *Transaction) handleDATA(_ command) {
 			}
 			t.reply(250, "Thank you.")
 			t.Love(commandExecutedProperly)
+			span.SetStatus(codes.Ok, "body processed")
 			t.reset()
 			t.dataHandlersCalledProperly = true
 			return

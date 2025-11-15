@@ -116,7 +116,7 @@ type Server struct {
 	// Authenticator, while being not nil, enables PLAIN/LOGIN authentication,
 	// only available after STARTTLS. Variable can be left empty for no authentication support.
 	// If Authenticator returns error, authentication will be considered erroneous.
-	Authenticator func(transaction *Transaction, username, password string) error
+	Authenticator AuthenticatorFunc
 
 	// DataCheckers are functions called to check message body before passing it
 	// to DataHandlers for delivery. If left empty, body is not checked. It is worth
