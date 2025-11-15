@@ -33,7 +33,7 @@ func (so *SMTPProxyOptions) String() string {
 
 // ViaSMTPProxy adds DataHandler that performs delivery via 3rd party SMTP server
 func ViaSMTPProxy(opts SMTPProxyOptions) msmtpd.DataHandler {
-	return func(_ context.Context, tr *msmtpd.Transaction) error {
+	return func(ctx context.Context, tr *msmtpd.Transaction) error {
 		if tr.IsFlagSet(DiscardFlag) {
 			tr.LogInfo("Message was discarded, nothing is send via %s", opts.String())
 			return nil
@@ -43,7 +43,7 @@ func ViaSMTPProxy(opts SMTPProxyOptions) msmtpd.DataHandler {
 		dialer := net.Dialer{
 			Resolver: tr.Resolver(),
 		}
-		conn, err := dialer.DialContext(tr.Context(), opts.Network, opts.Address)
+		conn, err := dialer.DialContext(ctx, opts.Network, opts.Address)
 		if err != nil {
 			tr.LogError(err, "error dialing SMTP backend")
 			return TemporaryError
