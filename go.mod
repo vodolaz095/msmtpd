@@ -1,6 +1,6 @@
 module github.com/vodolaz095/msmtpd
 
-go 1.24.9
+go 1.24.10
 
 require (
 	github.com/jarcoal/httpmock v1.3.1
