@@ -39,7 +39,7 @@ func RequireSenderScore(minimalSenderScore uint) msmtpd.ConnectionChecker {
 		panic("maximum sender score is 100")
 	}
 
-	return func(_ context.Context, tr *msmtpd.Transaction) error {
+	return func(ctx context.Context, tr *msmtpd.Transaction) error {
 		reversed, err := reverse(tr.Addr.(*net.TCPAddr).IP)
 		if err != nil {
 			tr.LogError(err, fmt.Sprintf("while reversing transaction address %s", tr.Addr.String()))
@@ -47,7 +47,7 @@ func RequireSenderScore(minimalSenderScore uint) msmtpd.ConnectionChecker {
 		}
 		domain := fmt.Sprintf("%s.score.senderscore.com", reversed)
 		tr.LogDebug("Resolving %s...", domain)
-		names, err := tr.Resolver().LookupHost(tr.Context(), domain)
+		names, err := tr.Resolver().LookupHost(ctx, domain)
 		if err != nil {
 			if strings.HasSuffix(err.Error(), "no such host") {
 				tr.LogInfo("senderscore is 0")

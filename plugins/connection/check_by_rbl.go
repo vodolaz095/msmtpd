@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"net"
 	"strings"
-	"sync"
 	"sync/atomic"
+
+	"golang.org/x/sync/errgroup"
 
 	"github.com/vodolaz095/msmtpd"
 )
@@ -14,7 +15,7 @@ import (
 // CheckByReverseIPBlacklists checks Transaction IP address against Reverse IP Blacklists provided. If IP address
 // presents in lists more times than tolerance, connection is blocked
 func CheckByReverseIPBlacklists(tolerance uint32, lists []string) msmtpd.ConnectionChecker {
-	return func(_ context.Context, tr *msmtpd.Transaction) error {
+	return func(ctx context.Context, tr *msmtpd.Transaction) error {
 		var listed uint32
 		ip := tr.Addr.(*net.TCPAddr).IP
 		reversed, err := reverse(ip)
@@ -22,34 +23,37 @@ func CheckByReverseIPBlacklists(tolerance uint32, lists []string) msmtpd.Connect
 			tr.LogError(err, fmt.Sprintf("while reversing transaction address %s", tr.Addr.String()))
 			return msmtpd.ErrServiceNotAvailable
 		}
-		wg := sync.WaitGroup{}
-		wg.Add(len(lists))
+		eg, ctx2 := errgroup.WithContext(ctx)
 		for j := range lists {
-			go func(t *msmtpd.Transaction, rr, list string) {
-				defer wg.Done()
-				hostname := fmt.Sprintf("%s.%s", rr, list)
-				t.LogDebug("Checking %s...", hostname)
-				names, errR := t.Resolver().LookupHost(t.Context(), hostname)
+			eg.Go(func() error {
+				hostname := fmt.Sprintf("%s.%s", reversed, lists[j])
+				tr.LogDebug("Checking %s...", hostname)
+				names, errR := tr.Resolver().LookupHost(ctx2, hostname)
 				if errR != nil {
 					if !strings.Contains(errR.Error(), "no such host") {
-						t.LogError(errR, "while resolving "+hostname)
+						tr.LogError(errR, "while resolving "+hostname)
 					}
-					return
+					return errR
 				}
 				if len(names) == 0 {
-					return
+					return nil
 				}
 				switch names[0] {
 				case "127.0.0.2", "127.0.0.3", "127.0.0.4":
-					tr.LogDebug("%s is listed in %s", ip, list)
+					tr.LogDebug("%s is listed in %s", ip, lists[j])
 					atomic.AddUint32(&listed, 1)
 					break
 				default:
-					tr.LogDebug("%s is not listed in %s", ip, list)
+					tr.LogDebug("%s is not listed in %s", ip, lists[j])
 				}
-			}(tr, reversed, lists[j])
+				return nil
+			})
 		}
-		wg.Wait()
+		err = eg.Wait()
+		if err != nil {
+			return msmtpd.ErrServiceNotAvailable
+		}
+
 		if listed > tolerance {
 			tr.LogWarn("Address %s is listed in %v reverse ip blacklists of %v provided",
 				ip, listed, len(lists),
