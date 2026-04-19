@@ -13,7 +13,14 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/url"
 	"regexp"
+	"strconv"
+
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/semconv/v1.40.0"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/vodolaz095/msmtpd"
 )
@@ -66,8 +73,8 @@ type Symbol struct {
 
 // AddHeader is part of Milter in Response used to add headers
 type AddHeader struct {
-	Value string
-	Order int
+	Value string `json:"value"`
+	Order int    `yaml:"order"`
 }
 
 // ActionNoop is thing rspamd recommends to do with this message
@@ -99,6 +106,18 @@ func DataChecker(opts Opts) msmtpd.DataChecker {
 		opts.HTTPClient = http.DefaultClient
 	}
 	var setupError error
+	var port int64
+	clientUrl, setupError := url.Parse(opts.URL)
+	if setupError != nil {
+		log.Fatalf("%s : while parsing url %s", setupError, opts.URL)
+	}
+	if clientUrl.Port() != "" {
+		port, setupError = strconv.ParseInt(clientUrl.Port(), 10, 64)
+		if setupError != nil {
+			log.Fatalf("%s : while parsing url %s", setupError, opts.URL)
+		}
+	}
+
 	resp, setupError := opts.HTTPClient.Get(fmt.Sprintf("%sping", opts.URL))
 	if setupError != nil {
 		log.Fatalf("%s : while trying to check rspamd server ping on %sping", setupError, opts.URL)
@@ -117,7 +136,13 @@ func DataChecker(opts Opts) msmtpd.DataChecker {
 	if pong != "pong\r\n" {
 		log.Fatalf("wrong response '%s' while reading rspamd server ping response from %sping", pong, opts.URL)
 	}
-	return func(ctx context.Context, transaction *msmtpd.Transaction) error {
+	return func(initialCtx context.Context, transaction *msmtpd.Transaction) error {
+		ctx, span := otel.Tracer("data.rspamd").Start(initialCtx, "checkBody",
+			trace.WithSpanKind(trace.SpanKindClient), // важно
+			trace.WithAttributes(semconv.ClientAddress(clientUrl.Hostname()), semconv.ClientPort(int(port))),
+		)
+		defer span.End()
+
 		payload := bytes.NewReader(transaction.Body)
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost,
 			fmt.Sprintf("%s%s", opts.URL, DefaultEndpoint), payload)
@@ -149,6 +174,8 @@ func DataChecker(opts Opts) msmtpd.DataChecker {
 		}
 		res, err := opts.HTTPClient.Do(req)
 		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
+			span.RecordError(err)
 			transaction.LogError(err, "error while doing HTTP request to RSPAMD")
 			return msmtpd.ErrorSMTP{
 				Code:    421,
@@ -180,6 +207,8 @@ func DataChecker(opts Opts) msmtpd.DataChecker {
 		var rr Response
 		err = json.Unmarshal(checkResponseBody, &rr)
 		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
+			span.RecordError(err)
 			transaction.LogError(err, "while parsing rspamd response")
 			return msmtpd.ErrorSMTP{
 				Code:    421,
