@@ -1,6 +1,7 @@
 package data
 
 import (
+	"context"
 	"time"
 
 	"github.com/vodolaz095/msmtpd"
@@ -32,7 +33,7 @@ const tooFarInFuture = 2 * 24 * time.Hour
 // contains minimal headers required. This checker protects from the majority of malformed messages
 // that can break, for example, antique Outlook Express and probably other email clients.
 func CheckHeaders(headersRequired []string) msmtpd.DataChecker {
-	return func(transaction *msmtpd.Transaction) error {
+	return func(_ context.Context, transaction *msmtpd.Transaction) error {
 		var val string
 		for _, header := range headersRequired {
 			val = transaction.Parsed.Header.Get(header)

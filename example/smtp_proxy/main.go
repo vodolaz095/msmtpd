@@ -5,6 +5,7 @@ package main
 // than it delivers messages using 3rd party SMTP server
 
 import (
+	"context"
 	"crypto/tls"
 	_ "embed"
 	"log"
@@ -67,7 +68,7 @@ func main() {
 
 		// SenderCheckers are called when client provides MAIL FROM to define who sends email message
 		SenderCheckers: []msmtpd.SenderChecker{
-			func(tr *msmtpd.Transaction) error {
+			func(_ context.Context, tr *msmtpd.Transaction) error {
 				tr.LogInfo("Somebody called %s tries to send message...", tr.MailFrom.String())
 				return nil
 			},
@@ -82,7 +83,7 @@ func main() {
 		// RecipientCheckers are called each time client provides RCPT TO
 		// in order to define for whom to send email message
 		RecipientCheckers: []msmtpd.RecipientChecker{
-			func(tr *msmtpd.Transaction, recipient *mail.Address) error {
+			func(_ context.Context, tr *msmtpd.Transaction, recipient *mail.Address) error {
 				if strings.HasPrefix(recipient.Address, "info@") {
 					return msmtpd.ErrorSMTP{
 						Code:    535,
@@ -105,7 +106,7 @@ func main() {
 
 			// this checker silently adds boss email where hidden
 			// copies of messages are send using Transaction.Aliases
-			func(tr *msmtpd.Transaction) error {
+			func(_ context.Context, tr *msmtpd.Transaction) error {
 				for i := range tr.RcptTo {
 					tr.Aliases = append(tr.Aliases, tr.RcptTo[i])
 				}
@@ -125,7 +126,7 @@ func main() {
 		// CloseHandlers are called when client closes connection, they can be used
 		// to, for example, record connection data in database or save metrics
 		CloseHandlers: []msmtpd.CloseHandler{
-			func(tr *msmtpd.Transaction) error {
+			func(_ context.Context, tr *msmtpd.Transaction) error {
 				tr.LogInfo("Closing connection. Karma is %d", tr.Karma())
 				return nil // error means nothing here, to be honest, connection is closed
 			},

@@ -2,6 +2,7 @@ package data
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"net/smtp"
 	"testing"
@@ -16,7 +17,7 @@ func TestAddHeader(t *testing.T) {
 			AddHeader("Something", "interesting"),
 		},
 		DataHandlers: []msmtpd.DataHandler{
-			func(tr *msmtpd.Transaction) error {
+			func(_ context.Context, tr *msmtpd.Transaction) error {
 				t.Logf("Body:\n--------------\n%s\n-----------\n", string(tr.Body))
 
 				if !bytes.Contains(tr.Body, []byte("Something: interesting")) {

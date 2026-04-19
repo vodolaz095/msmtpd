@@ -6,12 +6,20 @@ import (
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func (t *Transaction) handleSTARTTLS(cmd command) {
+	_, span := t.server.Tracer.Start(t.Context(), "handle_start_tls",
+		trace.WithSpanKind(trace.SpanKindInternal), // важно
+	)
+	defer span.End()
+	cmd.attachToSpan(span)
 	var err error
 	if t.Encrypted {
 		t.LogDebug("Connection is already encrypted!")
+		span.AddEvent("Connection is already encrypted!")
 		t.reply(502, "Already running in TLS")
 		return
 	}
@@ -25,6 +33,8 @@ func (t *Transaction) handleSTARTTLS(cmd command) {
 	err = tlsConn.Handshake()
 	if err != nil {
 		t.LogError(err, "couldn't perform handshake")
+		span.SetStatus(codes.Error, err.Error())
+		span.RecordError(err)
 		t.reply(550, "TLS Handshake error")
 		return
 	}
@@ -36,6 +46,8 @@ func (t *Transaction) handleSTARTTLS(cmd command) {
 	// with a TLS connection
 	err = t.conn.SetDeadline(time.Time{})
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		span.RecordError(err)
 		t.LogError(err, "error setting deadline for encrypted connection")
 		t.reply(550, "TLS Handshake error")
 		return
@@ -50,6 +62,7 @@ func (t *Transaction) handleSTARTTLS(cmd command) {
 	// Save connection state on peer
 	state := tlsConn.ConnectionState()
 	t.TLS = &state
+	span.AddEvent("connection is encrypted")
 	// Flush the connection to set new timeout deadlines
 	t.flush()
 	t.Love(commandExecutedProperly)

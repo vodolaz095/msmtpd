@@ -1,13 +1,14 @@
 package helo
 
 import (
+	"context"
 	"strings"
 
 	"github.com/vodolaz095/msmtpd"
 )
 
 // DenyMalformedDomain checks, if domain in HELO request belongs to top list domains like .ru, .su and so on
-func DenyMalformedDomain(transaction *msmtpd.Transaction) error {
+func DenyMalformedDomain(_ context.Context, transaction *msmtpd.Transaction) error {
 	var pass bool
 	if transaction.IsFlagSet(IsLocalAddressFlagName) {
 		transaction.LogDebug("Connecting from local address %s, DenyMalformedDomain check disabled",

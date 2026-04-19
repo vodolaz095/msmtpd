@@ -23,9 +23,6 @@ func (t *Transaction) logEvent(level LoggerLevel, format string, args ...any) {
 			}
 		}
 	}
-	if t.Span != nil {
-		t.Span.AddEvent(level.String() + " " + fmt.Sprintf(format, args...))
-	}
 	switch level {
 	case TraceLevel:
 		backend.Tracef(t, format, args...)
@@ -34,15 +31,19 @@ func (t *Transaction) logEvent(level LoggerLevel, format string, args ...any) {
 		backend.Debugf(t, format, args...)
 		break
 	case InfoLevel:
+		t.Span.AddEvent(level.String() + " " + fmt.Sprintf(format, args...))
 		backend.Infof(t, format, args...)
 		break
 	case WarnLevel:
+		t.Span.AddEvent(level.String() + " " + fmt.Sprintf(format, args...))
 		backend.Warnf(t, format, args...)
 		break
 	case ErrorLevel:
+		t.Span.AddEvent(level.String() + " " + fmt.Sprintf(format, args...))
 		backend.Errorf(t, format, args...)
 		break
 	case FatalLevel:
+		t.Span.AddEvent(level.String() + " " + fmt.Sprintf(format, args...))
 		backend.Fatalf(t, format, args...)
 		break
 	default:

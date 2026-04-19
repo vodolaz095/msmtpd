@@ -1,6 +1,7 @@
 package msmtpd
 
 import (
+	"context"
 	"fmt"
 	"net/smtp"
 	"strings"
@@ -78,7 +79,7 @@ func TestNullSender(t *testing.T) {
 
 func TestSenderCheck(t *testing.T) {
 	sc := make([]SenderChecker, 0)
-	sc = append(sc, func(tr *Transaction) error {
+	sc = append(sc, func(_ context.Context, tr *Transaction) error {
 		if tr.MailFrom.Address != "sender@example.org" {
 			t.Errorf("wrong sender %s", tr.MailFrom.String())
 		}
@@ -102,7 +103,7 @@ func TestSenderCheck(t *testing.T) {
 
 func TestMailFromWithExtraSpace(t *testing.T) {
 	sc := make([]SenderChecker, 0)
-	sc = append(sc, func(tr *Transaction) error {
+	sc = append(sc, func(_ context.Context, tr *Transaction) error {
 		if tr.MailFrom.Address != "test@example.org" {
 			return ErrorSMTP{Code: 502, Message: "Denied"}
 		}

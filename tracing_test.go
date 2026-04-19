@@ -49,7 +49,7 @@ func TestTracingSuccess(t *testing.T) {
 	addr, closer := RunTestServerWithoutTLS(t, &Server{
 		Tracer: tracer,
 		CloseHandlers: []CloseHandler{
-			func(tr *Transaction) error {
+			func(_ context.Context, tr *Transaction) error {
 				t.Logf("You can see transaction details on http://%s:16686/trace/%s",
 					testJaegerHost, tr.ID,
 				)
@@ -144,13 +144,13 @@ func TestTracingError(t *testing.T) {
 	addr, closer := RunTestServerWithoutTLS(t, &Server{
 		Tracer: tracer,
 		RecipientCheckers: []RecipientChecker{
-			func(tr *Transaction, recipient *mail.Address) error {
+			func(_ context.Context, tr *Transaction, recipient *mail.Address) error {
 				tr.LogError(fmt.Errorf("test error in RCPT TO"), "it is expected")
 				return nil
 			},
 		},
 		CloseHandlers: []CloseHandler{
-			func(tr *Transaction) error {
+			func(_ context.Context, tr *Transaction) error {
 				tr.LogError(fmt.Errorf("test error in close handler"), "it is expected")
 
 				t.Logf("You can see transaction details on http://%s:16686/trace/%s",
@@ -249,20 +249,20 @@ func TestTracingConnectionCheckerAndCloseHandlers(t *testing.T) {
 	addr, closer := RunTestServerWithoutTLS(t, &Server{
 		Tracer: tracer,
 		ConnectionCheckers: []ConnectionChecker{
-			func(tr *Transaction) error {
+			func(_ context.Context, tr *Transaction) error {
 				connectionHandlerCalled = true
 				wg.Done()
 				return ErrorSMTP{Code: 521, Message: "i do not like you"}
 			},
 		},
 		CloseHandlers: []CloseHandler{
-			func(tr *Transaction) error {
+			func(_ context.Context, tr *Transaction) error {
 				t.Logf("close handler is called")
 				closeHandlerCalled = true
 				wg.Done()
 				return nil
 			},
-			func(tr *Transaction) error {
+			func(_ context.Context, tr *Transaction) error {
 				t.Logf("You can see transaction details on http://%s:16686/trace/%s",
 					testJaegerHost, tr.ID,
 				)

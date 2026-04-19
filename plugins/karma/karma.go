@@ -1,6 +1,7 @@
 package karma
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/vodolaz095/msmtpd"
@@ -49,8 +50,8 @@ type Handler struct {
 }
 
 // ConnectionChecker checks karma of remote IP address using data from Storage
-func (kh *Handler) ConnectionChecker(tr *msmtpd.Transaction) (err error) {
-	err = kh.Storage.Ping(tr.Context())
+func (kh *Handler) ConnectionChecker(ctx context.Context, tr *msmtpd.Transaction) (err error) {
+	err = kh.Storage.Ping(ctx)
 	if err != nil {
 		tr.LogError(err, "while pinging karma storage")
 		return msmtpd.ErrorSMTP{
@@ -79,7 +80,7 @@ func (kh *Handler) ConnectionChecker(tr *msmtpd.Transaction) (err error) {
 }
 
 // CloseHandler saves Transaction Karma into Storage after connection is finished
-func (kh *Handler) CloseHandler(tr *msmtpd.Transaction) (err error) {
+func (kh *Handler) CloseHandler(_ context.Context, tr *msmtpd.Transaction) (err error) {
 	var isGood bool
 	if tr.Karma() > kh.HateLimit {
 		tr.LogDebug("preparing to save transaction karma of %v as good", tr.Karma())

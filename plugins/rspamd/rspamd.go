@@ -5,6 +5,7 @@ package rspamd
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
@@ -116,9 +117,9 @@ func DataChecker(opts Opts) msmtpd.DataChecker {
 	if pong != "pong\r\n" {
 		log.Fatalf("wrong response '%s' while reading rspamd server ping response from %sping", pong, opts.URL)
 	}
-	return func(transaction *msmtpd.Transaction) error {
+	return func(ctx context.Context, transaction *msmtpd.Transaction) error {
 		payload := bytes.NewReader(transaction.Body)
-		req, err := http.NewRequestWithContext(transaction.Context(), http.MethodPost,
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost,
 			fmt.Sprintf("%s%s", opts.URL, DefaultEndpoint), payload)
 		if err != nil {
 			transaction.LogError(err, "error while making HTTP request to RSPAMD")
@@ -127,7 +128,6 @@ func DataChecker(opts Opts) msmtpd.DataChecker {
 				Message: rspamdComplain,
 			}
 		}
-		req = req.WithContext(transaction.Context())
 		req.Header.Add("IP", transaction.Addr.(*net.TCPAddr).IP.String())
 		req.Header.Add("Helo", transaction.HeloName)
 		req.Header.Add("From", transaction.MailFrom.String())

@@ -6,14 +6,22 @@ import (
 	"strings"
 
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func (t *Transaction) handleXCLIENT(cmd command) {
+	_, span := t.server.Tracer.Start(t.Context(), "handle_xclient",
+		trace.WithSpanKind(trace.SpanKindInternal), // важно
+	)
+	cmd.attachToSpan(span)
+	defer span.End()
 	if len(cmd.fields) < 2 {
+		span.AddEvent("Invalid syntax.")
 		t.reply(502, "Invalid syntax.")
 		return
 	}
 	if !t.server.EnableXCLIENT {
+		span.AddEvent("XCLIENT not enabled")
 		t.reply(550, "XCLIENT not enabled")
 		return
 	}

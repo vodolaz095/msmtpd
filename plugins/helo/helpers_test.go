@@ -1,6 +1,7 @@
 package helo
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"net/smtp"
@@ -30,7 +31,7 @@ func heloTestRunner(t *testing.T, cases []testCase, checkers []msmtpd.HelloCheck
 	for k := range cases {
 		addr, closer := msmtpd.RunTestServerWithoutTLS(t, &msmtpd.Server{
 			ConnectionCheckers: []msmtpd.ConnectionChecker{
-				func(tr *msmtpd.Transaction) error {
+				func(_ context.Context, tr *msmtpd.Transaction) error {
 					tr.Addr = &cases[k].IP
 					//					tr.PTRs = []string{cases[k].Helo}
 					if len(cases[k].PTRs) > 0 {

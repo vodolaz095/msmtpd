@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // All messages MUST have a 'Date' and 'From' header and a message may not
@@ -31,7 +32,13 @@ var uniqueHeaders = []string{
 	"Subject",
 }
 
-func (t *Transaction) handleDATA(_ command) {
+func (t *Transaction) handleDATA(cmd command) {
+	ctx, span := t.server.Tracer.Start(t.Context(), "handle_data",
+		trace.WithSpanKind(trace.SpanKindInternal), // важно
+	)
+	cmd.attachToSpan(span)
+	defer span.End()
+
 	var checkErr error
 	var deliverErr error
 	var createdAt time.Time
@@ -39,18 +46,21 @@ func (t *Transaction) handleDATA(_ command) {
 
 	if t.HeloName == "" {
 		t.LogDebug("DATA called without HELO/EHLO!")
+		span.AddEvent("DATA called without HELO/EHLO!")
 		t.Hate(missingParameterPenalty)
 		t.reply(502, "Please introduce yourself first.")
 		return
 	}
 	if !t.Encrypted && t.server.ForceTLS {
 		t.LogDebug("DATA called without STARTTLS!")
+		span.AddEvent("DATA called without STARTTLS!")
 		t.Hate(missingParameterPenalty)
 		t.reply(502, "Please turn on TLS by issuing a STARTTLS command.")
 		return
 	}
 	if t.server.Authenticator != nil && t.Username == "" {
 		t.LogDebug("DATA called without authentication!")
+		span.AddEvent("DATA called without authentication!")
 		t.Hate(missingParameterPenalty)
 		t.reply(530, "Authentication Required.")
 		return
@@ -58,6 +68,7 @@ func (t *Transaction) handleDATA(_ command) {
 	if t.MailFrom.Address == "" {
 		t.Hate(missingParameterPenalty)
 		t.LogDebug("DATA called without MAIL FROM!")
+		span.AddEvent("DATA called without MAIL FROM!")
 		t.reply(502, "It seems you haven't called MAIL FROM in order to explain who sends your message.")
 		return
 	}
@@ -87,6 +98,7 @@ func (t *Transaction) handleDATA(_ command) {
 			t.AddReceivedLine() // will be added as first one
 			t.LogDebug("Parsing message body with size %v...", data.Len())
 			t.Span.SetAttributes(attribute.Int("size", data.Len()))
+			span.SetAttributes(attribute.Int("size", data.Len()))
 			t.Parsed, checkErr = mail.ReadMessage(bytes.NewReader(t.Body))
 			if checkErr != nil {
 				t.LogWarn("%s : while parsing message body", checkErr)
@@ -160,6 +172,7 @@ func (t *Transaction) handleDATA(_ command) {
 					subject = decoded
 					t.LogInfo("Subject: %s", subject)
 					t.Span.SetAttributes(attribute.String("subject", subject))
+					span.SetAttributes(attribute.String("subject", subject))
 					t.SetFact(SubjectFact, subject)
 				}
 			}
@@ -167,7 +180,7 @@ func (t *Transaction) handleDATA(_ command) {
 			t.LogDebug("Message body of %v bytes is parsed, calling %v DataCheckers on it",
 				data.Len(), len(t.server.DataCheckers))
 			for j := range t.server.DataCheckers {
-				checkErr = t.server.DataCheckers[j](t)
+				checkErr = t.server.DataCheckers[j](ctx, t)
 				if checkErr != nil {
 					t.error(checkErr)
 					return
@@ -179,7 +192,7 @@ func (t *Transaction) handleDATA(_ command) {
 
 			t.LogDebug("Starting delivery by %v DataHandlers...", len(t.server.DataHandlers))
 			for k := range t.server.DataHandlers {
-				deliverErr = t.server.DataHandlers[k](t)
+				deliverErr = t.server.DataHandlers[k](ctx, t)
 				if deliverErr != nil {
 					t.error(deliverErr)
 					return
@@ -190,6 +203,7 @@ func (t *Transaction) handleDATA(_ command) {
 			} else {
 				t.LogWarn("Message silently discarded - no DataHandlers set...")
 			}
+			span.AddEvent("body accepted")
 			t.reply(250, "Thank you.")
 			t.Love(commandExecutedProperly)
 			t.reset()

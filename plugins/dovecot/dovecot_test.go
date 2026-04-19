@@ -1,6 +1,7 @@
 package dovecot
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 	"net/mail"
@@ -47,14 +48,14 @@ func TestDovecot_Exists(t *testing.T) {
 		ID:        "dovecot_exists",
 		StartedAt: time.Now(),
 	}
-	err := dvc.CheckRecipient(&tr, &mail.Address{
+	err := dvc.CheckRecipient(context.TODO(), &tr, &mail.Address{
 		Name:    "who cares",
 		Address: rcptTo,
 	})
 	if err != nil {
 		t.Errorf("%s : while checking %s to exists", err, rcptTo)
 	}
-	err = dvc.CheckRecipient(&tr, &mail.Address{
+	err = dvc.CheckRecipient(context.TODO(), &tr, &mail.Address{
 		Name:    "who cares",
 		Address: "somebody@example.org",
 	})
@@ -85,11 +86,11 @@ func TestDovecot_Authenticate(t *testing.T) {
 		ID:        "dovecot_authenticate",
 		StartedAt: time.Now(),
 	}
-	err := dvc.Authenticate(&tr, username, password)
+	err := dvc.Authenticate(context.TODO(), &tr, username, password)
 	if err != nil {
 		t.Errorf("%s : while checking %s to exists", err, rcptTo)
 	}
-	err = dvc.Authenticate(&tr, "wrong_username", "wrong_password")
+	err = dvc.Authenticate(context.TODO(), &tr, "wrong_username", "wrong_password")
 	if err != nil {
 		if err.Error() != "521 authorization failed" {
 			t.Errorf("%s : wrong error while checking wrong authentication", err)
@@ -120,7 +121,7 @@ func TestDovecot_DeliverRcptTo(t *testing.T) {
 			{Name: "somebody", Address: "somebody@example.org"},
 		},
 	}
-	err := dvc.Deliver(&tr)
+	err := dvc.Deliver(context.TODO(), &tr)
 	if err != nil {
 		t.Errorf("%s : while delivering test message", err)
 	}
@@ -147,7 +148,7 @@ func TestDovecot_DeliverAliases(t *testing.T) {
 			{Name: "somebody", Address: "somebody@example.org"},
 		},
 	}
-	err := dvc.Deliver(&tr)
+	err := dvc.Deliver(context.TODO(), &tr)
 	if err != nil {
 		t.Errorf("%s : while delivering test message", err)
 	}

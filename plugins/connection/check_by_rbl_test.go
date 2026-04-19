@@ -35,7 +35,7 @@ func TestCheckByRbl(t *testing.T) {
 				},
 			},
 			ConnectionCheckers: []msmtpd.ConnectionChecker{
-				func(tr *msmtpd.Transaction) error {
+				func(_ context.Context, tr *msmtpd.Transaction) error {
 					tr.Addr = &cases[i]
 					return nil
 				},

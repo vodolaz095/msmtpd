@@ -1,6 +1,7 @@
 package helo
 
 import (
+	"context"
 	"fmt"
 	"net"
 
@@ -11,7 +12,7 @@ import (
 // 1. HELO/EHLO matches any of PTR records resolved for connecting IP
 // 2. PTR records of connecting IP are resolved (aka have DNS A records) into IP addresses including connecting IP
 // This test prevents delivery from majority small GI domains, which are known to be spammy.
-func DenyReverseDNSMismatch(transaction *msmtpd.Transaction) (err error) {
+func DenyReverseDNSMismatch(ctx context.Context, transaction *msmtpd.Transaction) (err error) {
 	var found bool
 	if transaction.IsFlagSet(IsLocalAddressFlagName) {
 		transaction.LogDebug("Connecting from local address %s, DenyReverseDNSMismatch check disabled",
@@ -45,7 +46,7 @@ func DenyReverseDNSMismatch(transaction *msmtpd.Transaction) (err error) {
 	var resolvedPtrs []string
 	for i := range transaction.PTRs {
 		addrs, errLookup := transaction.Resolver().
-			LookupHost(transaction.Context(), transaction.PTRs[i])
+			LookupHost(ctx, transaction.PTRs[i])
 		if errLookup != nil {
 			transaction.LogError(err, fmt.Sprintf("while resolving A record for PTR of %s", transaction.PTRs[i]))
 			return complain

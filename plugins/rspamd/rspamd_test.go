@@ -1,6 +1,7 @@
 package rspamd
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/smtp"
@@ -31,7 +32,7 @@ func TestCheckPyRealRSPAMD(t *testing.T) {
 			}),
 		},
 		DataHandlers: []msmtpd.DataHandler{
-			func(transaction *msmtpd.Transaction) error {
+			func(_ context.Context, transaction *msmtpd.Transaction) error {
 				for k, v := range transaction.Parsed.Header {
 					t.Logf("%s : %v", k, v)
 				}
@@ -101,7 +102,7 @@ func TestCheckPyMockRSPAMDFail(t *testing.T) {
 			}),
 		},
 		DataHandlers: []msmtpd.DataHandler{
-			func(transaction *msmtpd.Transaction) error {
+			func(_ context.Context, transaction *msmtpd.Transaction) error {
 				for k, v := range transaction.Parsed.Header {
 					t.Logf("%s : %v", k, v)
 				}
@@ -182,7 +183,7 @@ func TestCheckPyMockRSPAMDActionNoop(t *testing.T) {
 			}),
 		},
 		DataHandlers: []msmtpd.DataHandler{
-			func(transaction *msmtpd.Transaction) error {
+			func(_ context.Context, transaction *msmtpd.Transaction) error {
 				for k, v := range transaction.Parsed.Header {
 					t.Logf("%s : %v", k, v)
 				}
@@ -259,7 +260,7 @@ func TestCheckPyMockRSPAMDActionGreylist(t *testing.T) {
 			}),
 		},
 		DataHandlers: []msmtpd.DataHandler{
-			func(transaction *msmtpd.Transaction) error {
+			func(_ context.Context, transaction *msmtpd.Transaction) error {
 				for k, v := range transaction.Parsed.Header {
 					t.Logf("%s : %v", k, v)
 				}
@@ -347,7 +348,7 @@ func TestCheckPyMockRSPAMDActionAddHeader(t *testing.T) {
 			}),
 		},
 		DataHandlers: []msmtpd.DataHandler{
-			func(transaction *msmtpd.Transaction) error {
+			func(_ context.Context, transaction *msmtpd.Transaction) error {
 				for k, v := range transaction.Parsed.Header {
 					t.Logf("%s : %v", k, v)
 				}
@@ -427,7 +428,7 @@ func TestCheckPyMockRSPAMDActionSoftReject(t *testing.T) {
 			}),
 		},
 		DataHandlers: []msmtpd.DataHandler{
-			func(transaction *msmtpd.Transaction) error {
+			func(_ context.Context, transaction *msmtpd.Transaction) error {
 				for k, v := range transaction.Parsed.Header {
 					t.Logf("%s : %v", k, v)
 				}
@@ -508,7 +509,7 @@ func TestCheckPyMockRSPAMDActionHardReject(t *testing.T) {
 			}),
 		},
 		DataHandlers: []msmtpd.DataHandler{
-			func(transaction *msmtpd.Transaction) error {
+			func(_ context.Context, transaction *msmtpd.Transaction) error {
 				for k, v := range transaction.Parsed.Header {
 					t.Logf("%s : %v", k, v)
 				}
@@ -590,7 +591,7 @@ func TestCheckPyMockRSPAMDActionRewriteSubject(t *testing.T) {
 			}),
 		},
 		DataHandlers: []msmtpd.DataHandler{
-			func(transaction *msmtpd.Transaction) error {
+			func(_ context.Context, transaction *msmtpd.Transaction) error {
 				for k, v := range transaction.Parsed.Header {
 					t.Logf("%s : %v", k, v)
 				}

@@ -6,10 +6,22 @@ import (
 	"strings"
 
 	"go.opentelemetry.io/otel/attribute"
-	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.37.0"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func (t *Transaction) handleAUTH(cmd command) {
+	ctxWithTracer, span := t.server.Tracer.Start(t.Context(), "handle_auth",
+		trace.WithSpanKind(trace.SpanKindInternal), // важно
+		trace.WithAttributes(attribute.String("cmd.action", cmd.action)),
+
+		// prevent password leak
+		//trace.WithAttributes(attribute.StringSlice("cmd.params", cmd.params)),
+		//trace.WithAttributes(attribute.String("line", cmd.line)),
+		//trace.WithAttributes(attribute.StringSlice("arguments", cmd.fields)),
+	)
+	defer span.End()
+
 	var mechanism, username, password string
 	if len(cmd.fields) < 2 {
 		t.reply(502, "Invalid syntax.")
@@ -33,6 +45,8 @@ func (t *Transaction) handleAUTH(cmd command) {
 		return
 	}
 	mechanism = strings.ToUpper(cmd.fields[1])
+	span.SetAttributes(attribute.String("mechanism", mechanism))
+	t.Span.SetAttributes(attribute.String("mechanism", mechanism))
 	switch mechanism {
 	case "PLAIN":
 		auth := ""
@@ -97,7 +111,7 @@ func (t *Transaction) handleAUTH(cmd command) {
 	t.LogDebug("Trying to authorise %s with password %s using mechanism %s",
 		username, mask(password), mechanism,
 	)
-	err := t.server.Authenticator(t, username, password)
+	err := t.server.Authenticator(ctxWithTracer, t, username, password)
 	if err != nil {
 		t.error(err)
 		return
@@ -107,7 +121,9 @@ func (t *Transaction) handleAUTH(cmd command) {
 	// i know saving password here is security risk, but we can implement something like
 	// Haraka plugin to prevent credential leaks
 	// https://haraka.github.io/plugins/prevent_credential_leaks
-	t.Span.SetAttributes(semconv.EnduserID(username))
-	t.Span.SetAttributes(attribute.String("enduser.password", mask(password)))
+	t.Span.SetAttributes(semconv.UserName(username))
+	t.Span.SetAttributes(attribute.String("user.password", mask(password)))
+	span.SetAttributes(semconv.UserName(username))
+	span.SetAttributes(attribute.String("user.password", mask(password)))
 	t.reply(235, "OK, you are now authenticated")
 }

@@ -1,6 +1,7 @@
 package procrastinator
 
 import (
+	"context"
 	"crypto/rand"
 	"math/big"
 	"net/mail"
@@ -38,7 +39,7 @@ func doRandomDelay(dur time.Duration) (howMuch time.Duration, err error) {
 
 // wait should be called when you want client to train patience
 func (p *Procrastinator) wait() msmtpd.CheckerFunc {
-	return func(t *msmtpd.Transaction) (err error) {
+	return func(_ context.Context, t *msmtpd.Transaction) (err error) {
 		var randomDelay time.Duration
 		if p.RandomDelay != 0 {
 			randomDelay, err = doRandomDelay(p.RandomDelay)
@@ -56,35 +57,35 @@ func (p *Procrastinator) wait() msmtpd.CheckerFunc {
 
 // WaitForConnection should be called when you want client to train patience waiting when server will greet you
 func (p *Procrastinator) WaitForConnection() msmtpd.ConnectionChecker {
-	return func(tr *msmtpd.Transaction) error {
-		return p.wait()(tr)
+	return func(ctx context.Context, tr *msmtpd.Transaction) error {
+		return p.wait()(ctx, tr)
 	}
 }
 
 // WaitForHelo should be called when you want client to train patience waiting for HELO/EHLO
 func (p *Procrastinator) WaitForHelo() msmtpd.HelloChecker {
-	return func(tr *msmtpd.Transaction) error {
-		return p.wait()(tr)
+	return func(ctx context.Context, tr *msmtpd.Transaction) error {
+		return p.wait()(ctx, tr)
 	}
 }
 
 // WaitForSender should be called when you want client to train patience waiting for MAIL FROM
 func (p *Procrastinator) WaitForSender() msmtpd.SenderChecker {
-	return func(tr *msmtpd.Transaction) error {
-		return p.wait()(tr)
+	return func(ctx context.Context, tr *msmtpd.Transaction) error {
+		return p.wait()(ctx, tr)
 	}
 }
 
 // WaitForRecipient should be called when you want client to train patience waiting for RCPT TO
 func (p *Procrastinator) WaitForRecipient() msmtpd.RecipientChecker {
-	return func(tr *msmtpd.Transaction, recipient *mail.Address) error {
-		return p.wait()(tr)
+	return func(ctx context.Context, tr *msmtpd.Transaction, _ *mail.Address) error {
+		return p.wait()(ctx, tr)
 	}
 }
 
 // WaitForData should be called when you want client to train waiting for DATA
 func (p *Procrastinator) WaitForData() msmtpd.DataChecker {
-	return func(tr *msmtpd.Transaction) error {
-		return p.wait()(tr)
+	return func(ctx context.Context, tr *msmtpd.Transaction) error {
+		return p.wait()(ctx, tr)
 	}
 }

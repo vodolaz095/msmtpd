@@ -1,6 +1,7 @@
 package helo
 
 import (
+	"context"
 	"net"
 	"testing"
 
@@ -60,7 +61,7 @@ func TestHateForRDNSMismatch(t *testing.T) {
 	}
 	heloTestRunner(t, cases, []msmtpd.HelloChecker{
 		HateForRDNSMismatch(10),
-		func(tr *msmtpd.Transaction) error {
+		func(_ context.Context, tr *msmtpd.Transaction) error {
 			karma := tr.Karma()
 			t.Logf("For HELO %s karma is %v", tr.HeloName, karma)
 			if karma != -10 {

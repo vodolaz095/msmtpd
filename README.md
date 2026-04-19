@@ -162,4 +162,4 @@ $ swaks --to recipient1@example.org,recipient2@example.org,recipient3@example.or
 
 Support development / Поддержать разработку
 ====================
-https://www.tinkoff.ru/rm/ostroumov.anatoliy2/4HFzm76801/
+https://www.tbank.ru/rm/r_MarJWHfuBs.aNJjZwPrSm/5tN9636575/

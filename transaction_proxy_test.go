@@ -1,6 +1,7 @@
 package msmtpd
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"net/smtp"
@@ -42,14 +43,14 @@ func TestProxyEnabledSuccess(t *testing.T) {
 	addr, closer := RunTestServerWithoutTLS(t, &Server{
 		EnableProxyProtocol: true, // important
 		ConnectionCheckers: []ConnectionChecker{
-			func(tr *Transaction) error {
+			func(_ context.Context, tr *Transaction) error {
 				tr.LogInfo("Remote address for connection checker is %s", tr.Addr)
 				tr.SetFact("originalRemote", tr.Addr.String())
 				return nil
 			},
 		},
 		HeloCheckers: []HelloChecker{
-			func(tr *Transaction) error {
+			func(_ context.Context, tr *Transaction) error {
 				tr.LogInfo("Remote address for HELO is %s", tr.Addr)
 				if tr.Addr.String() != "8.8.8.8:443" {
 					t.Errorf("remote address is not set properly %s", tr.Addr)

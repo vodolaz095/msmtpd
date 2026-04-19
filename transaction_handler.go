@@ -42,15 +42,18 @@ func (t *Transaction) handle(line string) {
 }
 
 func (t *Transaction) handleRSET(_ command) {
+	t.Span.AddEvent("Reset is called")
 	t.reset()
 	t.reply(250, "I forgot everything you have said, go ahead please!")
 }
 
 func (t *Transaction) handleNOOP(_ command) {
+	t.Span.AddEvent("NOOP is called")
 	t.reply(250, "I'm finishing procrastinating, go ahead please!")
 }
 
 func (t *Transaction) handleQUIT(_ command) {
+	t.Span.AddEvent("Quite is called")
 	t.reply(221, fmt.Sprintf("Farewell, my friend! Transaction %s is finished", t.ID))
 	t.close()
 }

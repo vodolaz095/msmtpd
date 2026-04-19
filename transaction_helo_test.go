@@ -1,6 +1,7 @@
 package msmtpd
 
 import (
+	"context"
 	"net/smtp"
 	"testing"
 
@@ -10,7 +11,7 @@ import (
 func TestHELOCheck(t *testing.T) {
 	addr, closer := RunTestServerWithoutTLS(t, &Server{
 		HeloCheckers: []HelloChecker{
-			func(transaction *Transaction) error {
+			func(_ context.Context, transaction *Transaction) error {
 				name := transaction.HeloName
 				if name != "foobar.local" {
 					t.Error("Wrong HELO name")

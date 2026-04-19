@@ -1,14 +1,15 @@
 package connection
 
 import (
+	"context"
 	"strings"
 
 	"github.com/vodolaz095/msmtpd"
 )
 
 // Whitelist prevents connecting from remote addresses in not present in list
-func Whitelist(ipAddressesToAccept []string) func(transaction *msmtpd.Transaction) error {
-	return func(transaction *msmtpd.Transaction) error {
+func Whitelist(ipAddressesToAccept []string) msmtpd.ConnectionChecker {
+	return func(_ context.Context, transaction *msmtpd.Transaction) error {
 		var found bool
 		for i := range ipAddressesToAccept {
 			found = strings.HasPrefix(transaction.Addr.String(), ipAddressesToAccept[i])
@@ -28,8 +29,8 @@ func Whitelist(ipAddressesToAccept []string) func(transaction *msmtpd.Transactio
 }
 
 // Blacklist prevents connecting from remote addresses in list
-func Blacklist(ipAddressesToBlock []string) func(transaction *msmtpd.Transaction) error {
-	return func(transaction *msmtpd.Transaction) error {
+func Blacklist(ipAddressesToBlock []string) msmtpd.ConnectionChecker {
+	return func(_ context.Context, transaction *msmtpd.Transaction) error {
 		var found bool
 		for i := range ipAddressesToBlock {
 			found = strings.HasPrefix(transaction.Addr.String(), ipAddressesToBlock[i])

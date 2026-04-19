@@ -1,6 +1,7 @@
 package connection
 
 import (
+	"context"
 	"strings"
 
 	"github.com/vodolaz095/msmtpd"
@@ -9,7 +10,7 @@ import (
 // DenyPTRs allows to deny senders if their PTR records has suffix from list, for example,
 // we can restrict all Amazon Simple Email Service by providing suffix "amazonses.com.",
 func DenyPTRs(listOfPtrSuffixes []string) msmtpd.ConnectionChecker {
-	return func(tr *msmtpd.Transaction) error {
+	return func(_ context.Context, tr *msmtpd.Transaction) error {
 		var i, j int
 		var bad bool
 		for i = range tr.PTRs {
