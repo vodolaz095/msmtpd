@@ -12,11 +12,8 @@ import (
 func (t *Transaction) handleMAIL(cmd command) {
 	ctxWithTracer, span := t.server.Tracer.Start(t.Context(), "handle_mail",
 		trace.WithSpanKind(trace.SpanKindInternal), // важно
-		trace.WithAttributes(attribute.String("line", cmd.line)),
-		trace.WithAttributes(attribute.String("action", cmd.action)),
-		trace.WithAttributes(attribute.StringSlice("arguments", cmd.fields)),
-		trace.WithAttributes(attribute.StringSlice("params", cmd.params)),
 	)
+	cmd.attachToSpan(span)
 	defer span.End()
 
 	if len(cmd.params) != 2 || strings.ToUpper(cmd.params[0]) != "FROM" {
@@ -25,6 +22,7 @@ func (t *Transaction) handleMAIL(cmd command) {
 		return
 	}
 	if t.dataHandlersCalledProperly {
+		span.AddEvent("MAIL FROM called after DATA accepted")
 		t.LogWarn("MAIL FROM called after DATA accepted")
 		t.Hate(wrongCommandOrderPenalty)
 		t.reply(502, "wrong order of commands")
@@ -32,23 +30,27 @@ func (t *Transaction) handleMAIL(cmd command) {
 	}
 	if t.HeloName == "" {
 		t.Hate(missingParameterPenalty)
+		span.AddEvent("MAIL FROM called without HELO/EHLO")
 		t.LogDebug("MAIL FROM called without HELO/EHLO")
 		t.reply(502, "Please introduce yourself first.")
 		return
 	}
 	if !t.Encrypted && t.server.ForceTLS {
+		span.AddEvent("MAIL FROM called without STARTTLS")
 		t.LogDebug("MAIL FROM called without STARTTLS")
 		t.Hate(missingParameterPenalty)
 		t.reply(502, "Please turn on TLS by issuing a STARTTLS command.")
 		return
 	}
 	if t.server.Authenticator != nil && t.Username == "" {
+		span.AddEvent("MAIL FROM called without authentication")
 		t.LogDebug("MAIL FROM called without authentication")
 		t.Hate(missingParameterPenalty)
 		t.reply(530, "Authentication Required.")
 		return
 	}
 	if t.MailFrom.Address != "" {
+		span.AddEvent("MAIL FROM was already called")
 		t.LogDebug("MAIL FROM was already called")
 		t.Hate(missingParameterPenalty)
 		t.reply(502, "Duplicate MAIL")
@@ -82,6 +84,7 @@ func (t *Transaction) handleMAIL(cmd command) {
 	t.LogInfo("MAIL FROM %s is checked by %v SenderCheckers and accepted!",
 		t.MailFrom.String(), len(t.server.SenderCheckers),
 	)
+	span.AddEvent("MAIL FROM accepted")
 	t.reply(250, "Ok, it makes sense, go ahead please!")
 	t.Love(commandExecutedProperly)
 	span.SetStatus(codes.Ok, "sender's address accepted")

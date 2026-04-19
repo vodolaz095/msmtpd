@@ -14,10 +14,12 @@ import (
 func (t *Transaction) handleAUTH(cmd command) {
 	ctxWithTracer, span := t.server.Tracer.Start(t.Context(), "handle_auth",
 		trace.WithSpanKind(trace.SpanKindInternal), // важно
+		trace.WithAttributes(attribute.String("cmd.action", cmd.action)),
+		trace.WithAttributes(attribute.StringSlice("cmd.params", cmd.params)),
+
+		// prevent password leak
 		//trace.WithAttributes(attribute.String("line", cmd.line)),
-		trace.WithAttributes(attribute.String("action", cmd.action)),
-		// trace.WithAttributes(attribute.StringSlice("arguments", cmd.fields)), // prevent password leak
-		trace.WithAttributes(attribute.StringSlice("params", cmd.params)),
+		// trace.WithAttributes(attribute.StringSlice("arguments", cmd.fields)),
 	)
 	defer span.End()
 

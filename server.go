@@ -196,6 +196,7 @@ func (srv *Server) startTransaction(c net.Conn) (t *Transaction) {
 			semconv.HostName(srv.Hostname),
 			semconv.ClientAddress(remoteAddr.IP.String()),
 			semconv.ClientPort(remoteAddr.Port),
+			semconv.TelemetrySDKLanguageGo,
 		),
 	)
 	t = &Transaction{

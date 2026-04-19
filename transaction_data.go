@@ -36,11 +36,8 @@ var uniqueHeaders = []string{
 func (t *Transaction) handleDATA(cmd command) {
 	ctx, span := t.server.Tracer.Start(t.Context(), "handle_data",
 		trace.WithSpanKind(trace.SpanKindInternal), // важно
-		trace.WithAttributes(attribute.String("line", cmd.line)),
-		trace.WithAttributes(attribute.String("action", cmd.action)),
-		trace.WithAttributes(attribute.StringSlice("arguments", cmd.fields)),
-		trace.WithAttributes(attribute.StringSlice("params", cmd.params)),
 	)
+	cmd.attachToSpan(span)
 	defer span.End()
 
 	var checkErr error
@@ -50,18 +47,21 @@ func (t *Transaction) handleDATA(cmd command) {
 
 	if t.HeloName == "" {
 		t.LogDebug("DATA called without HELO/EHLO!")
+		span.AddEvent("DATA called without HELO/EHLO!")
 		t.Hate(missingParameterPenalty)
 		t.reply(502, "Please introduce yourself first.")
 		return
 	}
 	if !t.Encrypted && t.server.ForceTLS {
 		t.LogDebug("DATA called without STARTTLS!")
+		span.AddEvent("DATA called without STARTTLS!")
 		t.Hate(missingParameterPenalty)
 		t.reply(502, "Please turn on TLS by issuing a STARTTLS command.")
 		return
 	}
 	if t.server.Authenticator != nil && t.Username == "" {
 		t.LogDebug("DATA called without authentication!")
+		span.AddEvent("DATA called without authentication!")
 		t.Hate(missingParameterPenalty)
 		t.reply(530, "Authentication Required.")
 		return
@@ -69,6 +69,7 @@ func (t *Transaction) handleDATA(cmd command) {
 	if t.MailFrom.Address == "" {
 		t.Hate(missingParameterPenalty)
 		t.LogDebug("DATA called without MAIL FROM!")
+		span.AddEvent("DATA called without MAIL FROM!")
 		t.reply(502, "It seems you haven't called MAIL FROM in order to explain who sends your message.")
 		return
 	}

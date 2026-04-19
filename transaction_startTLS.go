@@ -13,15 +13,13 @@ import (
 func (t *Transaction) handleSTARTTLS(cmd command) {
 	_, span := t.server.Tracer.Start(t.Context(), "handle_start_tls",
 		trace.WithSpanKind(trace.SpanKindInternal), // важно
-		trace.WithAttributes(attribute.String("line", cmd.line)),
-		trace.WithAttributes(attribute.String("action", cmd.action)),
-		trace.WithAttributes(attribute.StringSlice("arguments", cmd.fields)),
-		trace.WithAttributes(attribute.StringSlice("params", cmd.params)),
 	)
 	defer span.End()
+	cmd.attachToSpan(span)
 	var err error
 	if t.Encrypted {
 		t.LogDebug("Connection is already encrypted!")
+		span.AddEvent("Connection is already encrypted!")
 		t.reply(502, "Already running in TLS")
 		return
 	}
@@ -35,6 +33,8 @@ func (t *Transaction) handleSTARTTLS(cmd command) {
 	err = tlsConn.Handshake()
 	if err != nil {
 		t.LogError(err, "couldn't perform handshake")
+		span.SetStatus(codes.Error, err.Error())
+		span.RecordError(err)
 		t.reply(550, "TLS Handshake error")
 		return
 	}
@@ -46,6 +46,8 @@ func (t *Transaction) handleSTARTTLS(cmd command) {
 	// with a TLS connection
 	err = t.conn.SetDeadline(time.Time{})
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		span.RecordError(err)
 		t.LogError(err, "error setting deadline for encrypted connection")
 		t.reply(550, "TLS Handshake error")
 		return

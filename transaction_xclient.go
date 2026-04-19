@@ -11,19 +11,18 @@ import (
 )
 
 func (t *Transaction) handleXCLIENT(cmd command) {
-	_, span := t.server.Tracer.Start(t.Context(), "handle_start_tls",
+	_, span := t.server.Tracer.Start(t.Context(), "handle_xclient",
 		trace.WithSpanKind(trace.SpanKindInternal), // важно
-		trace.WithAttributes(attribute.String("line", cmd.line)),
-		trace.WithAttributes(attribute.String("action", cmd.action)),
-		trace.WithAttributes(attribute.StringSlice("arguments", cmd.fields)),
-		trace.WithAttributes(attribute.StringSlice("params", cmd.params)),
 	)
+	cmd.attachToSpan(span)
 	defer span.End()
 	if len(cmd.fields) < 2 {
+		span.AddEvent("Invalid syntax.")
 		t.reply(502, "Invalid syntax.")
 		return
 	}
 	if !t.server.EnableXCLIENT {
+		span.AddEvent("XCLIENT not enabled")
 		t.reply(550, "XCLIENT not enabled")
 		return
 	}

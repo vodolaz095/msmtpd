@@ -16,11 +16,8 @@ import (
 func (t *Transaction) handlePROXY(cmd command) {
 	_, span := t.server.Tracer.Start(t.Context(), "handle_proxy",
 		trace.WithSpanKind(trace.SpanKindInternal), // важно
-		trace.WithAttributes(attribute.String("line", cmd.line)),
-		trace.WithAttributes(attribute.String("action", cmd.action)),
-		trace.WithAttributes(attribute.StringSlice("arguments", cmd.fields)),
-		trace.WithAttributes(attribute.StringSlice("params", cmd.params)),
 	)
+	cmd.attachToSpan(span)
 	defer span.End()
 	t.LogTrace("Proxy command: %s", cmd.line)
 	if !t.server.EnableProxyProtocol {

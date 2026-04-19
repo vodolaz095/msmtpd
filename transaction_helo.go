@@ -12,11 +12,8 @@ import (
 func (t *Transaction) handleHELO(cmd command) {
 	ctxWithTracer, span := t.server.Tracer.Start(t.Context(), "handle_helo",
 		trace.WithSpanKind(trace.SpanKindInternal), // важно
-		trace.WithAttributes(attribute.String("line", cmd.line)),
-		trace.WithAttributes(attribute.String("action", cmd.action)),
-		trace.WithAttributes(attribute.StringSlice("arguments", cmd.fields)),
-		trace.WithAttributes(attribute.StringSlice("params", cmd.params)),
 	)
+	cmd.attachToSpan(span)
 	defer span.End()
 
 	var err error
@@ -26,6 +23,7 @@ func (t *Transaction) handleHELO(cmd command) {
 		return
 	}
 	if t.dataHandlersCalledProperly {
+		span.AddEvent("HELO called after DATA accepted")
 		t.LogWarn("HELO called after DATA accepted")
 		t.reply(502, "wrong order of commands")
 		t.Hate(wrongCommandOrderPenalty)
@@ -50,6 +48,7 @@ func (t *Transaction) handleHELO(cmd command) {
 		}
 	}
 	t.LogInfo("HELO <%s> is accepted!", cmd.fields[1])
+	span.AddEvent("HELO accepted")
 	t.reply(250, "Go on, i'm listening...")
 	t.Love(commandExecutedProperly)
 	span.SetStatus(codes.Ok, "accepted")
@@ -77,11 +76,8 @@ func (t *Transaction) extensions() []string {
 func (t *Transaction) handleEHLO(cmd command) {
 	ctxWithTracer, span := t.server.Tracer.Start(t.Context(), "handle_ehlo",
 		trace.WithSpanKind(trace.SpanKindInternal), // важно
-		trace.WithAttributes(attribute.String("line", cmd.line)),
-		trace.WithAttributes(attribute.String("action", cmd.action)),
-		trace.WithAttributes(attribute.StringSlice("arguments", cmd.fields)),
-		trace.WithAttributes(attribute.StringSlice("params", cmd.params)),
 	)
+	cmd.attachToSpan(span)
 	defer span.End()
 
 	var err error
@@ -91,6 +87,7 @@ func (t *Transaction) handleEHLO(cmd command) {
 		return
 	}
 	if t.dataHandlersCalledProperly {
+		span.AddEvent("EHLO called after DATA accepted")
 		t.LogWarn("EHLO called after DATA accepted")
 		t.reply(502, "wrong order of commands")
 		t.Hate(wrongCommandOrderPenalty)
@@ -115,6 +112,7 @@ func (t *Transaction) handleEHLO(cmd command) {
 		}
 	}
 	t.LogInfo("EHLO <%s> is accepted!", cmd.fields[1])
+	span.AddEvent("ehlo accepted")
 	fmt.Fprintf(t.writer, "250-%s\r\n", t.server.Hostname)
 	extensions := t.extensions()
 	if len(extensions) > 1 {
