@@ -65,5 +65,4 @@ func (t *Transaction) handleSTARTTLS(cmd command) {
 	// Flush the connection to set new timeout deadlines
 	t.flush()
 	t.Love(commandExecutedProperly)
-	span.SetStatus(codes.Ok, "connection is encrypted")
 }

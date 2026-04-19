@@ -5,7 +5,6 @@ import (
 	"strconv"
 
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -71,5 +70,4 @@ func (t *Transaction) handlePROXY(cmd command) {
 	t.Addr = tcpAddr
 	t.Span.SetAttributes(attribute.String("PROXY", cmd.line))
 	t.welcome()
-	span.SetStatus(codes.Ok, "proxy command accepted")
 }

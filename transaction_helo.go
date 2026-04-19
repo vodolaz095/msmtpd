@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/codes"
 	semconv "go.opentelemetry.io/otel/semconv/v1.37.0"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -51,8 +50,6 @@ func (t *Transaction) handleHELO(cmd command) {
 	span.AddEvent("HELO accepted")
 	t.reply(250, "Go on, i'm listening...")
 	t.Love(commandExecutedProperly)
-	span.SetStatus(codes.Ok, "accepted")
-	return
 }
 
 func (t *Transaction) extensions() []string {
@@ -122,5 +119,4 @@ func (t *Transaction) handleEHLO(cmd command) {
 	}
 	t.reply(250, extensions[len(extensions)-1])
 	t.Love(commandExecutedProperly)
-	span.SetStatus(codes.Ok, "accepted")
 }

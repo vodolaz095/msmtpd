@@ -4,7 +4,6 @@ import (
 	"strings"
 
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -101,7 +100,6 @@ func (t *Transaction) handleRCPT(cmd command) {
 	t.Span.SetAttributes(attribute.StringSlice("aliases", aliasesAsStrings))
 	span.SetAttributes(attribute.StringSlice("aliases", aliasesAsStrings))
 	t.reply(250, "It seems i can handle delivery for this recipient, i'll do my best!")
-	span.SetStatus(codes.Ok, "recipients are found")
 	if len(t.RcptTo) == 1 { // too many recipients should not give too many love for transaction
 		t.Love(commandExecutedProperly)
 	}

@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -98,5 +97,4 @@ func (t *Transaction) handleXCLIENT(cmd command) {
 		t.Addr = tcpAddr
 	}
 	t.welcome()
-	span.SetStatus(codes.Ok, "xclient accepted")
 }

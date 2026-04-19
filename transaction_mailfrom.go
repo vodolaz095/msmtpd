@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -87,5 +86,4 @@ func (t *Transaction) handleMAIL(cmd command) {
 	span.AddEvent("MAIL FROM accepted")
 	t.reply(250, "Ok, it makes sense, go ahead please!")
 	t.Love(commandExecutedProperly)
-	span.SetStatus(codes.Ok, "sender's address accepted")
 }

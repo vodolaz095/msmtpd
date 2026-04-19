@@ -14,9 +14,6 @@ type command struct {
 
 func (cmd *command) attachToSpan(span trace.Span) {
 	span.SetAttributes(
-		attribute.String("cmd.line", cmd.line),
-		attribute.String("cmd.action", cmd.action),
-		attribute.StringSlice("cmd.arguments", cmd.fields),
-		attribute.StringSlice("cmd.params", cmd.params),
+		attribute.String("cmd.line", cmd.line), attribute.String("cmd.action", cmd.action),
 	)
 }

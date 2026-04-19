@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/codes"
 	semconv "go.opentelemetry.io/otel/semconv/v1.37.0"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -126,6 +125,5 @@ func (t *Transaction) handleAUTH(cmd command) {
 	t.Span.SetAttributes(attribute.String("user.password", mask(password)))
 	span.SetAttributes(semconv.UserName(username))
 	span.SetAttributes(attribute.String("user.password", mask(password)))
-	span.SetStatus(codes.Ok, "authentication succeeded")
 	t.reply(235, "OK, you are now authenticated")
 }

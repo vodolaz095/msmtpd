@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -206,7 +205,6 @@ func (t *Transaction) handleDATA(cmd command) {
 			}
 			t.reply(250, "Thank you.")
 			t.Love(commandExecutedProperly)
-			span.SetStatus(codes.Ok, "body processed")
 			t.reset()
 			t.dataHandlersCalledProperly = true
 			return
