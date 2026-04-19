@@ -103,4 +103,5 @@ func (t *Transaction) handleRCPT(cmd command) {
 	if len(t.RcptTo) == 1 { // too many recipients should not give too many love for transaction
 		t.Love(commandExecutedProperly)
 	}
+	span.AddEvent("recipients accepted")
 }

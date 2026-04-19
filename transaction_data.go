@@ -203,6 +203,7 @@ func (t *Transaction) handleDATA(cmd command) {
 			} else {
 				t.LogWarn("Message silently discarded - no DataHandlers set...")
 			}
+			span.AddEvent("body accepted")
 			t.reply(250, "Thank you.")
 			t.Love(commandExecutedProperly)
 			t.reset()

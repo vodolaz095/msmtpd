@@ -1,25 +1,30 @@
 package main
 
-// This example shows tracing capabilities
-// We recommend starting Jaeger ui via `docker compose up -d jaeger` and enjoy charts on
-// http://127.0.0.1:16686/
-
 import (
+	"context"
 	"log"
+
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/exporters/jaeger"
+	"go.opentelemetry.io/otel/sdk/resource"
+	tracesdk "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/semconv/v1.40.0"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/vodolaz095/msmtpd"
 	"github.com/vodolaz095/msmtpd/internal"
 	"github.com/vodolaz095/msmtpd/plugins/data"
 	"github.com/vodolaz095/msmtpd/plugins/helo"
 	"github.com/vodolaz095/msmtpd/plugins/sender"
-
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/exporters/jaeger"
-	"go.opentelemetry.io/otel/sdk/resource"
-	tracesdk "go.opentelemetry.io/otel/sdk/trace"
-	semconv "go.opentelemetry.io/otel/semconv/v1.12.0"
 )
+
+// This example shows tracing capabilities
+// We recommend starting Jaeger ui via `docker compose up -d jaeger` and enjoy charts on
+// http://127.0.0.1:16686/
+// Start server - $ start_tracing
+// Start client - $ make check_tracing
 
 func main() {
 	// tune logger
@@ -46,7 +51,7 @@ func main() {
 		// Record information about this application in a Resource.
 		tracesdk.WithResource(resource.NewWithAttributes(
 			semconv.SchemaURL,
-			semconv.ServiceNameKey.String("dovecot_inbound"),
+			semconv.ServiceNameKey.String("msmtpd_tracing"),
 			attribute.String("environment", "production"),
 		)),
 	)
@@ -75,6 +80,22 @@ func main() {
 			helo.DenyDynamicIP,
 			// if connection IP address PTR record differs from HELO/EHLO, connection is not allowed
 			helo.DenyReverseDNSMismatch,
+		},
+		Authenticator: func(ctx context.Context, transaction *msmtpd.Transaction, username, password string) error {
+			_, span := tp.Tracer("authenticationSystem").Start(ctx, "performLogin",
+				trace.WithSpanKind(trace.SpanKindInternal), // важно
+				trace.WithAttributes(
+					attribute.String("username", username),
+					attribute.String("password", password),
+				),
+			)
+			defer span.End()
+			if username == "vodolaz095" && password == "thisIsNotAPassword" {
+				span.SetStatus(codes.Ok, "credentials accepted")
+				return nil
+			}
+			span.SetStatus(codes.Error, "wrong credentials")
+			return msmtpd.ErrAuthenticationCredentialsInvalid
 		},
 		SenderCheckers: []msmtpd.SenderChecker{
 			// at least require that senders email address belongs to domain we can theoretically

@@ -62,6 +62,7 @@ func (t *Transaction) handleSTARTTLS(cmd command) {
 	// Save connection state on peer
 	state := tlsConn.ConnectionState()
 	t.TLS = &state
+	span.AddEvent("connection is encrypted")
 	// Flush the connection to set new timeout deadlines
 	t.flush()
 	t.Love(commandExecutedProperly)
