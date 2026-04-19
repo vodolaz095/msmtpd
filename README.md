@@ -42,6 +42,7 @@ Examples / Примеры
 - [minimal](example%2Fminimal)
 - [simple](example%2Fsimple)
 - [smtp_proxy](example%2Fsmtp_proxy)
+- [tracing](example%2Ftracing)
 
 Inspiration / Источники вдохновения
 =================================
