@@ -19,7 +19,7 @@ const commandExecutedProperly = 3 // 3 - HELO/EHLO, 3 MAIL FROM, 3 RCPT TO, 3 DA
 
 // TLSVersions is used to pretty print TLS protocol version being used
 var TLSVersions = map[uint16]string{
-	tls.VersionSSL30: "SSL3.0",
+	// tls.VersionSSL30: "SSL3.0", // See golang.org/issue/32716.
 	tls.VersionTLS10: "TLS1.0",
 	tls.VersionTLS11: "TLS1.1",
 	tls.VersionTLS12: "TLS1.2",

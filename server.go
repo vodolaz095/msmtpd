@@ -353,7 +353,7 @@ func (srv *Server) Serve(l net.Listener) error {
 			default:
 			}
 
-			if ne, ok := e.(net.Error); ok && ne.Temporary() {
+			if ne, ok := e.(net.Error); ok && ne.Timeout() {
 				time.Sleep(time.Second)
 				continue
 			}
@@ -498,10 +498,6 @@ func (srv *Server) configureDefaults() {
 }
 
 // From net/http/server.go
-
-func (srv *Server) shuttingDown() bool {
-	return srv.inShutdown.Load()
-}
 
 func (srv *Server) getDoneChan() <-chan struct{} {
 	srv.mu.Lock()

@@ -244,6 +244,10 @@ func TestTLSListener(t *testing.T) {
 		Certificates: []tls.Certificate{cert},
 	}
 	ln, err := tls.Listen("tcp", "127.0.0.1:0", cfg)
+	if err != nil {
+		t.Errorf("error starting tls listener: %s", err)
+		return
+	}
 	defer ln.Close()
 	addr := ln.Addr().String()
 	server := &Server{
