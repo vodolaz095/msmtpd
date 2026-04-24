@@ -107,12 +107,12 @@ func DataChecker(opts Opts) msmtpd.DataChecker {
 	}
 	var setupError error
 	var port int64
-	clientUrl, setupError := url.Parse(opts.URL)
+	clientURL, setupError := url.Parse(opts.URL)
 	if setupError != nil {
 		log.Fatalf("%s : while parsing url %s", setupError, opts.URL)
 	}
-	if clientUrl.Port() != "" {
-		port, setupError = strconv.ParseInt(clientUrl.Port(), 10, 64)
+	if clientURL.Port() != "" {
+		port, setupError = strconv.ParseInt(clientURL.Port(), 10, 64)
 		if setupError != nil {
 			log.Fatalf("%s : while parsing url %s", setupError, opts.URL)
 		}
@@ -139,7 +139,7 @@ func DataChecker(opts Opts) msmtpd.DataChecker {
 	return func(initialCtx context.Context, transaction *msmtpd.Transaction) error {
 		ctx, span := otel.Tracer("data.rspamd").Start(initialCtx, "checkBody",
 			trace.WithSpanKind(trace.SpanKindClient), // важно
-			trace.WithAttributes(semconv.ClientAddress(clientUrl.Hostname()), semconv.ClientPort(int(port))),
+			trace.WithAttributes(semconv.ClientAddress(clientURL.Hostname()), semconv.ClientPort(int(port))),
 		)
 		defer span.End()
 

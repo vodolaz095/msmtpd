@@ -23,14 +23,13 @@ func TrustHellos(input map[string]string) msmtpd.HelloChecker {
 				span.AddEvent("IP address is found in trusted and HELO match")
 				transaction.SetFlag(IsTrustedOrigin)
 				return nil
-			} else {
-				span.AddEvent("IP address is found in trusted but HELO differs")
-				transaction.UnsetFlag(IsTrustedOrigin)
-				transaction.LogWarn("IP address %s is found in trusted but HELO differs: expected:%v actual:%s",
-					a.IP.String(), val, transaction.HeloName,
-				)
-				return nil
 			}
+			span.AddEvent("IP address is found in trusted but HELO differs")
+			transaction.UnsetFlag(IsTrustedOrigin)
+			transaction.LogWarn("IP address %s is found in trusted but HELO differs: expected:%v actual:%s",
+				a.IP.String(), val, transaction.HeloName,
+			)
+			return nil
 		}
 		span.AddEvent("IP address is not found in trusted")
 		transaction.UnsetFlag(IsTrustedOrigin)
