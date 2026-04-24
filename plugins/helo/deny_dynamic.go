@@ -7,14 +7,23 @@ import (
 	"strings"
 
 	"github.com/vodolaz095/msmtpd"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // DenyDynamicIP ensures helo/ehlo does not contain parts if connection IP address like ISP
 // usually do with residential and dynamic IP addresses
-func DenyDynamicIP(_ context.Context, transaction *msmtpd.Transaction) error {
+func DenyDynamicIP(ctx context.Context, transaction *msmtpd.Transaction) error {
+	span := trace.SpanFromContext(ctx)
 	if transaction.IsFlagSet(IsLocalAddressFlagName) {
-		transaction.LogDebug("Connecting from local address %s, DenyBareIP check disabled",
+		span.AddEvent("Connection from local address, deny dynamic ip is disabled")
+		transaction.LogDebug("Connecting from local address %s, deny dynamic ip check disabled",
 			transaction.Addr.String())
+		return nil
+	}
+	if transaction.IsFlagSet(IsTrustedOrigin) {
+		span.AddEvent("Connection from trusted address, deny by bare ip is disabled")
+		transaction.LogDebug("Connecting from trusted address %s with accepted helo %s, deny dynamic ip check disabled",
+			transaction.Addr.String(), transaction.HeloName)
 		return nil
 	}
 	var isDynamic bool
@@ -53,6 +62,7 @@ func DenyDynamicIP(_ context.Context, transaction *msmtpd.Transaction) error {
 		}
 	}
 	if isDynamic {
+		span.AddEvent("HELO looks dynamic")
 		transaction.LogWarn("HELO %s looks dynamic for address %s",
 			transaction.HeloName, raw.To4().String())
 		return complain

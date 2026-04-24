@@ -1,10 +1,25 @@
 package helo
 
 import (
+	"log"
 	"testing"
 
 	"github.com/vodolaz095/msmtpd"
 )
+
+func ExampleDenyBareIP() {
+	server := msmtpd.Server{
+		Hostname:       "localhost",
+		WelcomeMessage: "Do you believe in our God?",
+		HeloCheckers: []msmtpd.HelloChecker{
+			DenyBareIP,
+		},
+	}
+	err := server.ListenAndServe(":1025")
+	if err != nil {
+		log.Fatalf("%s : while starting server on 0.0.0.0:1025", err)
+	}
+}
 
 func TestDenyBareIP(t *testing.T) {
 	cases := []testCase{ //TODO - more and more cases!
