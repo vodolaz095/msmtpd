@@ -217,11 +217,11 @@ func DataChecker(opts Opts) msmtpd.DataChecker {
 			}
 		}
 		for k := range rr.Symbols {
-			logMsg := fmt.Sprintf("Rule %s (%s) gives score=%.2f metric_score=%.2f",
+			logMsg := fmt.Sprintf("rule %s (%s) gives score=%.2f metric_score=%.2f",
 				k, rr.Symbols[k].Description, rr.Symbols[k].Score, rr.Symbols[k].MetricScore,
 			)
 			span.AddEvent(logMsg)
-			transaction.LogDebug(logMsg)
+			transaction.LogDebug("rspamd: %s", logMsg)
 		}
 		span.SetAttributes(attribute.String("rspamd.action", rr.Action),
 			attribute.Float64("rspamd.score", rr.Score), attribute.String("rspamd.action", rr.Action),

@@ -29,4 +29,5 @@ var TLSVersions = map[uint16]string{
 // SubjectFact is default name for fact key to store message Subject as string
 const SubjectFact = "subject"
 
+// NullSenderFlag is used to cover case when sender is null like with delivery confirmations
 const NullSenderFlag = "null_sender"
