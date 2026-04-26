@@ -18,6 +18,7 @@ import (
 	"strconv"
 
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/semconv/v1.40.0"
 	"go.opentelemetry.io/otel/trace"
@@ -216,11 +217,16 @@ func DataChecker(opts Opts) msmtpd.DataChecker {
 			}
 		}
 		for k := range rr.Symbols {
-			transaction.LogDebug("Rule %s (%s) gives score=%.2f metric_score=%.2f",
+			logMsg := fmt.Sprintf("Rule %s (%s) gives score=%.2f metric_score=%.2f",
 				k, rr.Symbols[k].Description, rr.Symbols[k].Score, rr.Symbols[k].MetricScore,
 			)
+			span.AddEvent(logMsg)
+			transaction.LogDebug(logMsg)
 		}
-
+		span.SetAttributes(attribute.String("rspamd.action", rr.Action),
+			attribute.Float64("rspamd.score", rr.Score), attribute.String("rspamd.action", rr.Action),
+			attribute.Float64("rspamd.required_score", rr.RequiredScore),
+		)
 		transaction.LogInfo("Rspamd check result: message `%s` has score %.2f of %.2f required and action is %s",
 			rr.MessageID, rr.Score, rr.RequiredScore, rr.Action,
 		)
