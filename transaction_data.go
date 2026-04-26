@@ -65,7 +65,7 @@ func (t *Transaction) handleDATA(cmd command) {
 		t.reply(530, "Authentication Required.")
 		return
 	}
-	if t.MailFrom.Address == "" {
+	if t.MailFrom.Address == "" && !t.IsFlagSet(NullSenderFlag) {
 		t.Hate(missingParameterPenalty)
 		t.LogDebug("DATA called without MAIL FROM!")
 		span.AddEvent("DATA called without MAIL FROM!")

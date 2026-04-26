@@ -46,7 +46,7 @@ func (t *Transaction) handleRCPT(cmd command) {
 		t.reply(530, "Authentication Required.")
 		return
 	}
-	if t.MailFrom.Address == "" {
+	if t.MailFrom.Address == "" && !t.IsFlagSet(NullSenderFlag) {
 		t.LogDebug("RCPT TO called without MAIL FROM")
 		span.AddEvent("RCPT TO called without MAIL FROM")
 		t.Hate(missingParameterPenalty)
