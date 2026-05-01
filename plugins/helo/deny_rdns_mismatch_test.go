@@ -13,6 +13,7 @@ func ExampleDenyReverseDNSMismatch() {
 		Hostname:       "localhost",
 		WelcomeMessage: "Do you believe in our God?",
 		HeloCheckers: []msmtpd.HelloChecker{
+			SkipHeloCheckForLocal,
 			DenyReverseDNSMismatch,
 		},
 	}

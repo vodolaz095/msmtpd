@@ -21,7 +21,7 @@ func DenyDynamicIP(ctx context.Context, transaction *msmtpd.Transaction) error {
 		return nil
 	}
 	if transaction.IsFlagSet(IsTrustedOrigin) {
-		span.AddEvent("Connection from trusted address, deny by bare ip is disabled")
+		span.AddEvent("Connection from trusted address, deny by dynamic ip is disabled")
 		transaction.LogDebug("Connecting from trusted address %s with accepted helo %s, deny dynamic ip check disabled",
 			transaction.Addr.String(), transaction.HeloName)
 		return nil
