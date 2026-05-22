@@ -156,7 +156,9 @@ func DataChecker(opts Opts) msmtpd.DataChecker {
 		}
 		req.Header.Add("IP", transaction.Addr.(*net.TCPAddr).IP.String())
 		req.Header.Add("Helo", transaction.HeloName)
-		req.Header.Add("From", transaction.MailFrom.String())
+		if transaction.MailFrom.Address != "" { // postmaster can have envelope with empty mail from
+			req.Header.Add("From", transaction.MailFrom.String())
+		}
 		if opts.Password != "" {
 			req.Header.Add("Password", opts.Password)
 		}
