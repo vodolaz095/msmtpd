@@ -10,7 +10,10 @@ import (
 	"github.com/vodolaz095/msmtpd"
 )
 
+var nonsenseErrorText = `521 "Stop sending me this nonsense, please!"`
+
 func TestBodyParseAndCheckHeadersOK(t *testing.T) {
+
 	buf := bytes.NewBufferString("")
 	fmt.Fprintf(buf, "Date: %s\n", time.Now().Format(time.RFC1123Z))
 	buf.WriteString("To: scuba@vodolaz095.ru\n")
@@ -83,7 +86,7 @@ func TestBodyParseAndCheckHeadersMalformed(t *testing.T) {
 	}
 	err = wc.Close()
 	if err != nil {
-		if err.Error() == "521 Stop sending me this nonsense, please!" {
+		if err.Error() == nonsenseErrorText {
 			t.Logf("proper error is thrown")
 			return
 		}
@@ -131,7 +134,7 @@ func TestBodyParseAndCheckHeadersMissingMandatoryHeaderFrom(t *testing.T) {
 	}
 	err = wc.Close()
 	if err != nil {
-		if err.Error() == "521 Stop sending me this nonsense, please!" {
+		if err.Error() == nonsenseErrorText {
 			t.Logf("proper error is thrown")
 			return
 		}
@@ -180,7 +183,7 @@ func TestBodyParseAndCheckHeadersMissingMandatoryHeaderDate(t *testing.T) {
 	}
 	err = wc.Close()
 	if err != nil {
-		if err.Error() == "521 Stop sending me this nonsense, please!" {
+		if err.Error() == nonsenseErrorText {
 			t.Logf("proper error is thrown")
 			return
 		}
@@ -228,7 +231,7 @@ func TestBodyParseAndCheckHeadersMissingRequiredSubject(t *testing.T) {
 	}
 	err = wc.Close()
 	if err != nil {
-		if err.Error() == "521 I cannot parse your message. Do not send me this particular message in future, please, i will never accept it. Thanks in advance!" {
+		if err.Error() == `521 "I cannot parse your message. Do not send me this particular message in future, please, i will never accept it. Thanks in advance!"` {
 			t.Logf("proper error is thrown")
 			return
 		}
@@ -277,7 +280,7 @@ func TestBodyParseAndCheckHeadersDuplicate(t *testing.T) {
 	}
 	err = wc.Close()
 	if err != nil {
-		if err.Error() == "521 Stop sending me this nonsense, please!" {
+		if err.Error() == nonsenseErrorText {
 			t.Logf("proper error is thrown")
 			return
 		}
@@ -325,7 +328,7 @@ func TestBodyParseAndCheckHeadersDateTooOld(t *testing.T) {
 	}
 	err = wc.Close()
 	if err != nil {
-		if err.Error() == "521 I cannot parse your message. Do not send me this particular message in future, please, i will never accept it. Thanks in advance!" {
+		if err.Error() == `521 "I cannot parse your message. Do not send me this particular message in future, please, i will never accept it. Thanks in advance!"` {
 			t.Logf("proper error is thrown")
 			return
 		}
@@ -373,7 +376,7 @@ func TestBodyParseAndCheckHeadersDateToFarInFuture(t *testing.T) {
 	}
 	err = wc.Close()
 	if err != nil {
-		if err.Error() == "521 I cannot parse your message. Do not send me this particular message in future, please, i will never accept it. Thanks in advance!" {
+		if err.Error() == `521 "I cannot parse your message. Do not send me this particular message in future, please, i will never accept it. Thanks in advance!"` {
 			t.Logf("proper error is thrown")
 			return
 		}
@@ -421,7 +424,7 @@ func TestBodyParseAndCheckHeadersDateMalformed(t *testing.T) {
 	}
 	err = wc.Close()
 	if err != nil {
-		if err.Error() == "521 Stop sending me this nonsense, please!" {
+		if err.Error() == nonsenseErrorText {
 			t.Logf("proper error is thrown")
 			return
 		}
