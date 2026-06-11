@@ -12,11 +12,13 @@ import (
 func TestAcceptMailFromDomains(t *testing.T) {
 	cases := make(map[string]error, 0)
 
-	cases["thisIsNotAEmail"] = fmt.Errorf("502 Malformed e-mail address")
+	wlErr := fmt.Errorf(`521 "I'm sorry, but your email address is not in whitelist"`)
+
+	cases["thisIsNotAEmail"] = fmt.Errorf(`502 "Malformed e-mail address"`)
 	cases["a@example.org"] = nil
 	cases["a@vodolaz095.ru"] = nil
-	cases["a@gmail.com"] = fmt.Errorf("521 I'm sorry, but your email address is not in whitelist")
-	cases["b@gmail.com"] = fmt.Errorf("521 I'm sorry, but your email address is not in whitelist")
+	cases["a@gmail.com"] = wlErr
+	cases["b@gmail.com"] = wlErr
 
 	addr, closer := msmtpd.RunTestServerWithoutTLS(t, &msmtpd.Server{
 		SenderCheckers: []msmtpd.SenderChecker{
@@ -55,12 +57,13 @@ func TestAcceptMailFromDomains(t *testing.T) {
 
 func TestAcceptMailFromAddresses(t *testing.T) {
 	cases := make(map[string]error, 0)
+	wlErr := fmt.Errorf(`521 "I'm sorry, but your email address is not in whitelist"`)
 
-	cases["thisIsNotAEmail"] = fmt.Errorf("502 Malformed e-mail address")
+	cases["thisIsNotAEmail"] = fmt.Errorf(`502 "Malformed e-mail address"`)
 	cases["a@gmail.com"] = nil
 	cases["b@gmail.com"] = nil
-	cases["d@gmail.com"] = fmt.Errorf("521 I'm sorry, but your email address is not in whitelist")
-	cases["e@gmail.com"] = fmt.Errorf("521 I'm sorry, but your email address is not in whitelist")
+	cases["d@gmail.com"] = wlErr
+	cases["e@gmail.com"] = wlErr
 
 	addr, closer := msmtpd.RunTestServerWithoutTLS(t, &msmtpd.Server{
 		SenderCheckers: []msmtpd.SenderChecker{
@@ -101,17 +104,18 @@ func TestAcceptMailFromAddresses(t *testing.T) {
 func TestAcceptMailFromDomainsOrAddresses(t *testing.T) {
 	cases := make(map[string]error, 0)
 
+	wlErr := fmt.Errorf(`521 "I'm sorry, but your email address is not in whitelist"`)
 	cases["thisIsNotAEmail"] = fmt.Errorf("502 Malformed e-mail address")
 	cases["a@example.org"] = nil
 	cases["a@vodolaz095.ru"] = nil
-	cases["a@gmail.com"] = fmt.Errorf("521 I'm sorry, but your email address is not in whitelist")
-	cases["b@gmail.com"] = fmt.Errorf("521 I'm sorry, but your email address is not in whitelist")
+	cases["a@gmail.com"] = wlErr
+	cases["b@gmail.com"] = wlErr
 
 	cases["a@gmail.com"] = nil
 	cases["b@gmail.com"] = nil
-	cases["d@gmail.com"] = fmt.Errorf("521 I'm sorry, but your email address is not in whitelist")
-	cases["e@gmail.com"] = fmt.Errorf("521 I'm sorry, but your email address is not in whitelist")
-	cases["info@yandex.ru"] = fmt.Errorf("521 I'm sorry, but your email address is not in whitelist")
+	cases["d@gmail.com"] = wlErr
+	cases["e@gmail.com"] = wlErr
+	cases["info@yandex.ru"] = wlErr
 
 	addr, closer := msmtpd.RunTestServerWithoutTLS(t, &msmtpd.Server{
 		SenderCheckers: []msmtpd.SenderChecker{

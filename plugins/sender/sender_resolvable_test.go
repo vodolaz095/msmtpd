@@ -12,10 +12,10 @@ func TestSenderIsResolvableDefault(t *testing.T) {
 	testCases := make(map[string]error, 0)
 
 	testCases["info@yandex.ru"] = nil
-	testCases["info@mx.yandex.ru"] = fmt.Errorf("421 %s", IsNotResolvableComplain)
+	testCases["info@mx.yandex.ru"] = fmt.Errorf("421 %q", IsNotResolvableComplain)
 	testCases["info@yandex.ru"] = nil
-	testCases["info@example.org"] = fmt.Errorf("421 %s", IsNotResolvableComplain)
-	testCases["info@localhost"] = fmt.Errorf("421 %s", IsNotResolvableComplain)
+	testCases["info@example.org"] = fmt.Errorf("421 %q", IsNotResolvableComplain)
+	testCases["info@localhost"] = fmt.Errorf("421 %q", IsNotResolvableComplain)
 
 	// it should fail, becase A/AAAA Fallback delivery is disabled from the box
 	testCases["info@mx.yandex.ru"] = fmt.Errorf("421 %s", IsNotResolvableComplain)
@@ -24,11 +24,11 @@ func TestSenderIsResolvableDefault(t *testing.T) {
 	// feedback.vodolaz095.ru.	33	IN	MX	10 ivory.vodolaz095.ru.
 	// ivory.vodolaz095.ru.	4	IN	A	192.168.1.2
 	// it should fail, because 192.168.1.2 is local IP
-	testCases["somebody@feedback.vodolaz095.ru"] = fmt.Errorf("421 %s", IsNotResolvableComplain)
-	testCases["somebody@ivory.vodolaz095.ru"] = fmt.Errorf("421 %s", IsNotResolvableComplain)
+	testCases["somebody@feedback.vodolaz095.ru"] = fmt.Errorf("421 %q", IsNotResolvableComplain)
+	testCases["somebody@ivory.vodolaz095.ru"] = fmt.Errorf("421 %q", IsNotResolvableComplain)
 
-	testCases[""] = fmt.Errorf("521 %s", "Malformed MAIL FROM is not allowed, go and bother different domains")
-	testCases["@"] = fmt.Errorf("502 Malformed e-mail address")
+	testCases[""] = fmt.Errorf("521 %q", "Malformed MAIL FROM is not allowed, go and bother different domains")
+	testCases["@"] = fmt.Errorf(`502 "Malformed e-mail address"`)
 
 	addr, closer := msmtpd.RunTestServerWithoutTLS(t, &msmtpd.Server{
 		SenderCheckers: []msmtpd.SenderChecker{
@@ -66,8 +66,8 @@ func TestSenderIsResolvableFallback(t *testing.T) {
 	testCases := make(map[string]error, 0)
 
 	testCases["info@yandex.ru"] = nil
-	testCases["info@example.org"] = fmt.Errorf("421 %s", IsNotResolvableComplain)
-	testCases["info@localhost"] = fmt.Errorf("421 %s", IsNotResolvableComplain)
+	testCases["info@example.org"] = fmt.Errorf("421 %q", IsNotResolvableComplain)
+	testCases["info@localhost"] = fmt.Errorf("421 %q", IsNotResolvableComplain)
 
 	// it should work according to standards (https://en.wikipedia.org/wiki/MX_record#Fallback_to_the_address_record)
 	// because mx.yandex.ru has A record and 25th port open for connections
@@ -78,8 +78,8 @@ func TestSenderIsResolvableFallback(t *testing.T) {
 	// feedback.vodolaz095.ru.	33	IN	MX	10 ivory.vodolaz095.ru.
 	// ivory.vodolaz095.ru.	4	IN	A	192.168.1.2
 	// it should fail, because 192.168.1.2 is local IP
-	testCases["somebody@feedback.vodolaz095.ru"] = fmt.Errorf("421 %s", IsNotResolvableComplain)
-	testCases["somebody@ivory.vodolaz095.ru"] = fmt.Errorf("421 %s", IsNotResolvableComplain)
+	testCases["somebody@feedback.vodolaz095.ru"] = fmt.Errorf("421 %q", IsNotResolvableComplain)
+	testCases["somebody@ivory.vodolaz095.ru"] = fmt.Errorf("421 %q", IsNotResolvableComplain)
 
 	addr, closer := msmtpd.RunTestServerWithoutTLS(t, &msmtpd.Server{
 		SenderCheckers: []msmtpd.SenderChecker{
@@ -119,11 +119,11 @@ func TestSenderIsResolvableLocal(t *testing.T) {
 	testCases := make(map[string]error, 0)
 
 	testCases["info@yandex.ru"] = nil
-	testCases["info@example.org"] = fmt.Errorf("421 %s", IsNotResolvableComplain)
-	testCases["info@localhost"] = fmt.Errorf("421 %s", IsNotResolvableComplain)
+	testCases["info@example.org"] = fmt.Errorf("421 %q", IsNotResolvableComplain)
+	testCases["info@localhost"] = fmt.Errorf("421 %q", IsNotResolvableComplain)
 
 	// this should fail, because we disabled A/AAAA record fallback delivery
-	testCases["info@mx.yandex.ru"] = fmt.Errorf("421 %s", IsNotResolvableComplain)
+	testCases["info@mx.yandex.ru"] = fmt.Errorf("421 %q", IsNotResolvableComplain)
 
 	// dramatic misuse of cloudflare :-)
 	// feedback.vodolaz095.ru.	33	IN	MX	10 ivory.vodolaz095.ru.
@@ -131,7 +131,7 @@ func TestSenderIsResolvableLocal(t *testing.T) {
 	// it should work, because we enabled delivery to local addresses
 	testCases["somebody@feedback.vodolaz095.ru"] = nil
 	// but this should fail, we disabled A/AAAA record fallback delivery
-	testCases["somebody@ivory.vodolaz095.ru"] = fmt.Errorf("421 %s", IsNotResolvableComplain)
+	testCases["somebody@ivory.vodolaz095.ru"] = fmt.Errorf("421 %q", IsNotResolvableComplain)
 
 	addr, closer := msmtpd.RunTestServerWithoutTLS(t, &msmtpd.Server{
 		SenderCheckers: []msmtpd.SenderChecker{
@@ -171,12 +171,12 @@ func TestSenderIsResolvableLocal(t *testing.T) {
 func TestSenderIsResolvableFallbackAndLocal(t *testing.T) {
 	testCases := make(map[string]error, 0)
 	testCases["info@yandex.ru"] = nil
-	testCases["info@example.org"] = fmt.Errorf("421 %s", IsNotResolvableComplain)
+	testCases["info@example.org"] = fmt.Errorf("421 %q", IsNotResolvableComplain)
 
 	// it should work according to standards :-)
 	testCases["info@mx.yandex.ru"] = nil
 	// providing local loop back as MX server is usually used to troll spammers
-	testCases["info@localhost"] = fmt.Errorf("421 %s", IsNotResolvableComplain)
+	testCases["info@localhost"] = fmt.Errorf("421 %q", IsNotResolvableComplain)
 
 	// dramatic misuse of cloudflare :-)
 	testCases["somebody@feedback.vodolaz095.ru"] = nil
@@ -221,19 +221,19 @@ func TestSenderIsResolvableDefaultWithTrustedDomain(t *testing.T) {
 	testCases := make(map[string]error, 0)
 
 	testCases["info@yandex.ru"] = nil
-	testCases["info@mx.yandex.ru"] = fmt.Errorf("421 %s", IsNotResolvableComplain)
+	testCases["info@mx.yandex.ru"] = fmt.Errorf("421 %q", IsNotResolvableComplain)
 	testCases["info@yandex.ru"] = nil
-	testCases["info@example.org"] = fmt.Errorf("421 %s", IsNotResolvableComplain)
+	testCases["info@example.org"] = fmt.Errorf("421 %q", IsNotResolvableComplain)
 	testCases["info@localhost"] = nil // trusted domain
 
 	// it should fail, becase A/AAAA Fallback delivery is disabled from the box
-	testCases["info@mx.yandex.ru"] = fmt.Errorf("421 %s", IsNotResolvableComplain)
+	testCases["info@mx.yandex.ru"] = fmt.Errorf("421 %q", IsNotResolvableComplain)
 
 	// dramatic misuse of cloudflare :-)
 	// feedback.vodolaz095.ru.	33	IN	MX	10 ivory.vodolaz095.ru.
 	// ivory.vodolaz095.ru.	4	IN	A	192.168.1.2
 	// it should fail, because 192.168.1.2 is local IP
-	testCases["somebody@feedback.vodolaz095.ru"] = fmt.Errorf("421 %s", IsNotResolvableComplain)
+	testCases["somebody@feedback.vodolaz095.ru"] = fmt.Errorf("421 %q", IsNotResolvableComplain)
 	testCases["somebody@ivory.vodolaz095.ru"] = nil // trusted domain
 
 	addr, closer := msmtpd.RunTestServerWithoutTLS(t, &msmtpd.Server{
@@ -277,23 +277,23 @@ func TestSenderIsResolvableDefaultWithAllowNul(t *testing.T) {
 	testCases := make(map[string]error, 0)
 
 	testCases["info@yandex.ru"] = nil
-	testCases["info@mx.yandex.ru"] = fmt.Errorf("421 %s", IsNotResolvableComplain)
+	testCases["info@mx.yandex.ru"] = fmt.Errorf("421 %q", IsNotResolvableComplain)
 	testCases["info@yandex.ru"] = nil
-	testCases["info@example.org"] = fmt.Errorf("421 %s", IsNotResolvableComplain)
-	testCases["info@localhost"] = fmt.Errorf("421 %s", IsNotResolvableComplain)
+	testCases["info@example.org"] = fmt.Errorf("421 %q", IsNotResolvableComplain)
+	testCases["info@localhost"] = fmt.Errorf("421 %q", IsNotResolvableComplain)
 
 	// it should fail, becase A/AAAA Fallback delivery is disabled from the box
-	testCases["info@mx.yandex.ru"] = fmt.Errorf("421 %s", IsNotResolvableComplain)
+	testCases["info@mx.yandex.ru"] = fmt.Errorf("421 %q", IsNotResolvableComplain)
 
 	// dramatic misuse of cloudflare :-)
 	// feedback.vodolaz095.ru.	33	IN	MX	10 ivory.vodolaz095.ru.
 	// ivory.vodolaz095.ru.	4	IN	A	192.168.1.2
 	// it should fail, because 192.168.1.2 is local IP
-	testCases["somebody@feedback.vodolaz095.ru"] = fmt.Errorf("421 %s", IsNotResolvableComplain)
-	testCases["somebody@ivory.vodolaz095.ru"] = fmt.Errorf("421 %s", IsNotResolvableComplain)
+	testCases["somebody@feedback.vodolaz095.ru"] = fmt.Errorf("421 %q", IsNotResolvableComplain)
+	testCases["somebody@ivory.vodolaz095.ru"] = fmt.Errorf("421 %q", IsNotResolvableComplain)
 
 	testCases[""] = nil // normally it is not allowed
-	testCases["@"] = fmt.Errorf("502 Malformed e-mail address")
+	testCases["@"] = fmt.Errorf(`502 "Malformed e-mail address"`)
 
 	addr, closer := msmtpd.RunTestServerWithoutTLS(t, &msmtpd.Server{
 		SenderCheckers: []msmtpd.SenderChecker{

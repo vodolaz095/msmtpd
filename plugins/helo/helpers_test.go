@@ -29,6 +29,10 @@ func (tc *testCase) String() string {
 
 func heloTestRunner(t *testing.T, cases []testCase, checkers []msmtpd.HelloChecker) {
 	for k := range cases {
+		t.Logf("Running test case IP=%s, PTRs=%v, Helo=%q, Error=%s",
+			cases[k].IP.String(), cases[k].PTRs, cases[k].Helo, cases[k].ErrorMsg,
+		)
+
 		addr, closer := msmtpd.RunTestServerWithoutTLS(t, &msmtpd.Server{
 			ConnectionCheckers: []msmtpd.ConnectionChecker{
 				func(_ context.Context, tr *msmtpd.Transaction) error {

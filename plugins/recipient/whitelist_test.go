@@ -8,12 +8,12 @@ import (
 	"github.com/vodolaz095/msmtpd"
 )
 
-var errRecipientNotWhitelisted = fmt.Errorf("521 I'm sorry, but recipient's email address is not in whitelist")
+var errRecipientNotWhitelisted = fmt.Errorf(`521 "I'm sorry, but recipient's email address is not in whitelist"`)
 
 func TestAcceptMailFromDomainsOrAddresses(t *testing.T) {
 	cases := make(map[string]error, 0)
 
-	cases["thisIsNotAEmail"] = fmt.Errorf("502 Malformed e-mail address")
+	cases["thisIsNotAEmail"] = fmt.Errorf(`502 "Malformed e-mail address"`)
 
 	cases["a@example.org"] = nil
 	cases["a@vodolaz095.ru"] = nil
@@ -75,7 +75,7 @@ func TestAcceptMailFromDomainsOrAddresses(t *testing.T) {
 func TestAcceptMailFromDomains(t *testing.T) {
 	cases := make(map[string]error, 0)
 
-	cases["thisIsNotAEmail"] = fmt.Errorf("502 Malformed e-mail address")
+	cases["thisIsNotAEmail"] = fmt.Errorf(`502 "Malformed e-mail address"`)
 
 	cases["a@example.org"] = nil
 	cases["a@vodolaz095.ru"] = nil
@@ -133,7 +133,7 @@ func TestAcceptMailFromDomains(t *testing.T) {
 func TestAcceptMailFromAddresses(t *testing.T) {
 	cases := make(map[string]error, 0)
 
-	cases["thisIsNotAEmail"] = fmt.Errorf("502 Malformed e-mail address")
+	cases["thisIsNotAEmail"] = fmt.Errorf(`502 "Malformed e-mail address"`)
 
 	cases["a@example.org"] = errRecipientNotWhitelisted
 	cases["a@vodolaz095.ru"] = errRecipientNotWhitelisted
