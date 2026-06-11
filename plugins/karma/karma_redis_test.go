@@ -65,7 +65,7 @@ func TestKarmaPluginRedisBad(t *testing.T) {
 	defer closer()
 	_, err = smtp.Dial(addr)
 	if err != nil {
-		if err.Error() != "521 FUCK OFF!" {
+		if err.Error() != `521 "FUCK OFF!"` {
 			t.Errorf("%s : wrong error while performing dial", err)
 		}
 	}
@@ -142,7 +142,7 @@ func TestKarmaPluginRedisGood(t *testing.T) {
 	defer closer()
 	c, err := smtp.Dial(addr)
 	if err != nil {
-		if err.Error() != "521 FUCK OFF!" {
+		if err.Error() != `521 "FUCK OFF!"` {
 			t.Errorf("%s : wrong error while performing dial", err)
 		}
 	}
