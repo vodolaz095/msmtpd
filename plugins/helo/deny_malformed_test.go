@@ -6,7 +6,7 @@ import (
 	"github.com/vodolaz095/msmtpd"
 )
 
-const testErrorMessage = "521 I don't like the way you introduce yourself. Goodbye!"
+const testErrorMessage = `521 "I don't like the way you introduce yourself. Goodbye!"`
 
 func TestDenyMalformed(t *testing.T) {
 	cases := []testCase{ //TODO - more and more cases!

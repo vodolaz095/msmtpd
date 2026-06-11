@@ -273,7 +273,7 @@ func TestTracingConnectionCheckerAndCloseHandlers(t *testing.T) {
 	defer closer()
 	_, err = smtp.Dial(addr)
 	if err != nil {
-		if err.Error() != "521 i do not like you" {
+		if err.Error() != `521 "i do not like you"` {
 			t.Errorf("%s : wrong error", err)
 		}
 	} else {
