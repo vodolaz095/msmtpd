@@ -15,7 +15,7 @@ type testPtrCase struct {
 }
 
 func TestDenyPTRs(t *testing.T) {
-	var denyPtrError = "521 Your IP address is blacklisted. Sorry. You can cry me a river."
+	var denyPtrError = `521 "Your IP address is blacklisted. Sorry. You can cry me a river."`
 	cases := []testPtrCase{
 		{[]string{"local"}, ""},
 		{[]string{"local", "something.local"}, ""},

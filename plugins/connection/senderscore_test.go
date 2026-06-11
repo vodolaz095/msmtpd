@@ -41,7 +41,7 @@ func TestCheckSenderScore(t *testing.T) {
 		})
 		c, err := smtp.Dial(addr)
 		if err != nil {
-			if err.Error() != "421 Service not available. Try again later, please." {
+			if err.Error() != `421 "Service not available. Try again later, please."` {
 				t.Errorf("%s : unexpected error while dialing", err)
 			}
 		} else {

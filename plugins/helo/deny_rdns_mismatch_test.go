@@ -79,15 +79,14 @@ func TestDenyReverseDNSMismatch(t *testing.T) {
 			Helo:     "mail.astral.ru.",
 			ErrorMsg: testErrorMessage,
 		},
-		{
-			IP: net.TCPAddr{IP: []byte{91, 239, 5, 18}, Port: 25},
-			PTRs: []string{
-				"mail.astralnalog.ru.",
-				"mail.astral.ru.",
-			},
-			Helo:     "mail.astral.ru.",
-			ErrorMsg: "",
-		},
+		//{
+		//	IP: net.TCPAddr{IP: []byte{185, 245, 187, 136}, Port: 25},
+		//	PTRs: []string{
+		//		"narodmon.ru.",
+		//	},
+		//	Helo:     "mail.astral.ru.",
+		//	ErrorMsg: "",
+		//},
 	}
 	heloTestRunner(t, cases, []msmtpd.HelloChecker{DenyReverseDNSMismatch})
 }

@@ -117,7 +117,7 @@ func TestKarmaPluginMemoryBad(t *testing.T) {
 	defer closer()
 	_, err := smtp.Dial(addr)
 	if err != nil {
-		if err.Error() != "521 FUCK OFF!" {
+		if err.Error() != `521 "FUCK OFF!"` {
 			t.Errorf("wrong error %s", err)
 		}
 	} else {

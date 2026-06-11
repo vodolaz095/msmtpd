@@ -113,7 +113,7 @@ func TestRCPTinWrongOrder(t *testing.T) {
 	}
 	err = c.Rcpt("bill.gates@microsoft.com")
 	if err != nil {
-		if err.Error() != "502 Please introduce yourself first." {
+		if err.Error() != `502 "Please introduce yourself first."` {
 			t.Errorf("%s : wrong error while helo not called", err)
 		}
 	} else {
@@ -125,7 +125,7 @@ func TestRCPTinWrongOrder(t *testing.T) {
 	}
 	err = c.Rcpt("bill.gates@microsoft.com")
 	if err != nil {
-		if err.Error() != "502 Please turn on TLS by issuing a STARTTLS command." {
+		if err.Error() != `502 "Please turn on TLS by issuing a STARTTLS command."` {
 			t.Errorf("%s : wrong error while STARTTLS not called", err)
 		}
 	} else {
@@ -137,7 +137,7 @@ func TestRCPTinWrongOrder(t *testing.T) {
 	}
 	err = c.Rcpt("bill.gates@microsoft.com")
 	if err != nil {
-		if err.Error() != "530 Authentication Required." {
+		if err.Error() != `530 "Authentication Required."` {
 			t.Errorf("%s : wrong error while STARTTLS not called", err)
 		}
 	} else {
@@ -149,7 +149,7 @@ func TestRCPTinWrongOrder(t *testing.T) {
 	}
 	err = c.Rcpt("bill.gates@microsoft.com")
 	if err != nil {
-		if err.Error() != "502 It seems you haven't called MAIL FROM in order to explain who sends your message." {
+		if err.Error() != `502 "It seems you haven't called MAIL FROM in order to explain who sends your message."` {
 			t.Errorf("%s : wrong error while MAIL FROM not called", err)
 		}
 	} else {

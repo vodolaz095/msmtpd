@@ -157,7 +157,7 @@ func TestWrongOrderForData(t *testing.T) {
 	}
 	_, err = c.Data()
 	if err != nil {
-		if err.Error() != "502 Please introduce yourself first." {
+		if err.Error() != `502 "Please introduce yourself first."` {
 			t.Errorf("%s : wrong error while helo not called", err)
 		}
 	} else {
@@ -169,7 +169,7 @@ func TestWrongOrderForData(t *testing.T) {
 	}
 	_, err = c.Data()
 	if err != nil {
-		if err.Error() != "502 Please turn on TLS by issuing a STARTTLS command." {
+		if err.Error() != `502 "Please turn on TLS by issuing a STARTTLS command."` {
 			t.Errorf("%s : wrong error while STARTTLS not called", err)
 		}
 	} else {
@@ -181,7 +181,7 @@ func TestWrongOrderForData(t *testing.T) {
 	}
 	_, err = c.Data()
 	if err != nil {
-		if err.Error() != "530 Authentication Required." {
+		if err.Error() != `530 "Authentication Required."` {
 			t.Errorf("%s : wrong error while STARTTLS not called", err)
 		}
 	} else {
@@ -193,7 +193,7 @@ func TestWrongOrderForData(t *testing.T) {
 	}
 	_, err = c.Data()
 	if err != nil {
-		if err.Error() != "502 It seems you haven't called MAIL FROM in order to explain who sends your message." {
+		if err.Error() != `502 "It seems you haven't called MAIL FROM in order to explain who sends your message."` {
 			t.Errorf("%s : wrong error while MAIL FROM not called", err)
 		}
 	} else {
@@ -205,7 +205,7 @@ func TestWrongOrderForData(t *testing.T) {
 	}
 	_, err = c.Data()
 	if err != nil {
-		if err.Error() != "502 It seems you haven't called RCPT TO in order to explain for whom do you want to deliver your message." {
+		if err.Error() != `502 "It seems you haven't called RCPT TO in order to explain for whom do you want to deliver your message."` {
 			t.Errorf("%s : wrong error while RCPT TO not called", err)
 		}
 	} else {
@@ -270,7 +270,7 @@ func TestRejectByDataChecker(t *testing.T) {
 	}
 	err = wc.Close()
 	if err != nil {
-		if err.Error() != "502 something is broken" {
+		if err.Error() != `502 "something is broken"` {
 			t.Errorf("%s : while closing data", err)
 		}
 	} else {
@@ -467,7 +467,7 @@ func TestMalformedMessageBody(t *testing.T) {
 	}
 	err = wc.Close()
 	if err != nil {
-		if err.Error() != "521 Stop sending me this nonsense, please!" {
+		if err.Error() != `521 "Stop sending me this nonsense, please!"` {
 			t.Errorf("%s : while closing message body", err)
 		}
 	} else {
@@ -512,7 +512,7 @@ func TestBodyParseAndCheckHeadersMissingMandatoryHeaderFrom(t *testing.T) {
 	}
 	err = wc.Close()
 	if err != nil {
-		if err.Error() == "521 Stop sending me this nonsense, please!" {
+		if err.Error() == `521 "Stop sending me this nonsense, please!"` {
 			t.Logf("proper error is thrown")
 			return
 		}
@@ -555,7 +555,7 @@ func TestBodyParseAndCheckHeadersMissingMandatoryHeaderDate(t *testing.T) {
 	}
 	err = wc.Close()
 	if err != nil {
-		if err.Error() == "521 Stop sending me this nonsense, please!" {
+		if err.Error() == `521 "Stop sending me this nonsense, please!"` {
 			t.Logf("proper error is thrown")
 			return
 		}
@@ -599,7 +599,7 @@ func TestBodyParseAndCheckHeadersDuplicate(t *testing.T) {
 	}
 	err = wc.Close()
 	if err != nil {
-		if err.Error() == "521 Stop sending me this nonsense, please!" {
+		if err.Error() == `521 "Stop sending me this nonsense, please!"` {
 			t.Logf("proper error is thrown")
 			return
 		}
@@ -699,7 +699,7 @@ func TestBodyParseAndCheckHeadersDateMalformed(t *testing.T) {
 	}
 	err = wc.Close()
 	if err != nil {
-		if err.Error() == "521 Stop sending me this nonsense, please!" {
+		if err.Error() == `521 "Stop sending me this nonsense, please!"` {
 			t.Logf("proper error is thrown")
 			return
 		}
@@ -742,7 +742,7 @@ func TestBodyParseTwoFromSenders(t *testing.T) {
 	}
 	err = wc.Close()
 	if err != nil {
-		if err.Error() == "521 Stop sending me this nonsense, please!" {
+		if err.Error() == `521 "Stop sending me this nonsense, please!"` {
 			t.Logf("proper error is thrown")
 			return
 		}

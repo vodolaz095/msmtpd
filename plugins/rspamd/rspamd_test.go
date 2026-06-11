@@ -146,7 +146,7 @@ func TestCheckPyMockRSPAMDFail(t *testing.T) {
 	}
 	err = wc.Close()
 	if err != nil {
-		if err.Error() != "421 Too many letters, i cannot read them all now. Please, resend your message later" {
+		if err.Error() != `421 "Too many letters, i cannot read them all now. Please, resend your message later"` {
 			t.Errorf("%s : wrong status", err)
 		}
 	} else {
@@ -304,7 +304,7 @@ func TestCheckPyMockRSPAMDActionGreylist(t *testing.T) {
 	}
 	err = wc.Close()
 	if err != nil {
-		if err.Error() != "451 Your message looks suspicious, try to deliver it one more time, maybe i'll change my mind and accept it" {
+		if err.Error() != `451 "Your message looks suspicious, try to deliver it one more time, maybe i'll change my mind and accept it"` {
 			t.Errorf("%s : wrong status", err)
 		}
 	} else {
@@ -472,7 +472,7 @@ func TestCheckPyMockRSPAMDActionSoftReject(t *testing.T) {
 	}
 	err = wc.Close()
 	if err != nil {
-		if err.Error() != "421 Too many letters, i cannot read them all now. Please, resend your message later" {
+		if err.Error() != `421 "Too many letters, i cannot read them all now. Please, resend your message later"` {
 			t.Errorf("%s : wrong status", err)
 		}
 	} else {
@@ -553,7 +553,7 @@ func TestCheckPyMockRSPAMDActionHardReject(t *testing.T) {
 	}
 	err = wc.Close()
 	if err != nil {
-		if err.Error() != "521 Stop sending me this nonsense, please!" {
+		if err.Error() != `521 "Stop sending me this nonsense, please!"` {
 			t.Errorf("%s : wrong status", err)
 		}
 	} else {

@@ -13,7 +13,7 @@ type ErrorSMTP struct {
 
 // Error returns a string representation of the SMTP error
 func (e ErrorSMTP) Error() string {
-	return fmt.Sprintf("%d %s", e.Code, e.Message)
+	return fmt.Sprintf("%d %q", e.Code, e.Message)
 }
 
 // ErrServerClosed is returned by the Server's Serve and ListenAndServe,

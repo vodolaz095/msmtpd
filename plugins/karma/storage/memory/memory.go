@@ -17,12 +17,15 @@ type Score struct {
 
 // Storage saves IP address history in memory
 type Storage struct {
-	mu   sync.RWMutex
+	mu   *sync.RWMutex
 	Data map[string]Score
 }
 
 // Ping does nothing, but somehow prepares memory storage
-func (m *Storage) Ping(ctx context.Context) error {
+func (m *Storage) Ping(_ context.Context) error {
+	if m.mu == nil {
+		m.mu = &sync.RWMutex{}
+	}
 	if m.Data == nil {
 		m.Data = make(map[string]Score, 0)
 	}
