@@ -7,6 +7,8 @@ import (
 	"github.com/vodolaz095/msmtpd"
 )
 
+const fuckOffErrMesg = `521 "FUCK OFF!"`
+
 func TestWhitelistFail(t *testing.T) {
 	addr, closer := msmtpd.RunTestServerWithoutTLS(t, &msmtpd.Server{
 		ConnectionCheckers: []msmtpd.ConnectionChecker{
@@ -16,7 +18,7 @@ func TestWhitelistFail(t *testing.T) {
 	defer closer()
 	_, err := smtp.Dial(addr)
 	if err != nil {
-		if err.Error() != "521 FUCK OFF!" {
+		if err.Error() != fuckOffErrMesg {
 			t.Errorf("Dial failed with wrong error: %s", err)
 		}
 		return
@@ -109,7 +111,7 @@ func TestBlacklistFail(t *testing.T) {
 	defer closer()
 	_, err := smtp.Dial(addr)
 	if err != nil {
-		if err.Error() != "521 FUCK OFF!" {
+		if err.Error() != fuckOffErrMesg {
 			t.Errorf("Dial failed with wrong error: %s", err)
 		}
 		return
@@ -126,7 +128,7 @@ func TestBlacklistFailSubnet1(t *testing.T) {
 	defer closer()
 	_, err := smtp.Dial(addr)
 	if err != nil {
-		if err.Error() != "521 FUCK OFF!" {
+		if err.Error() != fuckOffErrMesg {
 			t.Errorf("Dial failed with wrong error: %s", err)
 		}
 		return
@@ -143,7 +145,7 @@ func TestBlacklistFailSubnet2(t *testing.T) {
 	defer closer()
 	_, err := smtp.Dial(addr)
 	if err != nil {
-		if err.Error() != "521 FUCK OFF!" {
+		if err.Error() != fuckOffErrMesg {
 			t.Errorf("Dial failed with wrong error: %s", err)
 		}
 		return
@@ -160,7 +162,7 @@ func TestBlacklistFailSubnet3(t *testing.T) {
 	defer closer()
 	_, err := smtp.Dial(addr)
 	if err != nil {
-		if err.Error() != "521 FUCK OFF!" {
+		if err.Error() != fuckOffErrMesg {
 			t.Errorf("Dial failed with wrong error: %s", err)
 		}
 		return
@@ -177,7 +179,7 @@ func TestBlacklistFailSubnet4(t *testing.T) {
 	defer closer()
 	_, err := smtp.Dial(addr)
 	if err != nil {
-		if err.Error() != "521 FUCK OFF!" {
+		if err.Error() != fuckOffErrMesg {
 			t.Errorf("Dial failed with wrong error: %s", err)
 		}
 		return
