@@ -105,7 +105,7 @@ func TestAcceptMailFromDomainsOrAddresses(t *testing.T) {
 	cases := make(map[string]error, 0)
 
 	wlErr := fmt.Errorf(`521 "I'm sorry, but your email address is not in whitelist"`)
-	cases["thisIsNotAEmail"] = fmt.Errorf("502 Malformed e-mail address")
+	cases["thisIsNotAEmail"] = fmt.Errorf(`502 "Malformed e-mail address"`)
 	cases["a@example.org"] = nil
 	cases["a@vodolaz095.ru"] = nil
 	cases["a@gmail.com"] = wlErr

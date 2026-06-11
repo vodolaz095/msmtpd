@@ -34,7 +34,7 @@ func TestKarma(t *testing.T) {
 					Code:    555,
 					Message: "karma",
 				}
-				if err.Error() != "555 karma" {
+				if err.Error() != `555 "karma"` {
 					t.Errorf("wrong error")
 				}
 				return err
@@ -68,7 +68,7 @@ func TestKarma(t *testing.T) {
 	}
 	err = wc.Close()
 	if err != nil {
-		if err.Error() != "555 karma" {
+		if err.Error() != `555 "karma"` {
 			t.Errorf("wrong error returned")
 		}
 	}
@@ -208,7 +208,7 @@ func TestMeta(t *testing.T) {
 	}
 	err = cm.Rcpt("scuba@example.org")
 	if err != nil {
-		if err.Error() != "451 2 2.2 localhost" {
+		if err.Error() != `451 "2 2.2 localhost"` {
 			t.Errorf("wrong error `%s` instead `451 2 2.2 localhost`", err)
 		}
 	}

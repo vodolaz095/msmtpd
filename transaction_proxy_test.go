@@ -112,7 +112,7 @@ func TestProxyEnabledMalformedProtocol(t *testing.T) {
 	}
 	_, err = smtp.NewClient(con, "localhost")
 	if err != nil {
-		if err.Error() == "502 unable to decode proxy protocol - only TCP4/TCP6 is supported" {
+		if err.Error() == `502 "unable to decode proxy protocol - only TCP4/TCP6 is supported"` {
 			t.Logf("proxy command failed with malformed protocol")
 		} else {
 			t.Errorf("%s : unexpected error", err)
@@ -140,7 +140,7 @@ func TestProxyEnabledMalformedPort(t *testing.T) {
 	}
 	_, err = smtp.NewClient(con, "localhost")
 	if err != nil {
-		if err.Error() == "502 malformed port in proxy command" {
+		if err.Error() == `502 "malformed port in proxy command"` {
 			t.Logf("proxy command failed with malformed port")
 		} else {
 			t.Errorf("%s : unexpected error", err)
@@ -168,7 +168,7 @@ func TestProxyEnabledMalformedAddress(t *testing.T) {
 	}
 	_, err = smtp.NewClient(con, "localhost")
 	if err != nil {
-		if err.Error() == "502 malformed network address" {
+		if err.Error() == `502 "malformed network address"` {
 			t.Logf("proxy command failed with malformed address")
 		} else {
 			t.Errorf("%s : unexpected error", err)
@@ -196,7 +196,7 @@ func TestProxyEnabledMalformedManyArguments(t *testing.T) {
 	}
 	_, err = smtp.NewClient(con, "localhost")
 	if err != nil {
-		if err.Error() == "502 malformed proxy command" {
+		if err.Error() == `502 "malformed proxy command"` {
 			t.Logf("proxy command failed with malformed address")
 		} else {
 			t.Errorf("%s : unexpected error", err)
