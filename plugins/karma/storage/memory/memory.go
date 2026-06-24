@@ -6,7 +6,6 @@ import (
 	"sync"
 
 	"github.com/vodolaz095/msmtpd"
-	"github.com/vodolaz095/msmtpd/plugins/karma"
 )
 
 // Score used to pack IP address history in memory
@@ -22,7 +21,8 @@ type Storage struct {
 	Data map[string]Score
 }
 
-func New() karma.Storage {
+// New creates new instance of karma storage
+func New() *Storage {
 	return &Storage{
 		mu:   &sync.RWMutex{},
 		Data: make(map[string]Score, 0),

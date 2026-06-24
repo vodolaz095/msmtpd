@@ -7,7 +7,6 @@ import (
 
 	"github.com/redis/go-redis/v9"
 	"github.com/vodolaz095/msmtpd"
-	"github.com/vodolaz095/msmtpd/plugins/karma"
 )
 
 // Storage saves IP address history into redis database
@@ -15,7 +14,8 @@ type Storage struct {
 	Client *redis.Client
 }
 
-func New(client *redis.Client) karma.Storage {
+// New creates new instance of karma storage
+func New(client *redis.Client) *Storage {
 	return &Storage{Client: client}
 }
 
