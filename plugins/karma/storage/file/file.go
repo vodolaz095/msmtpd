@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/vodolaz095/msmtpd"
+	"github.com/vodolaz095/msmtpd/plugins/karma"
 )
 
 // Data used to pack IP address history in file
@@ -20,6 +21,14 @@ type Data struct {
 // Storage saves IP address history into files
 type Storage struct {
 	Directory string
+}
+
+func New(directory string) (karma.Storage, error) {
+	err := os.MkdirAll(directory, 0750)
+	if err != nil {
+		return nil, err
+	}
+	return &Storage{directory}, nil
 }
 
 // Ping pretends it does anything useful

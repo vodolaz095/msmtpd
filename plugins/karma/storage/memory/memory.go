@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/vodolaz095/msmtpd"
+	"github.com/vodolaz095/msmtpd/plugins/karma"
 )
 
 // Score used to pack IP address history in memory
@@ -19,6 +20,13 @@ type Score struct {
 type Storage struct {
 	mu   *sync.RWMutex
 	Data map[string]Score
+}
+
+func New() karma.Storage {
+	return &Storage{
+		mu:   &sync.RWMutex{},
+		Data: make(map[string]Score, 0),
+	}
 }
 
 // Ping does nothing, but somehow prepares memory storage
